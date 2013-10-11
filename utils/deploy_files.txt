@@ -1,0 +1,4 @@
+../src/core.js
+../src/app.js
+../src/widgets.js
+../src/inspector.js

@@ -1439,7 +1439,7 @@ $.extend({
 			that.closing_by_leave = setTimeout( function() { 
 				that.is_open = false;
 				that.hidePanels();
-			},LiteMenubar.closing_time);
+			},LiteGUI.Menubar.closing_time);
 		});
 
 		$(element).bind("mouseenter",function(e){
@@ -1831,6 +1831,424 @@ $.extend({
 
 	LiteGUI.List = List;
 
+
+	/***** DRAGGER **********/
+	function Dragger(value, options)
+	{
+		options = options || {};
+		var element = document.createElement("div");
+		element.className = "dragger " + (options.extraclass ? options.extraclass : "");
+
+		var wrap = document.createElement("span");
+		wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "");
+		if(options.disabled)
+		wrap.className += " disabled";
+		element.appendChild(wrap);
+
+		var dragger_class = options.dragger_class || "full";
+
+		var input = document.createElement("input");
+		input.className = "text number " + (dragger_class ? dragger_class : "");
+		input.value = value + (options.units ? options.units : "");
+		input.tabIndex = options.tab_index;
+		this.input = input;
+
+		this.setValue = function(v) { 
+			$(input).val(v).trigger("change");
+		}
+
+		$(input).bind("keydown",function(e) {
+			//trace(e.keyCode);
+			if(e.keyCode == 38)
+				inner_inc(1,e);
+			else if(e.keyCode == 40)
+				inner_inc(-1,e);
+			else
+				return;
+			e.stopPropagation();
+			e.preventDefault();
+			return true;
+		});
+
+
+		if(options.disabled)
+			input.disabled = true;
+		if(options.tab_index)
+			input.tabIndex = options.tab_index;
+		wrap.appendChild(input);
+		element.input = input;
+
+		var dragger = document.createElement("div");
+		dragger.className = "drag_widget";
+		if(options.disabled)
+			dragger.className += " disabled";
+
+		wrap.appendChild(dragger);
+		element.dragger = dragger;
+
+		this.root = element;
+
+		$(dragger).bind("mousedown",inner_down);
+
+		function inner_down(e)
+		{
+			if(!options.disabled)
+			{
+				$(document).bind("mousemove", inner_move);
+				$(document).bind("mouseup", inner_up);
+
+				dragger.data = [e.screenX, e.screenY];
+
+				$(dragger).trigger("start_dragging");
+			}
+
+			e.stopPropagation();
+			e.preventDefault();
+		}
+
+		function inner_move(e)
+		{
+			var diff = [e.screenX - dragger.data[0], dragger.data[1] - e.screenY];
+
+			dragger.data = [e.screenX, e.screenY];
+			var axis = options.horizontal ? 0 : 1;
+			inner_inc(diff[axis],e);
+
+			e.stopPropagation();
+			e.preventDefault();
+			return false;
+		};
+
+		function inner_up(e)
+		{
+			$(dragger).trigger("stop_dragging");
+			$(document).unbind("mousemove", inner_move);
+			$(document).unbind("mouseup", inner_up);
+			$(dragger).trigger("blur");
+			e.stopPropagation();
+			e.preventDefault();
+			return false;
+		};
+
+		function inner_inc(v,e)
+		{
+			var scale = (options.step ? options.step : 1.0);
+			if(e && e.shiftKey)
+				scale *= 10;
+			else if(e && e.ctrlKey)
+				scale *= 0.1;
+			var value = parseFloat( input.value ) + v * scale;
+			if(options.max != null && value > options.max)
+				value = options.max;
+			if(options.min != null && value < options.min)
+				value = options.min;
+
+			if(options.precision)
+				input.value = value.toFixed(options.precision);
+			else
+				input.value = ((value * 1000)<<0) / 1000; //remove ugly decimals
+			if(options.units)
+				input.value += options.units;
+			$(input).change();
+		}
+
+	}
+	LiteGUI.Dragger = Dragger;
+
+
+	function LineEditor(value, options)
+	{
+		options = options || {};
+		var element = document.createElement("div");
+		element.className = "curve " + (options.extraclass ? options.extraclass : "");
+		element.style.minHeight = "50px";
+		element.style.width = options.width || "100%";
+
+		element.bgcolor = options.bgcolor || "#222";
+		element.pointscolor = options.pointscolor || "#5AF";
+		element.linecolor = options.linecolor || "#444";
+
+		element.value = value || [];
+		element.xrange = options.xrange || [0,1]; //min,max
+		element.yrange = options.yrange || [0,1]; //min,max
+		element.defaulty = options.defaulty != null ? options.defaulty : 0.5;
+		element.no_trespassing = options.no_trespassing || false;
+		element.show_samples = options.show_samples || 0;
+		element.options = options;
+
+		var canvas = document.createElement("canvas");
+		canvas.width = options.width || 200;
+		canvas.height = options.height || 50;
+		element.appendChild(canvas);
+		element.canvas = canvas;
+
+		$(canvas).bind("mousedown",onmousedown);
+		$(element).resize(onresize);
+
+		element.getValueAt = function(x)
+		{
+			if(x < element.xrange[0] || x > element.xrange[1])
+				return element.defaulty;
+
+			var last = [ element.xrange[0], element.defaulty ];
+			var f = 0;
+			for(var i = 0; i < element.value.length; i += 1)
+			{
+				var v = element.value[i];
+				if(x == v[0]) return v[1];
+				if(x < v[0])
+				{
+					f = (x - last[0]) / (v[0] - last[0]);
+					return last[1] * (1-f) + v[1] * f;
+				}
+				last = v;
+			}
+
+			v = [ element.xrange[1], element.defaulty ];
+			f = (x - last[0]) / (v[0] - last[0]);
+			return last[1] * (1-f) + v[1] * f;
+		}
+
+		element.resample = function(samples)
+		{
+			var r = [];
+			var dx = (element.xrange[1] - element.xrange[0]) / samples;
+			for(var i = element.xrange[0]; i <= element.xrange[1]; i += dx)
+			{
+				r.push( element.getValueAt(i) );
+			}
+			return r;
+		}
+
+		element.addValue = function(v)
+		{
+			for(var i = 0; i < element.value; i++)
+			{
+				var value = element.value[i];
+				if(value[0] < v[0]) continue;
+				element.value.splice(i,0,v);
+				redraw();
+				return;
+			}
+
+			element.value.push(v);
+			redraw();
+		}
+
+		//value to canvas
+		function convert(v)
+		{
+			return [ canvas.width * ( (element.xrange[1] - element.xrange[0]) * v[0] + element.xrange[0]),
+				canvas.height * ((element.yrange[1] - element.yrange[0]) * v[1] + element.yrange[0])];
+		}
+
+		//canvas to value
+		function unconvert(v)
+		{
+			return [(v[0] / canvas.width - element.xrange[0]) / (element.xrange[1] - element.xrange[0]),
+					(v[1] / canvas.height - element.yrange[0]) / (element.yrange[1] - element.yrange[0])];
+		}
+
+		var selected = -1;
+
+		element.redraw = function()
+		{
+			var ctx = canvas.getContext("2d");
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.translate(0,canvas.height);
+			ctx.scale(1,-1);
+
+			ctx.fillStyle = element.bgcolor;
+			ctx.fillRect(0,0,canvas.width,canvas.height);
+
+			ctx.strokeStyle = element.linecolor;
+			ctx.beginPath();
+
+			//draw line
+			var pos = convert([element.xrange[0],element.defaulty]);
+			ctx.moveTo( pos[0], pos[1] );
+
+			for(var i in element.value)
+			{
+				var value = element.value[i];
+				pos = convert(value);
+				ctx.lineTo( pos[0], pos[1] );
+			}
+
+			pos = convert([element.xrange[1],element.defaulty]);
+			ctx.lineTo( pos[0], pos[1] );
+			ctx.stroke();
+
+			//draw points
+			for(var i = 0; i < element.value.length; i += 1)
+			{
+				var value = element.value[i];
+				pos = convert(value);
+				if(selected == i)
+					ctx.fillStyle = "white";
+				else
+					ctx.fillStyle = element.pointscolor;
+				ctx.beginPath();
+				ctx.arc( pos[0], pos[1], selected == i ? 4 : 2, 0, Math.PI * 2);
+				ctx.fill();
+			}
+
+			if(element.show_samples)
+			{
+				var samples = element.resample(element.show_samples);
+				ctx.fillStyle = "#888";
+				for(var i = 0; i < samples.length; i += 1)
+				{
+					var value = [ i * ((element.xrange[1] - element.xrange[0]) / element.show_samples) + element.xrange[0], samples[i] ];
+					pos = convert(value);
+					ctx.beginPath();
+					ctx.arc( pos[0], pos[1], 2, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			}
+		}
+
+		var last_mouse = [0,0];
+		function onmousedown(evt)
+		{
+			$(document).bind("mousemove",onmousemove);
+			$(document).bind("mouseup",onmouseup);
+
+			var rect = canvas.getBoundingClientRect();
+			var mousex = evt.clientX - rect.left;
+			var mousey = evt.clientY - rect.top;
+
+			selected = computeSelected(mousex,canvas.height-mousey);
+
+			if(selected == -1)
+			{
+				var v = unconvert([mousex,canvas.height-mousey]);
+				element.value.push(v);
+				sortValues();
+				selected = element.value.indexOf(v);
+			}
+
+			last_mouse = [mousex,mousey];
+			element.redraw();
+			evt.preventDefault();
+			evt.stopPropagation();
+		}
+
+		function onmousemove(evt)
+		{
+			var rect = canvas.getBoundingClientRect();
+			var mousex = evt.clientX - rect.left;
+			var mousey = evt.clientY - rect.top;
+
+			if(mousex < 0) mousex = 0;
+			else if(mousex > canvas.width) mousex = canvas.width;
+			if(mousey < 0) mousey = 0;
+			else if(mousey > canvas.height) mousey = canvas.height;
+
+			//dragging to remove
+			if( selected != -1 && distance( [evt.clientX - rect.left, evt.clientY - rect.top], [mousex,mousey] ) > canvas.height * 0.5 )
+			{
+				element.value.splice(selected,1);
+				onmouseup(evt);
+				return;
+			}
+
+			var dx = last_mouse[0] - mousex;
+			var dy = last_mouse[1] - mousey;
+			var delta = unconvert([-dx,dy]);
+			if(selected != -1)
+			{
+				var minx = element.xrange[0];
+				var maxx = element.xrange[1];
+
+				if(element.no_trespassing)
+				{
+					if(selected > 0) minx = element.value[selected-1][0];
+					if(selected < (element.value.length-1) ) maxx = element.value[selected+1][0];
+				}
+
+				var v = element.value[selected];
+				v[0] += delta[0];
+				v[1] += delta[1];
+				if(v[0] < minx) v[0] = minx;
+				else if(v[0] > maxx) v[0] = maxx;
+				if(v[1] < element.yrange[0]) v[1] = element.yrange[0];
+				else if(v[1] > element.yrange[1]) v[1] = element.yrange[1];
+			}
+
+			sortValues();
+			element.redraw();
+			last_mouse[0] = mousex;
+			last_mouse[1] = mousey;
+			onchange();
+
+			evt.preventDefault();
+			evt.stopPropagation();
+		}
+
+		function onmouseup(evt)
+		{
+			selected = -1;
+			element.redraw();
+			$(document).unbind("mousemove",onmousemove);
+			$(document).unbind("mouseup",onmouseup);
+			onchange();
+			evt.preventDefault();
+			evt.stopPropagation();
+		}
+
+		function onresize(e)
+		{
+			canvas.width = $(this).width();
+			canvas.height = $(this).height();
+			element.redraw();
+		}
+		
+		function onchange()
+		{
+			if(options.callback)
+				options.callback.call(element,element.value);
+			else
+				$(element).change();
+		}
+
+		function distance(a,b) { return Math.sqrt( Math.pow(b[0]-a[0],2) + Math.pow(b[1]-a[1],2) ); };
+
+		function computeSelected(x,y)
+		{
+			var min_dist = 100000;
+			var max_dist = 8; //pixels
+			var selected = -1;
+			for(var i=0; i < element.value.length; i++)
+			{
+				var value = element.value[i];
+				var pos = convert(value);
+				var dist = distance([x,y],pos);
+				if(dist < min_dist && dist < max_dist)
+				{
+					min_dist = dist;
+					selected = i;
+				}
+			}
+			return selected;
+		}
+
+		function sortValues()
+		{
+			var v = null;
+			if(selected != -1)
+				v = element.value[selected];
+			element.value.sort(function(a,b) { return a[0] > b[0]; });
+			if(v)
+				selected = element.value.indexOf(v);
+		}
+		
+		element.redraw();
+		return element;
+	}
+
+	LiteGUI.LineEditor = LineEditor;
+
 })();
 /* Attributes editor panel 
 	Dependencies: 
@@ -2195,7 +2613,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 	options.dragger_class = "full";
 	this.tab_index++;
 
-	var dragger = new LiteDragger(value, options);
+	var dragger = new LiteGUI.Dragger(value, options);
 	$(element).find(".wcontent").append(dragger.root);
 
 	$(dragger).bind("start_dragging",inner_before_change);
@@ -2237,14 +2655,14 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
-	var dragger1 = new LiteDragger(value[0], options);
+	var dragger1 = new LiteGUI.Dragger(value[0], options);
 	dragger1.root.style.marginLeft = 0;
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
-	var dragger2 = new LiteDragger(value[1], options);
+	var dragger2 = new LiteGUI.Dragger(value[1], options);
 	$(element).find(".wcontent").append(dragger2.root);
 
 	$(dragger1).bind("start_dragging",inner_before_change);
@@ -2281,6 +2699,10 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	});
 
 	this.append(element);
+	element.setValue = function(v) { 
+		dragger1.setValue(v[0]);
+		dragger2.setValue(v[1]);
+	}
 	return element;
 }
 
@@ -2298,20 +2720,20 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
-	var dragger1 = new LiteDragger(value[0], options );
+	var dragger1 = new LiteGUI.Dragger(value[0], options );
 	dragger1.root.style.marginLeft = 0;
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
-	var dragger2 = new LiteDragger(value[1], options );
+	var dragger2 = new LiteGUI.Dragger(value[1], options );
 	$(element).find(".wcontent").append(dragger2.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
-	var dragger3 = new LiteDragger(value[2], options );
+	var dragger3 = new LiteGUI.Dragger(value[2], options );
 	$(element).find(".wcontent").append(dragger3.root);
 
 	$(dragger1).bind("start_dragging",inner_before_change);
@@ -2349,6 +2771,11 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	});
 
 	this.append(element);
+	element.setValue = function(v) { 
+		dragger1.setValue(v[0]);
+		dragger2.setValue(v[1]);
+		dragger3.setValue(v[2]);
+	}
 	return element;
 }
 
@@ -2420,15 +2847,32 @@ Inspector.prototype.addSlider = function(name, value, options)
 				<input class='slider-input' type='range' step='"+options.step+"' min='"+ options.min +"' max='"+ options.max +"'/><span class='slider-thumb'></span></span>", options);
 
 	this.tab_index++;
-	var ui = $(element).find(".ui-slider");
 
-	$(element).find(".slider-input").bind('input', inner_slider_move );
+	var text_input = $(element).find(".slider-text");
+	var slider_input = $(element).find(".slider-input");
+	var slider_thumb = $(element).find(".slider-thumb");
 
-	$(element).find(".slider-text").bind('change', function() {
+	slider_input.bind('input', inner_slider_move );
+
+	var skip_change = false; //used to avoid recursive loops
+	text_input.bind('change', function() {
+		if(skip_change) return;
+
 		var v = parseFloat( $(this).val() );
-		$(element).find(".slider-input").val(v);
+		if(v > options.max)
+		{
+			skip_change = true;
+			slider.val( options.max );
+			skip_change = false;
+		}
+		else
+			slider.val(v);
+
 		var vnormalized = (v - options.min) / (options.max - options.min);
-		$(element).find(".slider-thumb").css({left: (vnormalized * ($(ui).width() - 12)) });
+		if(vnormalized > 1) vnormalized = 1;
+		else if(vnormalized < 0) vnormalized = 0;
+
+		slider_thumb.css({left: (vnormalized * ($(ui).width() - 12)) });
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
 
@@ -2436,29 +2880,19 @@ Inspector.prototype.addSlider = function(name, value, options)
 	{
 		var v = parseFloat( e.target.value );
 		var vnormalized = (v - options.min) / (options.max - options.min);
-		$(element).find(".slider-text").val(v);
-		//$(element).find(".slider-thumb").css({left: (vnormalized * ($(ui).width() - 12)) });
-		$(element).find(".slider-thumb").css({left: (vnormalized * 90).toFixed(2) + "%" });
-		Inspector.onWidgetChange.call(that,element,name,v, options);
+		if(!skip_change)
+		{
+			text_input.val(v);
+			Inspector.onWidgetChange.call(that,element,name,v, options);
+		}
+		slider_thumb.css({left: (vnormalized * 90).toFixed(2) + "%" });
 	}
 
-	/*
-	$(element).find(".wslider").slider({min: options.min, max: options.max, value: value, step: options.step });
-	$(element).find(".ui-slider").bind('slide', function(e,ui) {
-		var v = ui.value;
-		$(element).find("input").val(v);
-		Inspector.onWidgetChange.call(that,element,name,v, options);
-	});
-	$(element).find("input").bind('change', function() {
-		var v = parseFloat( $(this).val() );
-		$(element).find(".ui-slider").slider("value",v);
-		Inspector.onWidgetChange.call(that,element,name,v, options);
-	});
-	*/
-
 	this.append(element);
-	element.setValue = function(v) { $(this).find(".slider-text").val(v); };
-	$(element).find(".slider-input").val(value).trigger("input");
+	element.setValue = function(v) { text_input.val(v); };
+	skip_change = true;
+	slider_input.val(value).trigger("input");
+	skip_change = false;
 	return element;
 }
 
@@ -2832,7 +3266,7 @@ Inspector.prototype.addColor = function(name,value,options)
 	options.step = options.step || 0.01;
 	options.dragger_class = "nano";
 
-	var dragger = new LiteDragger(1, options);
+	var dragger = new LiteGUI.Dragger(1, options);
 	$(element).find('.wcontent').append(dragger.root);
 	$(dragger.input).change(function()
 	{
@@ -2872,7 +3306,7 @@ Inspector.prototype.addLine = function(name, value, options)
 	
 	var element = this.createWidget(name,"<span class='line-editor'></span>", options);
 
-	var line_editor = new LiteLineEditor(value,options);
+	var line_editor = new LiteGUI.LineEditor(value,options);
 	$(element).find("span.line-editor").append(line_editor);
 
 	$(line_editor).change( function(e) { 
@@ -2995,415 +3429,6 @@ Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)
 Inspector.parseColor = function(color)
 {
 	return "<span style='color: #FAA'>" + color[0].toFixed(2) + "</span>,<span style='color: #AFA'>" + color[1].toFixed(2) + "</span>,<span style='color: #AAF'>" + color[2].toFixed(2) + "</span>";
-}
-
-/***** DRAGGER **********/
-
-function LiteDragger(value, options)
-{
-	options = options || {};
-	var element = document.createElement("div");
-	element.className = "dragger " + (options.extraclass ? options.extraclass : "");
-
-	var wrap = document.createElement("span");
-	wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "");
-	if(options.disabled)
-	wrap.className += " disabled";
-	element.appendChild(wrap);
-
-	var dragger_class = options.dragger_class || "full";
-
-	var input = document.createElement("input");
-	input.className = "text number " + (dragger_class ? dragger_class : "");
-	input.value = value + (options.units ? options.units : "");
-	input.tabIndex = options.tab_index;
-	this.input = input;
-
-	$(input).bind("keydown",function(e) {
-		//trace(e.keyCode);
-		if(e.keyCode == 38)
-			inner_inc(1,e);
-		else if(e.keyCode == 40)
-			inner_inc(-1,e);
-		else
-			return;
-		e.stopPropagation();
-		e.preventDefault();
-		return true;
-	});
-
-
-	if(options.disabled)
-		input.disabled = true;
-	if(options.tab_index)
-		input.tabIndex = options.tab_index;
-	wrap.appendChild(input);
-	element.input = input;
-
-	var dragger = document.createElement("div");
-	dragger.className = "drag_widget";
-	if(options.disabled)
-		dragger.className += " disabled";
-
-	wrap.appendChild(dragger);
-	element.dragger = dragger;
-
-	this.root = element;
-
-	$(dragger).bind("mousedown",inner_down);
-
-	function inner_down(e)
-	{
-		if(!options.disabled)
-		{
-			$(document).bind("mousemove", inner_move);
-			$(document).bind("mouseup", inner_up);
-
-			dragger.data = [e.screenX, e.screenY];
-
-			$(dragger).trigger("start_dragging");
-		}
-
-		e.stopPropagation();
-		e.preventDefault();
-	}
-
-	function inner_move(e)
-	{
-		var diff = [e.screenX - dragger.data[0], dragger.data[1] - e.screenY];
-
-		dragger.data = [e.screenX, e.screenY];
-		var axis = options.horizontal ? 0 : 1;
-		inner_inc(diff[axis],e);
-
-		e.stopPropagation();
-		e.preventDefault();
-		return false;
-	};
-
-	function inner_up(e)
-	{
-		$(dragger).trigger("stop_dragging");
-		$(document).unbind("mousemove", inner_move);
-		$(document).unbind("mouseup", inner_up);
-		$(dragger).trigger("blur");
-		e.stopPropagation();
-		e.preventDefault();
-		return false;
-	};
-
-	function inner_inc(v,e)
-	{
-		var scale = (options.step ? options.step : 1.0);
-		if(e && e.shiftKey)
-			scale *= 10;
-		else if(e && e.ctrlKey)
-			scale *= 0.1;
-		var value = parseFloat( input.value ) + v * scale;
-		if(options.max != null && value > options.max)
-			value = options.max;
-		if(options.min != null && value < options.min)
-			value = options.min;
-
-		if(options.precision)
-			input.value = value.toFixed(options.precision);
-		else
-			input.value = ((value * 1000)<<0) / 1000; //remove ugly decimals
-		if(options.units)
-			input.value += options.units;
-		$(input).change();
-	}
-}
-
-function LiteLineEditor(value, options)
-{
-	options = options || {};
-	var element = document.createElement("div");
-	element.className = "curve " + (options.extraclass ? options.extraclass : "");
-	element.style.minHeight = "50px";
-	element.style.width = options.width || "100%";
-
-	element.bgcolor = options.bgcolor || "#222";
-	element.pointscolor = options.pointscolor || "#5AF";
-	element.linecolor = options.linecolor || "#444";
-
-	element.value = value || [];
-	element.xrange = options.xrange || [0,1]; //min,max
-	element.yrange = options.yrange || [0,1]; //min,max
-	element.defaulty = options.defaulty != null ? options.defaulty : 0.5;
-	element.no_trespassing = options.no_trespassing || false;
-	element.show_samples = options.show_samples || 0;
-	element.options = options;
-
-	var canvas = document.createElement("canvas");
-	canvas.width = options.width || 200;
-	canvas.height = options.height || 50;
-	element.appendChild(canvas);
-	element.canvas = canvas;
-
-	$(canvas).bind("mousedown",onmousedown);
-	$(element).resize(onresize);
-
-	element.getValueAt = function(x)
-	{
-		if(x < element.xrange[0] || x > element.xrange[1])
-			return element.defaulty;
-
-		var last = [ element.xrange[0], element.defaulty ];
-		var f = 0;
-		for(var i = 0; i < element.value.length; i += 1)
-		{
-			var v = element.value[i];
-			if(x == v[0]) return v[1];
-			if(x < v[0])
-			{
-				f = (x - last[0]) / (v[0] - last[0]);
-				return last[1] * (1-f) + v[1] * f;
-			}
-			last = v;
-		}
-
-		v = [ element.xrange[1], element.defaulty ];
-		f = (x - last[0]) / (v[0] - last[0]);
-		return last[1] * (1-f) + v[1] * f;
-	}
-
-	element.resample = function(samples)
-	{
-		var r = [];
-		var dx = (element.xrange[1] - element.xrange[0]) / samples;
-		for(var i = element.xrange[0]; i <= element.xrange[1]; i += dx)
-		{
-			r.push( element.getValueAt(i) );
-		}
-		return r;
-	}
-
-	element.addValue = function(v)
-	{
-		for(var i = 0; i < element.value; i++)
-		{
-			var value = element.value[i];
-			if(value[0] < v[0]) continue;
-			element.value.splice(i,0,v);
-			redraw();
-			return;
-		}
-
-		element.value.push(v);
-		redraw();
-	}
-
-	//value to canvas
-	function convert(v)
-	{
-		return [ canvas.width * ( (element.xrange[1] - element.xrange[0]) * v[0] + element.xrange[0]),
-			canvas.height * ((element.yrange[1] - element.yrange[0]) * v[1] + element.yrange[0])];
-	}
-
-	//canvas to value
-	function unconvert(v)
-	{
-		return [(v[0] / canvas.width - element.xrange[0]) / (element.xrange[1] - element.xrange[0]),
-				(v[1] / canvas.height - element.yrange[0]) / (element.yrange[1] - element.yrange[0])];
-	}
-
-	var selected = -1;
-
-	element.redraw = function()
-	{
-		var ctx = canvas.getContext("2d");
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
-		ctx.translate(0,canvas.height);
-		ctx.scale(1,-1);
-
-		ctx.fillStyle = element.bgcolor;
-		ctx.fillRect(0,0,canvas.width,canvas.height);
-
-		ctx.strokeStyle = element.linecolor;
-		ctx.beginPath();
-
-		//draw line
-		var pos = convert([element.xrange[0],element.defaulty]);
-		ctx.moveTo( pos[0], pos[1] );
-
-		for(var i in element.value)
-		{
-			var value = element.value[i];
-			pos = convert(value);
-			ctx.lineTo( pos[0], pos[1] );
-		}
-
-		pos = convert([element.xrange[1],element.defaulty]);
-		ctx.lineTo( pos[0], pos[1] );
-		ctx.stroke();
-
-		//draw points
-		for(var i = 0; i < element.value.length; i += 1)
-		{
-			var value = element.value[i];
-			pos = convert(value);
-			if(selected == i)
-				ctx.fillStyle = "white";
-			else
-				ctx.fillStyle = element.pointscolor;
-			ctx.beginPath();
-			ctx.arc( pos[0], pos[1], selected == i ? 4 : 2, 0, Math.PI * 2);
-			ctx.fill();
-		}
-
-		if(element.show_samples)
-		{
-			var samples = element.resample(element.show_samples);
-			ctx.fillStyle = "#888";
-			for(var i = 0; i < samples.length; i += 1)
-			{
-				var value = [ i * ((element.xrange[1] - element.xrange[0]) / element.show_samples) + element.xrange[0], samples[i] ];
-				pos = convert(value);
-				ctx.beginPath();
-				ctx.arc( pos[0], pos[1], 2, 0, Math.PI * 2);
-				ctx.fill();
-			}
-		}
-	}
-
-	var last_mouse = [0,0];
-	function onmousedown(evt)
-	{
-		$(document).bind("mousemove",onmousemove);
-		$(document).bind("mouseup",onmouseup);
-
-        var rect = canvas.getBoundingClientRect();
-        var mousex = evt.clientX - rect.left;
-        var mousey = evt.clientY - rect.top;
-
-		selected = computeSelected(mousex,canvas.height-mousey);
-
-		if(selected == -1)
-		{
-			var v = unconvert([mousex,canvas.height-mousey]);
-			element.value.push(v);
-			sortValues();
-			selected = element.value.indexOf(v);
-		}
-
-		last_mouse = [mousex,mousey];
-		element.redraw();
-		evt.preventDefault();
-		evt.stopPropagation();
-	}
-
-	function onmousemove(evt)
-	{
-        var rect = canvas.getBoundingClientRect();
-        var mousex = evt.clientX - rect.left;
-        var mousey = evt.clientY - rect.top;
-
-		if(mousex < 0) mousex = 0;
-		else if(mousex > canvas.width) mousex = canvas.width;
-		if(mousey < 0) mousey = 0;
-		else if(mousey > canvas.height) mousey = canvas.height;
-
-		//dragging to remove
-		if( selected != -1 && distance( [evt.clientX - rect.left, evt.clientY - rect.top], [mousex,mousey] ) > canvas.height * 0.5 )
-		{
-			element.value.splice(selected,1);
-			onmouseup(evt);
-			return;
-		}
-
-		var dx = last_mouse[0] - mousex;
-		var dy = last_mouse[1] - mousey;
-		var delta = unconvert([-dx,dy]);
-		if(selected != -1)
-		{
-			var minx = element.xrange[0];
-			var maxx = element.xrange[1];
-
-			if(element.no_trespassing)
-			{
-				if(selected > 0) minx = element.value[selected-1][0];
-				if(selected < (element.value.length-1) ) maxx = element.value[selected+1][0];
-			}
-
-			var v = element.value[selected];
-			v[0] += delta[0];
-			v[1] += delta[1];
-			if(v[0] < minx) v[0] = minx;
-			else if(v[0] > maxx) v[0] = maxx;
-			if(v[1] < element.yrange[0]) v[1] = element.yrange[0];
-			else if(v[1] > element.yrange[1]) v[1] = element.yrange[1];
-		}
-
-		sortValues();
-		element.redraw();
-		last_mouse[0] = mousex;
-		last_mouse[1] = mousey;
-		onchange();
-
-		evt.preventDefault();
-		evt.stopPropagation();
-	}
-
-	function onmouseup(evt)
-	{
-		selected = -1;
-		element.redraw();
-		$(document).unbind("mousemove",onmousemove);
-		$(document).unbind("mouseup",onmouseup);
-		onchange();
-		evt.preventDefault();
-		evt.stopPropagation();
-	}
-
-	function onresize(e)
-	{
-		canvas.width = $(this).width();
-		canvas.height = $(this).height();
-		element.redraw();
-	}
-	
-	function onchange()
-	{
-		if(options.callback)
-			options.callback.call(element,element.value);
-		else
-			$(element).change();
-	}
-
-	function distance(a,b) { return Math.sqrt( Math.pow(b[0]-a[0],2) + Math.pow(b[1]-a[1],2) ); };
-
-	function computeSelected(x,y)
-	{
-		var min_dist = 100000;
-		var max_dist = 8; //pixels
-		var selected = -1;
-		for(var i=0; i < element.value.length; i++)
-		{
-			var value = element.value[i];
-			var pos = convert(value);
-			var dist = distance([x,y],pos);
-			if(dist < min_dist && dist < max_dist)
-			{
-				min_dist = dist;
-				selected = i;
-			}
-		}
-		return selected;
-	}
-
-	function sortValues()
-	{
-		var v = null;
-		if(selected != -1)
-			v = element.value[selected];
-		element.value.sort(function(a,b) { return a[0] > b[0]; });
-		if(v)
-			selected = element.value.indexOf(v);
-	}
-	
-	element.redraw();
-	return element;
 }
 
 

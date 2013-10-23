@@ -610,17 +610,17 @@ Inspector.prototype.addSlider = function(name, value, options)
 		if(v > options.max)
 		{
 			skip_change = true;
-			slider.val( options.max );
+			slider_input.val( options.max );
 			skip_change = false;
 		}
 		else
-			slider.val(v);
+			slider_input.val(v);
 
 		var vnormalized = (v - options.min) / (options.max - options.min);
 		if(vnormalized > 1) vnormalized = 1;
 		else if(vnormalized < 0) vnormalized = 0;
 
-		slider_thumb.css({left: (vnormalized * ($(ui).width() - 12)) });
+		slider_thumb.css({left: (vnormalized * ($(slider_input).width() - 12)) });
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
 

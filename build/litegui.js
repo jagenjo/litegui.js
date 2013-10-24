@@ -2964,18 +2964,25 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'>";
 	this.tab_index++;
 
+	var values = options.values || [];
+
 	if(options.values)
 	{
-		for(var i in options.values)
-			code += "<option "+(options.values[i] == value?" selected":"")+">" + (options.values.length ? options.values[i] : i) + "</option>";
+		if (typeof(values) == "function")
+			values = options.values();
+		else
+			values = options.values;
+		if(!values) return null;
+		for(var i in values)
+			code += "<option "+( values[i] == value?" selected":"")+">" + ( values.length ?  values[i] : i) + "</option>";
 	}
 	code += "</select>";
 
 	var element = this.createWidget(name,"<span class='inputfield full inputcombo "+(options.disabled?"disabled":"")+"'>"+code+"</span>", options);
 	$(element).find(".wcontent select").change( function(e) { 
 		var value = e.target.value;
-		if(options.values && options.values.constructor != Array)
-			value = options.values[value];
+		if(values && values.constructor != Array)
+			value = values[value];
 		Inspector.onWidgetChange.call(that,element,name,value, options);
 	});
 

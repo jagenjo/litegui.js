@@ -669,7 +669,7 @@
 		element.className = "litetabs";
 		this.root = element;
 
-		this.current_tab = "";
+		this.current_tab = null; //current tab array [name, tab, content]
 
 		if(options.height)
 		{
@@ -696,6 +696,11 @@
 
 	Tabs.tabs_height = "30px";
 
+	Tabs.prototype.getCurrentTab = function()
+	{
+		return this.current_tab;
+	}
+
 	Tabs.prototype.appendTo = function(parent,at_front)
 	{
 		if(at_front)
@@ -714,6 +719,7 @@
 		options = options || {};
 		var that = this;
 
+		//the tab element
 		var element = document.createElement("LI");
 		element.className = "wtab wtab-" + name.replace(/ /gi,"_");
 		//if(options.selected) element.className += " selected";
@@ -722,6 +728,7 @@
 
 		$(this.list).append(element);
 
+		//the content of the tab
 		var content = document.createElement("div");
 		if(options.id)
 			content.id = options.id;
@@ -787,7 +794,7 @@
 		if (options.selected == true || this.selected == null)
 			this.select(name);
 
-		return $(element);
+		return {tab: element, content: content};
 	}
 
 	Tabs.prototype.select = function(name)

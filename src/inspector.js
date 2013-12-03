@@ -80,6 +80,115 @@ Inspector.prototype.setup = function(info)
 	}
 }
 
+Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info) 
+{
+	if(!instance) return;
+
+	if( !attrs && instance.getAttributes )
+		attrs = instance.getAttributes();
+	else
+		attrs = this.collectAttributes(instance);
+
+	var classObject = instance.constructor;
+	if(!attrs_info && classObject.attributes)
+		attrs_info = classObject.attributes;
+
+	if(!attrs_info)
+		attrs_info = {};
+
+	for(var i in attrs)
+	{
+		if(attrs_info[i])
+			continue;
+
+		var v = attrs[i];
+
+		if(classObject["@" + i]) //in class object
+		{
+			var options = {}; 
+			var shared_options = classObject["@" + i];
+			for(var j in shared_options) //clone, because cannot be shared or errors could appear
+				options[j] = shared_options[j];
+			attrs_info[i] = options;
+		}
+		else if(instance["@" + i])
+			attrs_info[i] = instance["@" + i];
+		else if (typeof(v) == "number")
+			attrs_info[i] = { type: "number" };
+		else if (typeof(v) == "string")
+			attrs_info[i] = { type: "string" };
+		else if (typeof(v) == "boolean")
+			attrs_info[i] = { type: "boolean" };
+		else if( v && v.length )
+		{
+			switch(v.length)
+			{
+				case 2: attrs_info[i] = { type: "vec2" }; break;
+				case 3: attrs_info[i] = { type: "vec3" }; break;
+				case 4: attrs_info[i] = { type: "vec4" }; break;
+				default: continue;
+			}
+		}
+	}
+
+	return this.showAttributes( instance, attrs_info );
+}
+
+Inspector.prototype.collectAttributes = function(instance)
+{
+	var attrs = {};
+
+	for(var i in instance)
+	{
+		if(i[0] == "_" || i[0] == "@" || i.substr(0,6) == "jQuery") //skip vars with _ (they are private)
+			continue;
+
+		var v = instance[i];
+		if ( v && v.constructor == Function )
+			continue;
+		attrs[i] = v;
+	}
+	return attrs;
+}
+
+Inspector.prototype.showAttributes = function(instance, attrs_info ) 
+{
+	for(var i in attrs_info)
+	{
+		var options = attrs_info[i];
+		if(!options.callback)
+		{
+			var o = { instance: instance, name: i, options: options };
+			options.callback = Inspector.assignValue.bind(o);
+		}
+		options.instance = instance;
+
+		var type = options.type || options.widget || "string";
+		this.add( type, i, instance[i], options );
+	}
+}
+
+Inspector.assignValue = function(value)
+{
+	var instance = this.instance;
+	var current_value = instance[this.name];
+
+	if(current_value == null || value == null)
+		instance[this.name] = value;
+	else if(typeof(current_value) == "number")
+		instance[this.name] = parseFloat(value);
+	else if(typeof(current_value) == "string")
+		instance[this.name] = value;
+	else if(value && value.length && current_value && current_value.length)
+	{
+		for(var i = 0; i < current_value.length; ++i)
+			current_value[i] = value[i];
+	}
+	else
+		instance[this.name] = value;
+}
+
+
 Inspector.prototype.createWidget = function(name, content, options) 
 {
 	options = options || {};
@@ -153,10 +262,12 @@ Inspector.widget_constructors = {
 	string: 'addString',
 	text: 'addString',
 	textarea: 'addTextarea',
-	slider: 'addSlider',
 	color: 'addColor',
+	"boolean": 'addCheckbox', 
 	checkbox: 'addCheckbox',
+	vec2: 'addVector2',
 	vector2: 'addVector2',
+	vec3: 'addVector3',
 	vector3: 'addVector3',
 	combo: 'addCombo',
 	button: 'addButton',
@@ -712,6 +823,9 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'>";
 	this.tab_index++;
 
+	var element = this.createWidget(name,"<span class='inputfield full inputcombo "+(options.disabled?"disabled":"")+"'></span>", options);
+	element.options = options;
+
 	var values = options.values || [];
 
 	if(options.values)
@@ -720,13 +834,14 @@ Inspector.prototype.addCombo = function(name, value, options)
 			values = options.values();
 		else
 			values = options.values;
-		if(!values) return null;
-		for(var i in values)
-			code += "<option "+( values[i] == value?" selected":"")+">" + ( values.length ?  values[i] : i) + "</option>";
+		if(values) 
+			for(var i in values)
+				code += "<option "+( values[i] == value?" selected":"")+">" + ( values.length ?  values[i] : i) + "</option>";
 	}
 	code += "</select>";
 
-	var element = this.createWidget(name,"<span class='inputfield full inputcombo "+(options.disabled?"disabled":"")+"'>"+code+"</span>", options);
+	element.querySelector("span.inputcombo").innerHTML = code;
+
 	$(element).find(".wcontent select").change( function(e) { 
 		var value = e.target.value;
 		if(values && values.constructor != Array)

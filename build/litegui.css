@@ -1723,10 +1723,12 @@ input[type="range"]
 	apperance:none; 
 	width:100%; 
 	height:1em;
-	opacity: 0.0;
+	opacity: 1.0;
 }
 
-input[type="range"]:focus {outline:none;}
+input[type="range"]:focus {
+	outline:none;
+}
 
 .ui-slider .slider-thumb {
 	position: absolute;
@@ -1734,6 +1736,8 @@ input[type="range"]:focus {outline:none;}
 	left:0;
 	pointer-events: none;
 	display: inline-block;
+	display: none;
+
     width: 10%;
     height: 1.0em;
 	border-radius: 1px;
@@ -1751,13 +1755,23 @@ input[type="range"]:focus {outline:none;}
 	/* cursor: e-resize !important; */
 }
 
-/* firefox do not allow to style it, so deprecated
+/* firefox do not allow to style it, so deprecated */
+input[type="range"]::slider-thumb {
+    width: 1.0em;
+    height: 1.0em;
+	border-radius: 1px;
+    background: linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
+    border: 0 none !important;
+    box-shadow: 0 1px 0 #5B5957 inset, 0 -1px 0 black, 0 1px 0 black, -1px 0 0 black, 1px 0 0 black, 0 1px 1px #111111 !important;
+	box-sizing:border-box;
+}
+
 input[type="range"]::-webkit-slider-thumb {
      -webkit-appearance: none;
     width: 1.0em;
     height: 1.0em;
 	border-radius: 1px;
-	margin-top: 0.5em;
+	/*margin-top: 0.5em;*/
 
     background: -moz-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
     background: -webkit-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
@@ -1771,22 +1785,17 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 input[type="range"]::-moz-slider-thumb {
-    -webkit-appearance: none;
-    -moz-appearance: none;
     width: 1.0em;
     height: 1.0em;
-	border-radius: 1em;
+	border-radius: 1px;
     background: -moz-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
-    background: -webkit-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
     background: linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
     border: 0 none !important;
     box-shadow: 0 1px 0 #5B5957 inset, 0 -1px 0 black, 0 1px 0 black, -1px 0 0 black, 1px 0 0 black, 0 1px 1px #111111 !important;
-
 	box-sizing:border-box;
 	-moz-box-sizing:border-box; 
-	-webkit-box-sizing:border-box; 
 }
-*/
+/**/
 
 
 /*

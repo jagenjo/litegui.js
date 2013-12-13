@@ -1510,23 +1510,50 @@ li.ltreeitem.root_item {
 	padding-left: 0px;
 }
 
-li.ltreeitem div.ltreecontent {
+li.ltreeitem div.ltreeitemtitle {
 	color: #AAA;
 }
 
-li.ltreeitem div.ltreecontent:hover {
+li.ltreeitem div.ltreeitemtitle .incontent:hover {
 	color: white;
 }
 
-li.ltreeitem div.ltreecontent.selected {
+li.ltreeitem div.ltreeitemtitle.selected .incontent {
 	color: #EC6;
 }
 
-ul.ltreelist {
+ul.ltreeitemchildren {
 	margin: 0;
 	padding: 0;
 	margin-left: -2px;
 	list-style-type: none;
+}
+
+li.ltreeitem .ltreeitemtitle .precontent {
+	margin-right: 4px;
+}
+
+li.ltreeitem .ltreeitemtitle .postcontent {
+	margin-left: 4px;
+}
+
+.listbox {
+	font-size: 0.8em;
+	width: 1em;
+	height: 1em;
+	display: inline-block;
+	outline: 1px solid #444;
+	text-align: center;
+}
+
+.listbox:hover {
+	color: white;	
+}
+
+.listbox.listopen {
+}
+
+.listbox.listclosed {
 }
 
 /**** LiteList ***/

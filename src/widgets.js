@@ -1231,23 +1231,34 @@
 		options = options || this.options;
 
 		var content_element = document.createElement("div");
-		content_element.className = "ltreecontent";
-		content_element.innerHTML = data.content || data.id || "";
+		content_element.className = "ltreeitemtitle";
+		var content = data.content || data.id || "";
+		content_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
 		//root.dataset["item"] = data.id || data.content || "";
 
 		root.appendChild(content_element);
 		root.content_element = content_element;
 
-		$(root).find(".ltreecontent").click(onNodeSelected);
-		$(root).find(".ltreecontent").dblclick(onNodeDblClicked);
+		$(root).find(".ltreeitemtitle").click(onNodeSelected);
+		$(root).find(".ltreeitemtitle .incontent").dblclick(onNodeDblClicked);
 
 		var list = document.createElement("ul");
-		list.className = "ltreelist";
+		list.className = "ltreeitemchildren";
+		//list.style.display = "none";
+		root.children_element = list;
 		root.list = list;
 		if(data.children)
 		{
+			var create_box = true;
 			for(var i in data.children)
 			{
+				if(!root.listbox)
+				{
+					var pre = content_element.querySelector(".precontent");
+					var box = createLitebox(true, Tree.onClickBox.bind(root) );
+					pre.appendChild(box);
+					root.listbox = box;
+				}
 				var item = data.children[i];
 				var element = this.createTreeItem(item, options);
 				list.appendChild(element);
@@ -1261,7 +1272,7 @@
 			if(this._editing) return;
 
 			$(that.root).removeClass("selected");
-			$(that.root).find(".ltreecontent.selected").removeClass("selected");
+			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
 			$(this).addClass("selected");
 			var item = this.parentNode;
 			$(that).trigger("item_selected", [item.data, item] );
@@ -1281,9 +1292,11 @@
 				this.innerHTML = "<input type='text' value='" + this.innerHTML + "' />";
 				var input = $(this).find("input")[0];
 				$(input).blur(function(e) { 
-					that2.innerHTML = e.target.value;
+					var new_name = e.target.value;
+					that2.innerHTML = new_name;
+					//item.node_name = new_name;
 					delete that2._editing;
-					$(that).trigger("item_renamed", [that2._old_name, e.target.value, item]);
+					$(that).trigger("item_renamed", [that2._old_name, new_name, item]);
 					delete that2._old_name;
 				});
 				$(input).bind("keydown", function(e) {
@@ -1352,13 +1365,40 @@
 		return root;
 	}
 
+	Tree.onClickBox = function(e)
+	{
+		var list = this.children_element;
+		if(list.style.display == "none")
+			list.style.display = "block";
+		else
+			list.style.display = "none";
+	}
+
 	Tree.prototype.getItem = function(id)
 	{
-		var node = $(this.root).find("#"+id);
-		if(!node.length) return null;
+		var node = this.root.querySelector("#"+id);
+		if(!node) return null;
 		if( !$(node).hasClass("ltreeitem") )
 			throw("this node is not a tree item");
-		return node[0];
+		return node;
+	}
+
+	Tree.prototype.expandItem = function(id)
+	{
+		var item = this.getItem(id);
+		if(!item) return;
+
+		if(!item.listbox) return;
+		listbox.setValue(true);
+	}
+
+	Tree.prototype.contractItem = function(id)
+	{
+		var item = this.getItem(id);
+		if(!item) return;
+
+		if(!item.listbox) return;
+		listbox.setValue(false);
 	}
 
 	Tree.prototype.setSelectedItem = function(id)
@@ -1366,7 +1406,7 @@
 		if(!id)
 		{
 			$(this.root).removeClass("selected");
-			$(this.root).find(".ltreecontent.selected").removeClass("selected");
+			$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
 			return;
 		}
 
@@ -1375,7 +1415,7 @@
 		if( $(node).hasClass("selected") ) return node;
 
 		$(this.root).removeClass("selected");
-		$(this.root).find(".ltreecontent.selected").removeClass("selected");
+		$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
 		$(node.content_element).addClass("selected");
 		return node;
 	}
@@ -1383,9 +1423,8 @@
 
 	Tree.prototype.getSelectedItem = function()
 	{
-		var node = $(that.root).find(".ltreecontent.selected");
-		if(!node.length) return null;
-		return node[0];
+		var node = this.root.querySelector(".ltreeitemtitle.selected");
+		return node;
 	}
 
 	Tree.prototype.insertItem = function(data, id_parent, position, options)
@@ -1403,12 +1442,20 @@
 		if( !$(parent).hasClass("ltreeitem") )
 			throw("this node is not a tree item");
 
+		if(!parent.listbox)
+		{
+			var pre = parent.querySelector(".precontent");
+			var box = createLitebox(true, Tree.onClickBox.bind(parent) );
+			pre.appendChild(box);
+			parent.listbox = box;
+		}
+
 		var element = this.createTreeItem(data, options);
 		if(position == undefined)
 			parent.list.appendChild( element );
 		else
 		{
-			trace(parent.list.childNodes);
+			//trace(parent.list.childNodes);
 			parent.list.insertBefore(element, parent.list.childNodes[position]);
 		}
 
@@ -1441,7 +1488,7 @@
 		if(data.id)
 			node.id = data.id;
 		if(data.content)
-			node.content_element.innerHTML = data.content;
+			node.content_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + data.content + "</span><span class='postcontent'></span>";
 	}
 
 	Tree.prototype.clear = function(keep_root)
@@ -1450,6 +1497,47 @@
 	}
 
 	LiteGUI.Tree = Tree;
+
+
+	function createLitebox(state, on_change)
+	{
+		var element = document.createElement("span");
+		element.className = "listbox listopen";
+		element.innerHTML = "-";
+		element.dataset["value"] = state ? "open" : "closed";
+		element.addEventListener("click", onClick );
+		element.on_change_callback = on_change;
+
+		element.setValue = function(v)
+		{
+			if(this.dataset["value"] == (v ? "open" : "closed"))
+				return;
+
+			if(!v)
+			{
+				this.dataset["value"] = "closed";
+				this.innerHTML = "+";
+				this.className = "listbox listclosed";
+			}
+			else
+			{
+				this.dataset["value"] = "open";
+				this.innerHTML = "-";
+				this.className = "listbox listopen";
+			}
+
+			if(on_change)
+				on_change( this.dataset["value"] );
+		}
+
+		function onClick(e) {
+			console.log("CLICK");
+			var box = e.target;
+			box.setValue( this.dataset["value"] == "open" ? false : true );
+		}
+
+		return element;
+	}	
 
 	/******* LiteList ***********************/
 
@@ -1466,6 +1554,7 @@
 
 		this.callback = options.callback;
 
+		//walk over every item in the list
 		for(var i in items)
 		{
 			var item = document.createElement("li");

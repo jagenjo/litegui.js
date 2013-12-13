@@ -269,6 +269,7 @@ Inspector.widget_constructors = {
 	vector2: 'addVector2',
 	vec3: 'addVector3',
 	vector3: 'addVector3',
+	"enum": 'addCombo',
 	combo: 'addCombo',
 	button: 'addButton',
 	buttons: 'addButtons',

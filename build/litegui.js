@@ -146,6 +146,21 @@ var LiteGUI = {
 		this.undo_steps = [];
 	},
 
+	// Clipboard ******************
+
+	toClipboard: function( object )
+	{
+		if(object == null) return;
+		localStorage.setItem("lite_clipboard", JSON.stringify( object ) );
+	},
+
+	getClipboard: function()
+	{
+		var data = localStorage.getItem("lite_clipboard");
+		if(!data) return null;
+		return JSON.parse(data);
+	},
+
 	// CSS ************************
 	addCSS: function(code)
 	{
@@ -234,7 +249,7 @@ var LiteGUI = {
 		options.height = 140;
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
-
+		$(".litepanel.alert").remove(); //kill other panels
 		return this.showMessage(content,options);
 	},
 
@@ -333,10 +348,11 @@ var LiteGUI = {
 
 
 
-/****************** AREA **************/
-/* Areas can be split several times horizontally or vertically to fit different colums or rows */
+//enclose in a scope
 (function(){
 
+	/****************** AREA **************/
+	/* Areas can be split several times horizontally or vertically to fit different colums or rows */
 	function Area(id, options)
 	{
 		options = options || {};
@@ -735,11 +751,13 @@ var LiteGUI = {
 			code += "</div>";
 		}
 
-		code += "<div class='content'>"+this.content+"</div><div class='panel-footer'></div>";
+		code += "<div class='content'>"+this.content+"</div>";
+		code += "<div class='panel-footer'></div>";
 		panel.innerHTML = code;
 
 		this.root = panel;
 		this.content = $(panel).find(".content")[0];
+		this.footer = $(panel).find(".panel-footer")[0];
 
 		if(options.buttons)
 		{
@@ -750,10 +768,10 @@ var LiteGUI = {
 		//if(options.scroll == false)	this.content.style.overflow = "hidden";
 		if(options.scroll == true)	this.content.style.overflow = "auto";
 
-		$(panel).find(".close-button").bind("click",function() { panel.data.close(); });
-		$(panel).find(".minimize-button").bind("click",function() { panel.data.minimize(); });
-		$(panel).find(".maximize-button").bind("click",function() { panel.data.maximize(); });
-		$(panel).find(".hide-button").bind("click",function() { panel.data.hide(); });
+		$(panel).find(".close-button").bind("click", this.close.bind(this) );
+		$(panel).find(".minimize-button").bind("click", this.minimize.bind(this) );
+		$(panel).find(".maximize-button").bind("click", this.maximize.bind(this) );
+		$(panel).find(".hide-button").bind("click", this.hide.bind(this) );
 
 		this.makeDialog(options);
 	}
@@ -773,7 +791,7 @@ var LiteGUI = {
 			panel.style.height = this.height + "px";
 
 		if(this.height)
-			$(panel).find(".content").css({height: this.height - 20});
+			$(panel).find(".content").css({height: this.height - 24});
 
 		panel.style.boxShadow = "0 0 3px black";
 
@@ -783,10 +801,59 @@ var LiteGUI = {
 			$(panel).draggable({handle:".panel-header"});
 		}
 
+		if(options.resizable)
+			this.setResizable();
+
 		//$(panel).bind("click",function(){});
 
-		$(LiteGUI.root_container).append(this.root);
+		var parent = options.parent || LiteGUI.root_container;
+		$(parent).append(this.root);
+
 		this.center();
+	}
+
+	Panel.prototype.setResizable = function()
+	{
+		if(this.resizable) return;
+
+		var root = this.root;
+		this.resizable = true;
+		var footer = this.footer;
+		footer.style.minHeight = "4px";
+
+		$(footer).addClass("resizable");
+
+		footer.addEventListener("mousedown", inner_mouse);
+
+		var mouse = [0,0];
+		var that = this;
+
+		function inner_mouse(e)
+		{
+			if(e.type == "mousedown")
+			{
+				document.body.addEventListener("mousemove", inner_mouse);
+				document.body.addEventListener("mouseup", inner_mouse);
+				mouse[0] = e.pageX;
+				mouse[1] = e.pageY;
+			}
+			else if(e.type == "mousemove")
+			{
+				var h = $(root).height();
+				var newh = h - (mouse[1] - e.pageY);
+				$(root).height(newh + "px");
+				mouse[0] = e.pageX;
+				mouse[1] = e.pageY;
+				that.content.style.height = "calc( 100% - 24px )";
+			}
+			else if(e.type == "mouseup")
+			{
+				document.body.removeEventListener("mousemove", inner_mouse);
+				document.body.removeEventListener("mouseup", inner_mouse);
+			}
+			e.preventDefault();
+			return false;
+		}
 	}
 
 	Panel.prototype.dockTo = function(parent, dock_type)
@@ -873,22 +940,39 @@ var LiteGUI = {
 		return button;
 	}
 
-	Panel.prototype.close = function(v) {
-		$(this).trigger("closed");
+	/*
+	Panel.prototype.open = function(v) {
+		$(this).trigger("opened");
 
 		if(!v)
 		{
-			trace("Panel closed");
+			//trace("Panel closed");
 			$(this.root).remove();
 			return
 		}
 
 		$(this.root).hide('fade',null,function() {
-			trace("Panel closed");
+			//trace("Panel closed");
 			$(this).remove();
 		});
 	}
+	*/	
 
+	Panel.prototype.close = function(v) {
+		$(this).trigger("closed");
+
+		if(!v)
+		{
+			//trace("Panel closed");
+			$(this.root).remove();
+			return;
+		}
+
+		$(this.root).hide('fade',null,function() {
+			//trace("Panel closed");
+			$(this.root).remove();
+		});
+	}
 
 	Panel.minimized = [];
 
@@ -918,9 +1002,13 @@ var LiteGUI = {
 
 	Panel.arrangeMinimized = function()
 	{
-		var pos = $(LiteGUI.root_container).height() - 20;
 		for(var i in LiteGUI.Panel.minimized)
-			$(LiteGUI.Panel.minimized[i].root).animate({ left: LiteGUI.Panel.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+		{
+			var panel = LiteGUI.Panel.minimized[i];
+			var parent = panel.root.parentNode;
+			var pos = $(parent).height() - 20;
+			$(panel.root).animate({ left: LiteGUI.Panel.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+		}
 	}
 
 	Panel.prototype.maximize = function() {
@@ -1565,17 +1653,24 @@ var LiteGUI = {
 		data.DOM = root;
 		options = options || this.options;
 
-		var content_element = document.createElement("div");
-		content_element.className = "ltreeitemtitle";
+		var title_element = document.createElement("div");
+		title_element.className = "ltreeitemtitle";
 		var content = data.content || data.id || "";
-		content_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
+		title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
 		//root.dataset["item"] = data.id || data.content || "";
 
-		root.appendChild(content_element);
-		root.content_element = content_element;
+		root.appendChild(title_element);
+		root.title_element = title_element;
 
-		$(root).find(".ltreeitemtitle").click(onNodeSelected);
-		$(root).find(".ltreeitemtitle .incontent").dblclick(onNodeDblClicked);
+		var incontent = $(root).find(".ltreeitemtitle .incontent");
+		incontent.click(onNodeSelected);
+		incontent.dblclick(onNodeDblClicked);
+		//incontent[0].addEventListener("mousedown", onMouseDown ); //for right click
+		incontent[0].addEventListener("contextmenu", function(e) { 
+			if(that.onContextMenu) onContextMenu(e);
+			e.preventDefault(); 
+			return false;
+		});
 
 		var list = document.createElement("ul");
 		list.className = "ltreeitemchildren";
@@ -1584,32 +1679,27 @@ var LiteGUI = {
 		root.list = list;
 		if(data.children)
 		{
-			var create_box = true;
 			for(var i in data.children)
 			{
-				if(!root.listbox)
-				{
-					var pre = content_element.querySelector(".precontent");
-					var box = createLitebox(true, Tree.onClickBox.bind(root) );
-					pre.appendChild(box);
-					root.listbox = box;
-				}
 				var item = data.children[i];
 				var element = this.createTreeItem(item, options);
 				list.appendChild(element);
 			}
 		}
 		root.appendChild(list);
+		this.updateListBox(root);
 
 		var that = this;
 		function onNodeSelected(e)
 		{
-			if(this._editing) return;
+			var title = this.parentNode;
+			var item = title.parentNode;
+			if(title._editing) return;
 
 			$(that.root).removeClass("selected");
 			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
-			$(this).addClass("selected");
-			var item = this.parentNode;
+			$(title).addClass("selected");
+			
 			$(that).trigger("item_selected", [item.data, item] );
 			if(item.callback) item.callback.call(that,item);
 		}
@@ -1645,8 +1735,16 @@ var LiteGUI = {
 			
 		}
 
+		function onContextMenu(e)
+		{
+			if(e.button != 2) return;
+
+			if(that.onContextMenu)
+				return that.onContextMenu(e);
+		}
+
 		//dragging tree
-		var draggable_element = content_element;
+		var draggable_element = title_element;
 		draggable_element.draggable = true;
 
 		//starts dragging this element
@@ -1659,12 +1757,21 @@ var LiteGUI = {
 		//something being dragged entered
 		draggable_element.addEventListener("dragenter", function (ev)
 		{
-			//trace("ENTER!");
+			//console.log(data.id);
+			$(title_element).addClass("dragover");
 			//if(ev.srcElement == this) return;
 			ev.preventDefault();
 		});
 
-		//allows to drag stuff on top?
+		draggable_element.addEventListener("dragleave", function (ev)
+		{
+			//console.log(data.id);
+			$(title_element).removeClass("dragover");
+			//if(ev.srcElement == this) return;
+			ev.preventDefault();
+		});
+
+		//test if allows to drag stuff on top?
 		draggable_element.addEventListener("dragover", on_drag_over );
 		function on_drag_over(ev)
 		{
@@ -1673,6 +1780,7 @@ var LiteGUI = {
 
 		draggable_element.addEventListener("drop", function (ev)
 		{
+			$(title_element).removeClass("dragover");
 			ev.preventDefault();
 			var node_id = ev.dataTransfer.getData("node-id");
 
@@ -1751,7 +1859,7 @@ var LiteGUI = {
 
 		$(this.root).removeClass("selected");
 		$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
-		$(node.content_element).addClass("selected");
+		$(node.title_element).addClass("selected");
 		return node;
 	}
 
@@ -1777,14 +1885,6 @@ var LiteGUI = {
 		if( !$(parent).hasClass("ltreeitem") )
 			throw("this node is not a tree item");
 
-		if(!parent.listbox)
-		{
-			var pre = parent.querySelector(".precontent");
-			var box = createLitebox(true, Tree.onClickBox.bind(parent) );
-			pre.appendChild(box);
-			parent.listbox = box;
-		}
-
 		var element = this.createTreeItem(data, options);
 		if(position == undefined)
 			parent.list.appendChild( element );
@@ -1794,24 +1894,109 @@ var LiteGUI = {
 			parent.list.insertBefore(element, parent.list.childNodes[position]);
 		}
 
+		this.updateListBox(parent);
+
 		return element;
+	}
+
+	Tree.prototype.updateListBox = function(node)
+	{
+		var child_elements = this.getChildren(node);
+		if(!child_elements) return; //null
+
+		if(child_elements.length && !node.listbox)
+		{
+			var pre = node.title_element.querySelector(".precontent");
+			var box = createLitebox(true, Tree.onClickBox.bind(node) );
+			pre.appendChild(box);
+			node.listbox = box;
+			return;
+		}
+
+		if(!child_elements.length && node.listbox)
+		{
+			node.listbox.parentNode.removeChild(node.listbox);
+			node.listbox = null;
+		}
+	}
+
+	Tree.prototype.getChildren = function(id_or_node)
+	{
+		var node = id_or_node;
+		if(typeof(id_or_node) == "string")
+			this.getItem(id_or_node);
+
+		if(!node)
+			return null;
+		if(!node.list) //this is not a itemTree
+			return null;
+
+		var childs = node.list.childNodes;
+		var child_elements = [];
+		for(var i in childs)
+		{
+			var c = childs[i];
+			if(c.localName == "li" && $(c).hasClass("ltreeitem"))
+				child_elements.push(c);
+		}
+
+		return child_elements;
+	}
+
+	Tree.prototype.getParent = function(id_or_node)
+	{
+		var node = id_or_node;
+		if(typeof(id_or_node) == "string")
+			this.getItem(id_or_node);
+		if(!node)
+			return null;
+
+		var aux = node.parentNode;
+		while(aux)
+		{
+			if( $(aux).hasClass("ltreeitem") )
+				return aux;
+			aux = aux.parentNode;
+		}
+		return null;
 	}
 
 	Tree.prototype.moveItem = function(id, id_parent)
 	{
 		var parent = this.getItem(id_parent);
 		var node = this.getItem(id);
+		var old_parent = this.getParent(node);
+
 		if(!parent || !node)
 			return false;
+
+		if(parent == old_parent)
+			return;
+
 		parent.list.appendChild( node );
+		this.updateListBox(parent);
+
+		if(old_parent)
+			this.updateListBox(old_parent);
+
 		return true;
 	}
 
-	Tree.prototype.removeItem = function(id)
+	Tree.prototype.removeItem = function(id_or_node)
 	{
-		var node = this.getItem(id);
-		if(node)
-			$(node).remove();
+		var node = id_or_node;
+		if(typeof(id_or_node) == "string")
+			node = this.getItem(id_or_node);
+		if(!node)
+			return null;
+
+		var parent = this.getParent(node);
+		if(!parent || !parent.list) return;
+
+		parent.list.removeChild( node );
+
+		if(parent)
+			this.updateListBox(parent);
 	}
 
 	Tree.prototype.updateItem = function(id, data)
@@ -1823,7 +2008,7 @@ var LiteGUI = {
 		if(data.id)
 			node.id = data.id;
 		if(data.content)
-			node.content_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + data.content + "</span><span class='postcontent'></span>";
+			node.title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + data.content + "</span><span class='postcontent'></span>";
 	}
 
 	Tree.prototype.clear = function(keep_root)
@@ -1833,7 +2018,7 @@ var LiteGUI = {
 
 	LiteGUI.Tree = Tree;
 
-
+	//the tiny box to expand the children of a node
 	function createLitebox(state, on_change)
 	{
 		var element = document.createElement("span");
@@ -3405,7 +3590,10 @@ Inspector.prototype.addButton = function(name, value, options)
 		$(element).trigger("wclick",value);
 	});
 	this.append(element);
-	element.wclick = function(callback) { $(this).wclick(callback); }
+	element.wclick = function(callback) { 
+		if(!options.disabled)
+			$(this).wclick(callback); 
+	}
 	return element;
 }
 

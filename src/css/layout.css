@@ -173,6 +173,10 @@ div {
 	text-align: right;
 }
 
+.litepanel .panel-footer.resizable {
+	cursor: s-resize;
+}
+
 .litepanel .panel-footer button {
 	font-size: inherit;
 	padding: 0.1em 0.6em;

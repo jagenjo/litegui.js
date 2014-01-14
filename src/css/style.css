@@ -45,9 +45,9 @@ a:hover {
 	min-width: 50px;
 	padding-left: 10px;
 	padding-right: 10px;
+	user-select: none;
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
-	user-select: none;
 	cursor: pointer;
 }
 
@@ -193,8 +193,12 @@ button.close-button {
 	border-radius: 3px 3px 0 0;
 	color: #AAA;
 	height: 100%;
-	cursor: pointer;
 	text-align: center;
+
+	user-select: none;
+	-moz-user-select: none;  
+	-webkit-user-select: none;  
+	cursor: pointer;
 }
 
 .litetabs li.wtab.selected {
@@ -238,8 +242,8 @@ button.close-button {
 li.ltreeitem {
 	list-style-type: none;
 	cursor: pointer;
-	background: url("../imgs/tree_lines_16x16.png") no-repeat scroll 10px -8px transparent;
-	padding-left: 30px;
+	background: url("../imgs/tree_lines_16x16.png") no-repeat scroll 5px -8px transparent;
+	padding-left: 24px;
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
 	user-select: none;
@@ -262,11 +266,22 @@ li.ltreeitem div.ltreeitemtitle.selected .incontent {
 	color: #EC6;
 }
 
+li.ltreeitem div.ltreeitemtitle.dragover .incontent {
+	background-color: #EC6;
+	color: black;
+	padding: 3px;
+	border-radius: 2px;
+	font-size: 2em;
+}
+
+
 ul.ltreeitemchildren {
 	margin: 0;
 	padding: 0;
 	margin-left: -2px;
 	list-style-type: none;
+	/*background: url("../imgs/tree_lines_16x16.png") repeat-y transparent;*/
+	/*outline: 1px #aaa dotted;*/
 }
 
 li.ltreeitem .ltreeitemtitle .precontent {
@@ -279,10 +294,11 @@ li.ltreeitem .ltreeitemtitle .postcontent {
 
 .listbox {
 	font-size: 0.8em;
-	width: 1em;
-	height: 1em;
+	width: 0.8em;
+	height: 0.8em;
+	line-height: 0.9em;
 	display: inline-block;
-	outline: 1px solid #444;
+	outline: 1px solid #666;
 	text-align: center;
 }
 

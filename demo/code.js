@@ -160,7 +160,7 @@ function createWidgetsDialog()
 {
 	//test floating panel
 	var name = "Dialog_" + ((Math.random() * 100)>>0);
-	var dialog = new LiteGUI.Dialog(name, {title:name, close: true, minimize: true, width: 300, height: 200, scroll: true, draggable: true});
+	var dialog = new LiteGUI.Dialog(name, {title:name, close: true, minimize: true, width: 300, height: 200, scroll: true, resizable:true, draggable: true});
 	dialog.show('fade');
 
 	//test menu in panel

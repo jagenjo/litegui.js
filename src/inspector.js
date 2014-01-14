@@ -1055,7 +1055,10 @@ Inspector.prototype.addButton = function(name, value, options)
 		$(element).trigger("wclick",value);
 	});
 	this.append(element);
-	element.wclick = function(callback) { $(this).wclick(callback); }
+	element.wclick = function(callback) { 
+		if(!options.disabled)
+			$(this).wclick(callback); 
+	}
 	return element;
 }
 

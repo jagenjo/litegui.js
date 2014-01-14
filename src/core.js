@@ -145,6 +145,21 @@ var LiteGUI = {
 		this.undo_steps = [];
 	},
 
+	// Clipboard ******************
+
+	toClipboard: function( object )
+	{
+		if(object == null) return;
+		localStorage.setItem("lite_clipboard", JSON.stringify( object ) );
+	},
+
+	getClipboard: function()
+	{
+		var data = localStorage.getItem("lite_clipboard");
+		if(!data) return null;
+		return JSON.parse(data);
+	},
+
 	// CSS ************************
 	addCSS: function(code)
 	{
@@ -233,7 +248,7 @@ var LiteGUI = {
 		options.height = 140;
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
-
+		$(".litepanel.alert").remove(); //kill other panels
 		return this.showMessage(content,options);
 	},
 

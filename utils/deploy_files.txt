@@ -1,4 +1,8 @@
 ../src/core.js
-../src/app.js
 ../src/widgets.js
+../src/menubar.js
+../src/tabs.js
+../src/dragger.js
+../src/tree.js
+../src/panel.js
 ../src/inspector.js

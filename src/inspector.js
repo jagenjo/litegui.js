@@ -61,14 +61,18 @@ Inspector.prototype.clear = function()
 	this.addSection();
 }
 
-Inspector.prototype.append = function(widget)
+Inspector.prototype.append = function(widget, options)
 {
 	var root = this.root;
 	if(this.current_group_content)
 		root = this.current_group_content;
 	else if(this.current_section_content)
 		root = this.current_section_content;
-	root.appendChild(widget);
+
+	if(options && options.replace)
+		options.replace.parentNode.replaceChild(widget, options.replace);
+	else
+		root.appendChild(widget);
 }
 
 Inspector.prototype.setup = function(info)
@@ -369,7 +373,7 @@ Inspector.prototype.beginGroup = function(name, options)
 		$(element).find(".wgrouptoggle").html(collapsed ? "+" : "-");
 	});
 
-	this.append(element);
+	this.append(element, options);
 
 	this.current_group = element;
 	this.current_group_content = content;
@@ -399,7 +403,7 @@ Inspector.prototype.addTitle = function(title,options)
 
 	element.setValue = function(v) { $(this).find(".text").html(v); };
 
-	this.append(element);
+	this.append(element, options);
 	return element;
 }
 
@@ -429,7 +433,7 @@ Inspector.prototype.addString = function(name,value, options)
 
 	element.setValue = function(v) { $(this).find("input").val(v).change(); };
 	element.wchange = function(callback) { $(this).wchange(callback); }
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -452,7 +456,7 @@ Inspector.prototype.addStringButton = function(name,value, options)
 	});
 
 	this.tab_index += 1;
-	this.append(element);
+	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
 	return element;
@@ -466,7 +470,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 	this.values[name] = value;
 
 	var element = this.createWidget(name,"", options);
-	this.append(element);
+	this.append(element,options);
 
 	options.extraclass = "full";
 	options.tab_index = this.tab_index;
@@ -558,11 +562,13 @@ Inspector.prototype.addVector2 = function(name,value, options)
 		if(that.onchange) that.onchange(name,r,element);
 	});
 
-	this.append(element);
+	this.append(element,options);
+
 	element.setValue = function(v) { 
 		dragger1.setValue(v[0]);
 		dragger2.setValue(v[1]);
 	}
+
 	return element;
 }
 
@@ -630,7 +636,8 @@ Inspector.prototype.addVector3 = function(name,value, options)
 		if(that.onchange) that.onchange(name,r,element);
 	});
 
-	this.append(element);
+	this.append(element,options);
+
 	element.setValue = function(v) { 
 		dragger1.setValue(v[0]);
 		dragger2.setValue(v[1]);
@@ -656,7 +663,7 @@ Inspector.prototype.addTextarea = function(name,value, options)
 
 	if(options.height)
 		$(element).find("textarea").css({height: options.height });
-	this.append(element);
+	this.append(element,options);
 
 	element.setValue = function(v) { $(this).find("textarea").val(v).change(); };
 	return element;
@@ -686,7 +693,7 @@ Inspector.prototype.addInfo = function(name,value, options)
 	}
 
 
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -748,7 +755,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 		slider_thumb.css({left: (vnormalized * 90).toFixed(2) + "%" });
 	}
 
-	this.append(element);
+	this.append(element,options);
 	element.setValue = function(v) { text_input.val(v); };
 	skip_change = true;
 	slider_input.val(value).trigger("input");
@@ -789,7 +796,7 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 			$(this).find(".checkbox").click(); 
 		};
 
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -850,7 +857,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,value, options);
 	});
 
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -878,7 +885,7 @@ Inspector.prototype.addComboButtons = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,buttonname, options);
 	});
 
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -937,7 +944,7 @@ Inspector.prototype.addTags = function(name, value, options)
 		if(that.onchange) that.onchange(name, element.tags, element);
 	}
 
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -1036,7 +1043,7 @@ Inspector.prototype.addList = function(name, values, options)
 	}
 
 	element.updateItems(values);
-	this.append(element);
+	this.append(element,options);
 
 	if(options.height) $(element).scroll(0);
 	return element;
@@ -1054,7 +1061,8 @@ Inspector.prototype.addButton = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
 		$(element).trigger("wclick",value);
 	});
-	this.append(element);
+	this.append(element,options);
+
 	element.wclick = function(callback) { 
 		if(!options.disabled)
 			$(this).wclick(callback); 
@@ -1083,7 +1091,7 @@ Inspector.prototype.addButtons = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
 		$(element).trigger("wclick",this.innerHTML);
 	});
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -1100,7 +1108,7 @@ Inspector.prototype.addColor = function(name,value,options)
 	if(options.show_rgb)
 		code += "<span class='rgb-color'>"+Inspector.parseColor(value)+"</span>";
 	var element = this.createWidget(name,code, options);
-	this.append(element); //add now or jscolor dont work
+	this.append(element,options); //add now or jscolor dont work
 
 	//create jsColor 
 	var input_element = $(element).find("input.color")[0];
@@ -1167,7 +1175,7 @@ Inspector.prototype.addFile = function(name, value, options)
 		$(element).trigger("wchange",[e.target.files]);
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -1189,7 +1197,7 @@ Inspector.prototype.addLine = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
 
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 
@@ -1221,7 +1229,7 @@ Inspector.prototype.addTree = function(name, value, options)
 		}
 	}
 
-	this.append(element);
+	this.append(element,options);
 	return element;
 }
 

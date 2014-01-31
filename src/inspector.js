@@ -706,7 +706,42 @@ Inspector.prototype.addSlider = function(name, value, options)
 
 	var that = this;
 	this.values[name] = value;
+
+	var element = this.createWidget(name,"<span class='inputfield'>\
+				<input tabIndex='"+this.tab_index+"' type='text' class='slider-text fixed nano' value='"+value+"' /><span class='slider-container'></span></span>", options);
+
+	var slider_container = element.querySelector(".slider-container");
+
+	var slider = new LiteGUI.Slider(value,options);
+	slider_container.appendChild(slider.root);
+
+	var skip_change = false; //used to avoid recursive loops
+	var text_input = element.querySelector(".slider-text");
+	$(text_input).bind('change', function() {
+		if(skip_change) return;
+
+		var v = parseFloat( $(this).val() );
+		/*
+		if(v > options.max)
+		{
+			skip_change = true;
+			slider.setValue( options.max );
+			skip_change = false;
+		}
+		else
+		*/
+		slider.setValue( v );
+
+		Inspector.onWidgetChange.call(that,element,name,v, options);
+	});
+
+	$(slider).bind("change", function(e,v) {
+		text_input.value = v;
+		Inspector.onWidgetChange.call(that,element,name,v, options);
+	});
+
 	
+	/*
 	//var element = this.createWidget(name,"<span class='inputfield'><input tabIndex='"+this.tab_index+"' type='text' class='fixed nano' value='"+value+"' /></span><div class='wslider'></div>", options);
 	var element = this.createWidget(name,"<span class='inputfield'>\
 				<input tabIndex='"+this.tab_index+"' type='text' class='slider-text fixed nano' value='"+value+"' /></span>\
@@ -755,11 +790,13 @@ Inspector.prototype.addSlider = function(name, value, options)
 		slider_thumb.css({left: (vnormalized * 90).toFixed(2) + "%" });
 	}
 
+	*/
+
 	this.append(element,options);
-	element.setValue = function(v) { text_input.val(v); };
-	skip_change = true;
-	slider_input.val(value).trigger("input");
-	skip_change = false;
+	element.setValue = function(v) { slider.setValue(v); };
+	//skip_change = true;
+	//slider_input.val(value).trigger("input");
+	//skip_change = false;
 	return element;
 }
 

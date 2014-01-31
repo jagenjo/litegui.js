@@ -166,6 +166,16 @@ input[type="range"]::-moz-slider-thumb {
 }
 */
 
+
+.slider {
+    /*calc( width: 100% - 30px );*/
+}
+
+.slider-container {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
 .colorpicker-window {
 	position: absolute;
 	top: 50px;

@@ -532,7 +532,79 @@
 	LiteGUI.List = List;
 
 
+	function Slider(value, options)
+	{
+		options = options || {};
+		var canvas = document.createElement("canvas");
+		canvas.className = "slider " + (options.extraclass ? options.extraclass : "");
+		canvas.width = 100;
+		canvas.height = 10;
+		canvas.style.position = "relative";
+		this.root = canvas;
+		var that = this;
+		this.value = value;
 
+		this.setValue = function(value)
+		{
+			var ctx = canvas.getContext("2d");
+			var min = options.min || 0.0;
+			var max = options.max || 1.0;
+			if(value < min) value = min;
+			else if(value > max) value = max;
+			var range = max - min;
+			var norm = (value - min) / range;
+			ctx.clearRect(0,0,canvas.width,canvas.height);
+			ctx.fillStyle = "#999";
+			ctx.fillRect(0,0, canvas.width * norm, canvas.height);
+			ctx.fillStyle = "#DA2";
+			ctx.fillRect(canvas.width * norm - 1,0,2, canvas.height);
+
+			if(value != this.value)
+			{
+				this.value = value;
+				$(this).trigger("change", value );
+			}
+		}
+
+		function setFromX(x)
+		{
+			var norm = x / canvas.width;
+			var min = options.min || 0.0;
+			var max = options.max || 1.0;
+			var range = max - min;
+			that.setValue( range * norm + min );
+		}
+
+		canvas.addEventListener("mousedown", function(e) {
+			var mouseX, mouseY;
+			if(e.offsetX) { mouseX = e.offsetX; mouseY = e.offsetY; }
+			else if(e.layerX) { mouseX = e.layerX; mouseY = e.layerY; }	
+			setFromX(mouseX);
+			document.addEventListener("mousemove", onMouseMove );
+			document.addEventListener("mouseup", onMouseUp );
+    	});
+
+		function onMouseMove(e)
+		{
+			var rect = canvas.getClientRects()[0];
+			var mouseX = e.x - rect.left;
+			setFromX(mouseX);
+			e.preventDefault();
+			return false;
+		}
+
+		function onMouseUp(e)
+		{
+			document.removeEventListener("mousemove", onMouseMove );
+			document.removeEventListener("mouseup", onMouseUp );
+			e.preventDefault();
+			return false;
+		}
+
+		this.setValue(value);
+	}
+
+	LiteGUI.Slider = Slider;
 
 
 	function LineEditor(value, options)

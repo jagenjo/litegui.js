@@ -190,7 +190,81 @@ var LiteGUI = {
 		}
 	},
 
-	requireScript: function(url, on_complete)
+	request: function(request)
+	{
+		var dataType = request.dataType || "text";
+		if(dataType == "json") //parse it locally
+			dataType = "text";
+		else if(dataType == "xml") //parse it locally
+			dataType = "text";
+		else if (dataType == "binary")
+		{
+			//request.mimeType = "text/plain; charset=x-user-defined";
+			dataType = "arraybuffer";
+			request.mimeType = "application/octet-stream";
+		}	
+
+		//regular case, use AJAX call
+        var xhr = new XMLHttpRequest();
+        xhr.open(request.data ? 'POST' : 'GET', request.url, true);
+        if(dataType)
+            xhr.responseType = dataType;
+        if (request.mimeType)
+            xhr.overrideMimeType( request.mimeType );
+        xhr.onload = function(load)
+		{
+			var response = this.response;
+			if(this.status != 200)
+			{
+				var err = "Error " + this.status;
+				if(request.error)
+					request.error(err);
+				LEvent.trigger(xhr,"fail", this.status);
+				return;
+			}
+
+			if(request.dataType == "json") //chrome doesnt support json format
+			{
+				try
+				{
+					response = JSON.parse(response);
+				}
+				catch (err)
+				{
+					if(request.error)
+						request.error(err);
+					else
+						throw err;
+				}
+			}
+			else if(request.dataType == "xml")
+			{
+				try
+				{
+					var xmlparser = new DOMParser();
+					response = xmlparser.parseFromString(response,"text/xml");
+				}
+				catch (err)
+				{
+					if(request.error)
+						request.error(err);
+					else
+						throw err;
+				}
+			}
+			if(request.success)
+				request.success.call(this, response);
+		};
+        xhr.onerror = function(err) {
+			if(request.error)
+				request.error(err);
+		}
+        xhr.send(request.data);
+		return xhr;
+	},	
+
+	//old version, it loads one by one, so it is slower
+	requireScript2: function(url, on_complete, on_progress )
 	{
 		if(typeof(url)=="string")
 			url = [url];
@@ -203,6 +277,9 @@ var LiteGUI = {
 			script.onload = function(e) { 
 				if(url.length)
 				{
+					if(on_progress)
+						on_progress(url[0], url.length);
+
 					addScript();
 					return;
 				}
@@ -214,6 +291,32 @@ var LiteGUI = {
 		}
 
 		addScript();
+	},
+
+	requireScript: function(url, on_complete, on_progress )
+	{
+		if(typeof(url)=="string")
+			url = [url];
+
+		var total = url.length;
+		for(var i in url)
+		{
+			var script = document.createElement('script');
+			script.type = 'text/javascript';
+			script.src = url[i];
+			script.async = false;
+			script.onload = function(e) { 
+				total--;
+				if(total)
+				{
+					if(on_progress)
+						on_progress(this.src, total);
+				}
+				else if(on_complete)
+					on_complete();
+			};
+			document.getElementsByTagName('head')[0].appendChild(script);
+		}
 	},
 
 	//* DIALOGS *******************
@@ -1959,7 +2062,7 @@ var LiteGUI = {
 				var input = $(this).find("input")[0];
 				$(input).blur(function(e) { 
 					var new_name = e.target.value;
-					that2.innerHTML = new_name;
+					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
 					$(that).trigger("item_renamed", [that2._old_name, new_name, item]);
@@ -2249,7 +2352,11 @@ var LiteGUI = {
 		if(data.id)
 			node.id = data.id;
 		if(data.content)
-			node.title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + data.content + "</span><span class='postcontent'></span>";
+		{
+			//node.title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" +  + "</span><span class='postcontent'></span>";
+			var incontent = node.title_element.querySelector(".incontent");
+			incontent.innerHTML = data.content;
+		}
 	}
 
 	Tree.prototype.clear = function(keep_root)

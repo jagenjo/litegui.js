@@ -105,7 +105,7 @@
 				var input = $(this).find("input")[0];
 				$(input).blur(function(e) { 
 					var new_name = e.target.value;
-					that2.innerHTML = new_name;
+					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
 					$(that).trigger("item_renamed", [that2._old_name, new_name, item]);
@@ -395,7 +395,11 @@
 		if(data.id)
 			node.id = data.id;
 		if(data.content)
-			node.title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + data.content + "</span><span class='postcontent'></span>";
+		{
+			//node.title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" +  + "</span><span class='postcontent'></span>";
+			var incontent = node.title_element.querySelector(".incontent");
+			incontent.innerHTML = data.content;
+		}
 	}
 
 	Tree.prototype.clear = function(keep_root)

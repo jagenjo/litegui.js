@@ -432,6 +432,7 @@ Inspector.prototype.addString = function(name,value, options)
 	this.tab_index += 1;
 
 	element.setValue = function(v) { $(this).find("input").val(v).change(); };
+	element.getValue = function() { return $(this).find("input").val(); };
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	this.append(element,options);
 	return element;
@@ -1065,7 +1066,7 @@ Inspector.prototype.addList = function(name, values, options)
 				code += "<li className='item-"+i+" "+(typeof(values[i]) == "object" && values[i].selected ? "selected":"") + "' data-name='"+item_name+"' data-pos='"+i+"'>" + icon + item_name + "</li>";
 			}
 
-		$(this).find("ul").html(code);
+		this.querySelector("ul").innerHTML = code;
 		$(this).find(".wcontent li").click( inner_item_click );
 	}
 
@@ -1081,6 +1082,15 @@ Inspector.prototype.addList = function(name, values, options)
 
 	element.updateItems(values);
 	this.append(element,options);
+
+	element.getSelected = function()
+	{
+		var r = [];
+		var selected = this.querySelectorAll("ul li.selected");
+		for(var i = 0; i < selected.length; ++i)
+			r.push( selected[i].dataset["name"] );
+		return r;
+	}
 
 	if(options.height) $(element).scroll(0);
 	return element;

@@ -236,20 +236,26 @@
 	}
 	*/	
 
-	Panel.prototype.close = function(v) {
+	Panel.prototype.close = function() {
+		$(this.root).remove();
 		$(this).trigger("closed");
 
-		if(!v)
+		/*
+		var that = this;
+		if(fade_out == true)
+		{
+			$(this.root).hide('fade',null,function() {
+				//trace("Panel closed");
+				$(that.root).remove();
+			});
+		}
+		else
 		{
 			//trace("Panel closed");
 			$(this.root).remove();
 			return;
 		}
-
-		$(this.root).hide('fade',null,function() {
-			//trace("Panel closed");
-			$(this.root).remove();
-		});
+		*/
 	}
 
 	Panel.minimized = [];

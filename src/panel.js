@@ -207,9 +207,9 @@
 
 		$(this.root).find(".panel-footer").append(button);
 
-		$(button).bind("click", function() { 
+		$(button).bind("click", function(e) { 
 			if(options.callback)
-				options.callback();
+				options.callback(this);
 
 			if(options.close)
 				that.close();

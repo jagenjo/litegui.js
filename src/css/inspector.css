@@ -122,6 +122,10 @@
 	margin-bottom: 6px;
 }
 
+.inspector .wsection.selected {
+	outline: 1px solid rgba(255,255,255,0.5);
+}
+
 .inspector .wsection.minimized {
 	margin-bottom: 0;
 	padding-bottom: 0;

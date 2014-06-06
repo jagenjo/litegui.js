@@ -118,7 +118,7 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 		else if(instance["@" + i])
 			attrs_info[i] = instance["@" + i];
 		else if (typeof(v) == "number")
-			attrs_info[i] = { type: "number" };
+			attrs_info[i] = { type: "number", step: 0.1 };
 		else if (typeof(v) == "string")
 			attrs_info[i] = { type: "string" };
 		else if (typeof(v) == "boolean")
@@ -127,9 +127,9 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 		{
 			switch(v.length)
 			{
-				case 2: attrs_info[i] = { type: "vec2" }; break;
-				case 3: attrs_info[i] = { type: "vec3" }; break;
-				case 4: attrs_info[i] = { type: "vec4" }; break;
+				case 2: attrs_info[i] = { type: "vec2", step: 0.1 }; break;
+				case 3: attrs_info[i] = { type: "vec3", step: 0.1 }; break;
+				case 4: attrs_info[i] = { type: "vec4", step: 0.1 }; break;
 				default: continue;
 			}
 		}
@@ -170,6 +170,20 @@ Inspector.prototype.showAttributes = function(instance, attrs_info )
 		var type = options.type || options.widget || "string";
 		this.add( type, i, instance[i], options );
 	}
+
+	if(instance.constructor.widgets)
+		for(var i in instance.constructor.widgets)
+		{
+			var w = instance.constructor.widgets[i];
+			this.add( w.widget, w.name, w.value, w );
+		}
+
+	//used to add extra widgets
+	if(instance.onShowAttributes)
+		instance.onShowAttributes(this);
+
+	if(instance.constructor.onShowAttributes)
+		instance.constructor.onShowAttributes(instance, this);
 }
 
 Inspector.assignValue = function(value)
@@ -327,6 +341,8 @@ Inspector.prototype.addSection = function(name, options)
 	var element = document.createElement("DIV");
 	element.className = "wsection";
 	if(!name) element.className += " notitle";
+	if(options.className)
+		element.className += " " + options.className;
 	var code = "";
 	if(name) code += "<div class='wsectiontitle'>"+(options.no_minimize ? "" : "<span class='switch-section-button'></span>")+name+"</div>";
 	code += "<div class='wsectioncontent'></div>";
@@ -1092,6 +1108,19 @@ Inspector.prototype.addList = function(name, values, options)
 		return r;
 	}
 
+	element.selectAll = function()
+	{
+		var items = this.querySelectorAll("ul li");
+		for(var i = 0; i < items.length; ++i)
+		{
+			var item = items[i];
+			if($(item).hasClass("selected"))
+				continue;
+			$(item).click();
+		}
+		return r;
+	}
+
 	if(options.height) $(element).scroll(0);
 	return element;
 }
@@ -1204,6 +1233,11 @@ Inspector.prototype.addColor = function(name,value,options)
 		if (myColor.onImmediateChange)
 			myColor.onImmediateChange();
 	});
+
+	element.setValue = function(value) { 
+		myColor.fromRGB(value[0],value[1],value[2]);
+		$(dragger.input).change(); 
+	};
 
 	return element;
 }

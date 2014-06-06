@@ -18,6 +18,9 @@ var LiteGUI = {
 		if(options.width && options.height)
 			this.setWindowSize(options.width,options.height);
 
+		//block back button
+		//window.onbeforeunload = function() { return "You work will be lost."; };
+
 		this.root_container = $("#work-area")[0];
 
 		this.modalbg_div = document.createElement("div");

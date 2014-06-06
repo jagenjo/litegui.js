@@ -19,6 +19,9 @@ var LiteGUI = {
 		if(options.width && options.height)
 			this.setWindowSize(options.width,options.height);
 
+		//block back button
+		//window.onbeforeunload = function() { return "You work will be lost."; };
+
 		this.root_container = $("#work-area")[0];
 
 		this.modalbg_div = document.createElement("div");
@@ -452,6 +455,29 @@ var LiteGUI = {
 
 //enclose in a scope
 (function(){
+
+	function SearchBox(value, options)
+	{
+		options = options || {};
+		var element = document.createElement("div");
+		element.className = "litegui searchbox";
+		var placeholder = (options.placeholder != null ? options.placeholder : "Search");
+		element.innerHTML = "<input value='"+value+"' placeholder='"+ placeholder +"'/>";
+		this.input = element.querySelector("input");
+		this.root = element;
+		var that = this;
+
+		$(this.input).change( function(e) { 
+			var value = e.target.value;
+			if(options.callback)
+				options.callback.call(that,value);
+		});
+	}
+
+	SearchBox.prototype.setValue = function(v) { $(this.input).val(v).change(); };
+	SearchBox.prototype.getValue = function() { return $(this.input).val(); };
+
+	LiteGUI.SearchBox = SearchBox;
 
 	/****************** AREA **************/
 	/* Areas can be split several times horizontally or vertically to fit different colums or rows */
@@ -890,10 +916,18 @@ var LiteGUI = {
 	{
 		var element = document.createElement("span");
 		element.className = "listbox listopen";
-		element.innerHTML = "-";
+		element.innerHTML = "";
 		element.dataset["value"] = state ? "open" : "closed";
 		element.addEventListener("click", onClick );
 		element.on_change_callback = on_change;
+
+		element.setEmpty = function(v)
+		{
+			if(v)
+				$(this).addClass("empty");
+			else
+				$(this).removeClass("empty");
+		}
 
 		element.setValue = function(v)
 		{
@@ -903,14 +937,16 @@ var LiteGUI = {
 			if(!v)
 			{
 				this.dataset["value"] = "closed";
-				this.innerHTML = "+";
-				this.className = "listbox listclosed";
+				//this.innerHTML = "+";
+				$(this).removeClass("listopen");
+				$(this).addClass("listclosed");
 			}
 			else
 			{
 				this.dataset["value"] = "open";
-				this.innerHTML = "-";
-				this.className = "listbox listopen";
+				//this.innerHTML = "-";
+				$(this).addClass("listopen");
+				$(this).removeClass("listclosed");
 			}
 
 			if(on_change)
@@ -1999,6 +2035,9 @@ var LiteGUI = {
 
 		var title_element = document.createElement("div");
 		title_element.className = "ltreeitemtitle";
+		if(data.className)
+			title_element.className += " " + data.className;
+
 		var content = data.content || data.id || "";
 		title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
 		//root.dataset["item"] = data.id || data.content || "";
@@ -2152,6 +2191,28 @@ var LiteGUI = {
 		return root;
 	}
 
+	Tree.prototype.filterByName = function(name)
+	{
+		var all = this.root.querySelectorAll(".ltreeitemtitle .incontent");
+		for(var i = 0; i < all.length; i++)
+		{
+			var element = all[i];
+			if(!element) continue;
+			var str = element.innerHTML;
+			var parent = element.parentNode;
+			if(!name || str.indexOf(name) != -1)
+			{
+				parent.style.display = "block"
+				parent.parentNode.style.paddingLeft = null;
+			}
+			else
+			{
+				parent.style.display = "none"
+				parent.parentNode.style.paddingLeft = 0;
+			}
+		}
+	}	
+
 	Tree.onClickBox = function(e)
 	{
 		var list = this.children_element;
@@ -2245,6 +2306,25 @@ var LiteGUI = {
 
 	Tree.prototype.updateListBox = function(node)
 	{
+
+		if(!node.listbox)
+		{
+			var pre = node.title_element.querySelector(".precontent");
+			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
+			box.setEmpty(true);
+			pre.appendChild(box);
+			node.listbox = box;
+		}
+
+		var child_elements = this.getChildren(node);
+		if(!child_elements) return; //null
+
+		if(child_elements.length)
+			node.listbox.setEmpty(false);
+		else
+			node.listbox.setEmpty(true);
+
+		/*
 		var child_elements = this.getChildren(node);
 		if(!child_elements) return; //null
 
@@ -2262,6 +2342,7 @@ var LiteGUI = {
 			node.listbox.parentNode.removeChild(node.listbox);
 			node.listbox = null;
 		}
+		*/
 	}
 
 	Tree.prototype.getChildren = function(id_or_node)
@@ -2575,9 +2656,9 @@ var LiteGUI = {
 
 		$(this.root).find(".panel-footer").append(button);
 
-		$(button).bind("click", function() { 
+		$(button).bind("click", function(e) { 
 			if(options.callback)
-				options.callback();
+				options.callback(this);
 
 			if(options.close)
 				that.close();
@@ -2867,7 +2948,7 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 		else if(instance["@" + i])
 			attrs_info[i] = instance["@" + i];
 		else if (typeof(v) == "number")
-			attrs_info[i] = { type: "number" };
+			attrs_info[i] = { type: "number", step: 0.1 };
 		else if (typeof(v) == "string")
 			attrs_info[i] = { type: "string" };
 		else if (typeof(v) == "boolean")
@@ -2876,9 +2957,9 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 		{
 			switch(v.length)
 			{
-				case 2: attrs_info[i] = { type: "vec2" }; break;
-				case 3: attrs_info[i] = { type: "vec3" }; break;
-				case 4: attrs_info[i] = { type: "vec4" }; break;
+				case 2: attrs_info[i] = { type: "vec2", step: 0.1 }; break;
+				case 3: attrs_info[i] = { type: "vec3", step: 0.1 }; break;
+				case 4: attrs_info[i] = { type: "vec4", step: 0.1 }; break;
 				default: continue;
 			}
 		}
@@ -2919,6 +3000,20 @@ Inspector.prototype.showAttributes = function(instance, attrs_info )
 		var type = options.type || options.widget || "string";
 		this.add( type, i, instance[i], options );
 	}
+
+	if(instance.constructor.widgets)
+		for(var i in instance.constructor.widgets)
+		{
+			var w = instance.constructor.widgets[i];
+			this.add( w.widget, w.name, w.value, w );
+		}
+
+	//used to add extra widgets
+	if(instance.onShowAttributes)
+		instance.onShowAttributes(this);
+
+	if(instance.constructor.onShowAttributes)
+		instance.constructor.onShowAttributes(instance, this);
 }
 
 Inspector.assignValue = function(value)
@@ -3076,6 +3171,8 @@ Inspector.prototype.addSection = function(name, options)
 	var element = document.createElement("DIV");
 	element.className = "wsection";
 	if(!name) element.className += " notitle";
+	if(options.className)
+		element.className += " " + options.className;
 	var code = "";
 	if(name) code += "<div class='wsectiontitle'>"+(options.no_minimize ? "" : "<span class='switch-section-button'></span>")+name+"</div>";
 	code += "<div class='wsectioncontent'></div>";
@@ -3841,6 +3938,19 @@ Inspector.prototype.addList = function(name, values, options)
 		return r;
 	}
 
+	element.selectAll = function()
+	{
+		var items = this.querySelectorAll("ul li");
+		for(var i = 0; i < items.length; ++i)
+		{
+			var item = items[i];
+			if($(item).hasClass("selected"))
+				continue;
+			$(item).click();
+		}
+		return r;
+	}
+
 	if(options.height) $(element).scroll(0);
 	return element;
 }
@@ -3953,6 +4063,11 @@ Inspector.prototype.addColor = function(name,value,options)
 		if (myColor.onImmediateChange)
 			myColor.onImmediateChange();
 	});
+
+	element.setValue = function(value) { 
+		myColor.fromRGB(value[0],value[1],value[2]);
+		$(dragger.input).change(); 
+	};
 
 	return element;
 }

@@ -1,6 +1,29 @@
 //enclose in a scope
 (function(){
 
+	function SearchBox(value, options)
+	{
+		options = options || {};
+		var element = document.createElement("div");
+		element.className = "litegui searchbox";
+		var placeholder = (options.placeholder != null ? options.placeholder : "Search");
+		element.innerHTML = "<input value='"+value+"' placeholder='"+ placeholder +"'/>";
+		this.input = element.querySelector("input");
+		this.root = element;
+		var that = this;
+
+		$(this.input).change( function(e) { 
+			var value = e.target.value;
+			if(options.callback)
+				options.callback.call(that,value);
+		});
+	}
+
+	SearchBox.prototype.setValue = function(v) { $(this.input).val(v).change(); };
+	SearchBox.prototype.getValue = function() { return $(this.input).val(); };
+
+	LiteGUI.SearchBox = SearchBox;
+
 	/****************** AREA **************/
 	/* Areas can be split several times horizontally or vertically to fit different colums or rows */
 	function Area(id, options)
@@ -438,10 +461,18 @@
 	{
 		var element = document.createElement("span");
 		element.className = "listbox listopen";
-		element.innerHTML = "-";
+		element.innerHTML = "";
 		element.dataset["value"] = state ? "open" : "closed";
 		element.addEventListener("click", onClick );
 		element.on_change_callback = on_change;
+
+		element.setEmpty = function(v)
+		{
+			if(v)
+				$(this).addClass("empty");
+			else
+				$(this).removeClass("empty");
+		}
 
 		element.setValue = function(v)
 		{
@@ -451,14 +482,16 @@
 			if(!v)
 			{
 				this.dataset["value"] = "closed";
-				this.innerHTML = "+";
-				this.className = "listbox listclosed";
+				//this.innerHTML = "+";
+				$(this).removeClass("listopen");
+				$(this).addClass("listclosed");
 			}
 			else
 			{
 				this.dataset["value"] = "open";
-				this.innerHTML = "-";
-				this.className = "listbox listopen";
+				//this.innerHTML = "-";
+				$(this).addClass("listopen");
+				$(this).removeClass("listclosed");
 			}
 
 			if(on_change)

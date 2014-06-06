@@ -1,3 +1,10 @@
+*, *:before, *:after {
+-moz-box-sizing: border-box;
+-webkit-box-sizing: border-box;
+box-sizing: border-box;
+}
+
+
 /* Here goes the css related to look and feel (buttons, lists, titles) */
 body {
 	font-family: 'Arial';
@@ -243,11 +250,17 @@ li.ltreeitem {
 	list-style-type: none;
 	cursor: pointer;
 	background: url("../imgs/tree_lines_16x16.png") no-repeat scroll 5px -8px transparent;
-	padding-left: 24px;
+	padding-left: 20px;
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
 	user-select: none;
 }
+
+/*
+li.ltreeitem:nth-child(even) div.ltreeitemtitle {
+	background-color: black;
+}
+*/
 
 li.ltreeitem.root_item {
 	background: transparent;
@@ -256,7 +269,11 @@ li.ltreeitem.root_item {
 
 li.ltreeitem div.ltreeitemtitle {
 	color: #AAA;
+	min-width: 100px;
+	white-space: nowrap;
 }
+
+
 
 li.ltreeitem div.ltreeitemtitle .incontent:hover {
 	color: white;
@@ -293,24 +310,51 @@ li.ltreeitem .ltreeitemtitle .postcontent {
 }
 
 .listbox {
-	font-size: 0.8em;
-	width: 0.8em;
-	height: 0.8em;
-	line-height: 0.9em;
+	font-size: 1em;
+	width: 0.9em;
+	height: 0.9em;
+	margin-left: -2px;
+	margin-bottom: 2px;
+	line-height: 1em;
 	display: inline-block;
-	outline: 1px solid #666;
+	outline: 1px solid #678;
 	text-align: center;
+}
+
+.listbox.empty {
+	margin-left: 0px;
+	width: 0.4em;
+	height: 0.4em;
+
+	color: #36A;
+	background-color: #467;
+    /* Hide the text. */
+    text-indent: 100%;
+    white-space: nowrap;
+    overflow: hidden;	
 }
 
 .listbox:hover {
 	color: white;	
+	background-color: rgba(100,100,100,0.5);
 }
 
 .listbox.listopen {
 }
 
+.listbox.listopen::after
+{ 
+	content:"-";
+}
+
 .listbox.listclosed {
 }
+
+.listbox.listclosed::after
+{ 
+	content:"+";
+}
+
 
 /**** LiteList ***/
 
@@ -399,6 +443,8 @@ ul.file-list li.file-item strong {
 	height: 1.2em;
 	padding: 0.1em;
 	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	background-color: black;
 }
 
@@ -484,4 +530,19 @@ textarea.textfield {
 	border-top: 1px solid #000; 
 	border-bottom: 1px solid #888; 
 	border-radius: 3px;
+}
+
+.tinybox {
+	width: 8px;
+	height: 8px;
+	margin: 2px;
+	margin-bottom: 0px;
+	display: inline-block;
+	background-color: #44ffaa;
+	opacity: 0.5;
+}
+
+.tinybox.ok {
+	background-color: #33FF99;	
+	opacity: 1;
 }

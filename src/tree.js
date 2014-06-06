@@ -42,6 +42,9 @@
 
 		var title_element = document.createElement("div");
 		title_element.className = "ltreeitemtitle";
+		if(data.className)
+			title_element.className += " " + data.className;
+
 		var content = data.content || data.id || "";
 		title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
 		//root.dataset["item"] = data.id || data.content || "";
@@ -195,6 +198,28 @@
 		return root;
 	}
 
+	Tree.prototype.filterByName = function(name)
+	{
+		var all = this.root.querySelectorAll(".ltreeitemtitle .incontent");
+		for(var i = 0; i < all.length; i++)
+		{
+			var element = all[i];
+			if(!element) continue;
+			var str = element.innerHTML;
+			var parent = element.parentNode;
+			if(!name || str.indexOf(name) != -1)
+			{
+				parent.style.display = "block"
+				parent.parentNode.style.paddingLeft = null;
+			}
+			else
+			{
+				parent.style.display = "none"
+				parent.parentNode.style.paddingLeft = 0;
+			}
+		}
+	}	
+
 	Tree.onClickBox = function(e)
 	{
 		var list = this.children_element;
@@ -288,6 +313,25 @@
 
 	Tree.prototype.updateListBox = function(node)
 	{
+
+		if(!node.listbox)
+		{
+			var pre = node.title_element.querySelector(".precontent");
+			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
+			box.setEmpty(true);
+			pre.appendChild(box);
+			node.listbox = box;
+		}
+
+		var child_elements = this.getChildren(node);
+		if(!child_elements) return; //null
+
+		if(child_elements.length)
+			node.listbox.setEmpty(false);
+		else
+			node.listbox.setEmpty(true);
+
+		/*
 		var child_elements = this.getChildren(node);
 		if(!child_elements) return; //null
 
@@ -305,6 +349,7 @@
 			node.listbox.parentNode.removeChild(node.listbox);
 			node.listbox = null;
 		}
+		*/
 	}
 
 	Tree.prototype.getChildren = function(id_or_node)

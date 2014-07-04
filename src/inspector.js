@@ -11,11 +11,11 @@
 */
 
 jQuery.fn.wchange = function(callback) {
-	$(this[0]).bind("wchange",callback);
+	$(this[0]).on("wchange",callback);
 };
 
 jQuery.fn.wclick = function(callback) {
-	$(this[0]).bind("wclick",callback);
+	$(this[0]).on("wclick",callback);
 };
 
 function Inspector(id,options)
@@ -52,6 +52,7 @@ Inspector.prototype.appendTo = function(parent, at_front)
 
 Inspector.prototype.clear = function()
 {
+	purgeElement(this.root, true); //hack, but doesnt seem to work
 	$(this.root).empty();
 
 	this.sections = [];
@@ -84,6 +85,7 @@ Inspector.prototype.setup = function(info)
 	}
 }
 
+//given an instance it shows all the attributes
 Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info) 
 {
 	if(!instance) return;
@@ -138,6 +140,7 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 	return this.showAttributes( instance, attrs_info );
 }
 
+//extract all attributes from an instance (properties that are not null or function starting with alphabetic character)
 Inspector.prototype.collectAttributes = function(instance)
 {
 	var attrs = {};
@@ -155,6 +158,7 @@ Inspector.prototype.collectAttributes = function(instance)
 	return attrs;
 }
 
+//adds the widgets for the attributes specified in attrs_info of instance
 Inspector.prototype.showAttributes = function(instance, attrs_info ) 
 {
 	for(var i in attrs_info)
@@ -497,7 +501,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 	var dragger = new LiteGUI.Dragger(value, options);
 	$(element).find(".wcontent").append(dragger.root);
 
-	$(dragger).bind("start_dragging",inner_before_change);
+	$(dragger).on("start_dragging",inner_before_change);
 	function inner_before_change(e)
 	{
 		if(options.callback_before) options.callback_before.call(element);
@@ -546,8 +550,8 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
 	$(element).find(".wcontent").append(dragger2.root);
 
-	$(dragger1).bind("start_dragging",inner_before_change);
-	$(dragger2).bind("start_dragging",inner_before_change);
+	$(dragger1).on("start_dragging",inner_before_change);
+	$(dragger2).on("start_dragging",inner_before_change);
 
 	function inner_before_change(e)
 	{
@@ -619,9 +623,9 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
 	$(element).find(".wcontent").append(dragger3.root);
 
-	$(dragger1).bind("start_dragging",inner_before_change);
-	$(dragger2).bind("start_dragging",inner_before_change);
-	$(dragger3).bind("start_dragging",inner_before_change);
+	$(dragger1).on("start_dragging",inner_before_change);
+	$(dragger2).on("start_dragging",inner_before_change);
+	$(dragger3).on("start_dragging",inner_before_change);
 
 	function inner_before_change(e)
 	{
@@ -674,7 +678,7 @@ Inspector.prototype.addTextarea = function(name,value, options)
 	var element = this.createWidget(name,"<span class='inputfield textarea "+(options.disabled?"disabled":"")+"'><textarea tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+">"+value+"</textarea></span>", options);
 	this.tab_index++;
 
-	$(element).find(".wcontent textarea").bind( options.inmediate ? "keyup" : "change", function(e) { 
+	$(element).find(".wcontent textarea").on( options.inmediate ? "keyup" : "change", function(e) { 
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
 
@@ -734,7 +738,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 
 	var skip_change = false; //used to avoid recursive loops
 	var text_input = element.querySelector(".slider-text");
-	$(text_input).bind('change', function() {
+	$(text_input).on('change', function() {
 		if(skip_change) return;
 
 		var v = parseFloat( $(this).val() );
@@ -752,7 +756,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
 
-	$(slider).bind("change", function(e,v) {
+	$(slider).on("change", function(e,v) {
 		text_input.value = v;
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
@@ -1018,12 +1022,12 @@ Inspector.prototype.addList = function(name, values, options)
 
 	$(element).find("ul").focus(function() {
 		//trace("focus!");
-		$(document).bind("keypress",inner_key);
+		$(document).on("keypress",inner_key);
 	});
 
 	$(element).find("ul").blur(function() {
 		//trace("blur!");
-		$(document).unbind("keypress",inner_key);
+		$(document).off("keypress",inner_key);
 	});
 
 	function inner_key(e)

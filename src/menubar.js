@@ -43,6 +43,8 @@
 
 		while(menu)
 		{
+			if(current_token > 5)
+				throw("Error: Menubar too deep");
 			//token not found in this menu, create it
 			if(menu.length == current_pos)
 			{
@@ -67,7 +69,7 @@
 			//token found in this menu, get inside for next token
 			if(menu[current_pos] && tokens[current_token] == menu[current_pos].name)
 			{
-				if(current_token < tokens.length)
+				if(current_token < tokens.length - 1)
 				{
 					menu = menu[current_pos].children;
 					current_pos = 0;

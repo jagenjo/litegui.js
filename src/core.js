@@ -33,11 +33,13 @@ var LiteGUI = {
 			$(options.menubar).append(this.mainmenu.root);
 		}
 
+		//called before anything
 		if(options.gui_callback)
 			options.gui_callback();
 
 		//init all modules attached to the GUI
-		if(options.initModules != false) this.initModules();
+		if(options.initModules != false) 
+			this.initModules();
 
 		//grab some keys
 		$(document).bind("keydown",function(e){
@@ -65,16 +67,22 @@ var LiteGUI = {
 	{
 		//pre init
 		for(var i in this.modules)
-			if (this.modules[i].init_gui)
-				this.modules[i].init_gui();
+			if (this.modules[i].preInit)
+				this.modules[i].preInit();
 
-		//post init
+		//init
 		for(var i in this.modules)
 			if (this.modules[i].init && !this.modules[i]._initialized)
 			{
 				this.modules[i].init();
 				this.modules[i]._initialized = true;
 			}
+
+		//post init
+		for(var i in this.modules)
+			if (this.modules[i].postInit)
+				this.modules[i].postInit();
+
 
 		this._modules_initialized = true;
 	},
@@ -86,8 +94,9 @@ var LiteGUI = {
 		//initialize on late registration
 		if(this._modules_initialized)
 		{
-			if (module.init_gui) module.init_gui();
+			if (module.preInit) module.preInit();
 			if (module.init) module.init();
+			if (module.postInit) module.postInit();
 		}
 
 		$(this).trigger("module_registered",module);
@@ -265,8 +274,36 @@ var LiteGUI = {
 		return xhr;
 	},	
 
+	requireScript: function(url, on_complete, on_progress )
+	{
+		if(typeof(url)=="string")
+			url = [url];
+
+		var total = url.length;
+		var size = total;
+		for(var i in url)
+		{
+			var script = document.createElement('script');
+			script.type = 'text/javascript';
+			script.src = url[i];
+			script.async = false;
+			script.onload = function(e) { 
+				total--;
+				if(total)
+				{
+					if(on_progress)
+						on_progress(this.src, size - total - 1);
+				}
+				else if(on_complete)
+					on_complete();
+			};
+			document.getElementsByTagName('head')[0].appendChild(script);
+		}
+	},
+
+
 	//old version, it loads one by one, so it is slower
-	requireScript2: function(url, on_complete, on_progress )
+	requireScriptSerial: function(url, on_complete, on_progress )
 	{
 		if(typeof(url)=="string")
 			url = [url];
@@ -293,32 +330,6 @@ var LiteGUI = {
 		}
 
 		addScript();
-	},
-
-	requireScript: function(url, on_complete, on_progress )
-	{
-		if(typeof(url)=="string")
-			url = [url];
-
-		var total = url.length;
-		for(var i in url)
-		{
-			var script = document.createElement('script');
-			script.type = 'text/javascript';
-			script.src = url[i];
-			script.async = false;
-			script.onload = function(e) { 
-				total--;
-				if(total)
-				{
-					if(on_progress)
-						on_progress(this.src, total);
-				}
-				else if(on_complete)
-					on_complete();
-			};
-			document.getElementsByTagName('head')[0].appendChild(script);
-		}
 	},
 
 	//* DIALOGS *******************
@@ -450,4 +461,34 @@ var LiteGUI = {
 };
 
 
+function purgeElement(d, skip) {
+    var a = d.attributes, i, l, n;
 
+    if (a) {
+        for (i = a.length - 1; i >= 0; i -= 1) {
+            n = a[i].name;
+            if (typeof d[n] === 'function') {
+                d[n] = null;
+            }
+        }
+    }
+
+    a = d.childNodes;
+    if (a) {
+        l = a.length;
+        for (i = 0; i < l; i += 1) {
+            purgeElement(d.childNodes[i]);
+        }
+    }
+
+	/*
+	if(!skip)
+	{
+		for (i in d) {
+			if (typeof d[i] === 'function') {
+				d[i] = null;
+			}
+		}
+	}
+	*/
+}

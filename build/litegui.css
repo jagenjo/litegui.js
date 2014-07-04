@@ -679,7 +679,7 @@ div {
 }
 
 #header {
-	height: 60px;
+	height: 48px;
 	background-color: #454545;
 	/*
     background-color: #1B1B1B;
@@ -701,7 +701,7 @@ div {
 	position: absolute;
 	top: 0;
 	right: 0;
-	padding: 10px;
+	padding-right: 10px;
 	color: #aaa;
 }
 
@@ -1275,6 +1275,8 @@ table {
     border-collapse: collapse;
     border-spacing: 0;
 }
+/****** litegui css/style.css */
+
 *, *:before, *:after {
 -moz-box-sizing: border-box;
 -webkit-box-sizing: border-box;
@@ -1296,7 +1298,7 @@ h1,h2,h3 {
 
 h1 {
 	color: #777;
-	font-size: 32px;
+	/*font-size: 32px;*/
 	/*text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 30px rgba(255, 255, 255, 0.125);*/
 	padding-left: 10px;
 	height: 40px;

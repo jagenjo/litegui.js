@@ -34,11 +34,13 @@ var LiteGUI = {
 			$(options.menubar).append(this.mainmenu.root);
 		}
 
+		//called before anything
 		if(options.gui_callback)
 			options.gui_callback();
 
 		//init all modules attached to the GUI
-		if(options.initModules != false) this.initModules();
+		if(options.initModules != false) 
+			this.initModules();
 
 		//grab some keys
 		$(document).bind("keydown",function(e){
@@ -66,16 +68,22 @@ var LiteGUI = {
 	{
 		//pre init
 		for(var i in this.modules)
-			if (this.modules[i].init_gui)
-				this.modules[i].init_gui();
+			if (this.modules[i].preInit)
+				this.modules[i].preInit();
 
-		//post init
+		//init
 		for(var i in this.modules)
 			if (this.modules[i].init && !this.modules[i]._initialized)
 			{
 				this.modules[i].init();
 				this.modules[i]._initialized = true;
 			}
+
+		//post init
+		for(var i in this.modules)
+			if (this.modules[i].postInit)
+				this.modules[i].postInit();
+
 
 		this._modules_initialized = true;
 	},
@@ -87,8 +95,9 @@ var LiteGUI = {
 		//initialize on late registration
 		if(this._modules_initialized)
 		{
-			if (module.init_gui) module.init_gui();
+			if (module.preInit) module.preInit();
 			if (module.init) module.init();
+			if (module.postInit) module.postInit();
 		}
 
 		$(this).trigger("module_registered",module);
@@ -266,8 +275,36 @@ var LiteGUI = {
 		return xhr;
 	},	
 
+	requireScript: function(url, on_complete, on_progress )
+	{
+		if(typeof(url)=="string")
+			url = [url];
+
+		var total = url.length;
+		var size = total;
+		for(var i in url)
+		{
+			var script = document.createElement('script');
+			script.type = 'text/javascript';
+			script.src = url[i];
+			script.async = false;
+			script.onload = function(e) { 
+				total--;
+				if(total)
+				{
+					if(on_progress)
+						on_progress(this.src, size - total - 1);
+				}
+				else if(on_complete)
+					on_complete();
+			};
+			document.getElementsByTagName('head')[0].appendChild(script);
+		}
+	},
+
+
 	//old version, it loads one by one, so it is slower
-	requireScript2: function(url, on_complete, on_progress )
+	requireScriptSerial: function(url, on_complete, on_progress )
 	{
 		if(typeof(url)=="string")
 			url = [url];
@@ -294,32 +331,6 @@ var LiteGUI = {
 		}
 
 		addScript();
-	},
-
-	requireScript: function(url, on_complete, on_progress )
-	{
-		if(typeof(url)=="string")
-			url = [url];
-
-		var total = url.length;
-		for(var i in url)
-		{
-			var script = document.createElement('script');
-			script.type = 'text/javascript';
-			script.src = url[i];
-			script.async = false;
-			script.onload = function(e) { 
-				total--;
-				if(total)
-				{
-					if(on_progress)
-						on_progress(this.src, total);
-				}
-				else if(on_complete)
-					on_complete();
-			};
-			document.getElementsByTagName('head')[0].appendChild(script);
-		}
 	},
 
 	//* DIALOGS *******************
@@ -451,7 +462,37 @@ var LiteGUI = {
 };
 
 
+function purgeElement(d, skip) {
+    var a = d.attributes, i, l, n;
 
+    if (a) {
+        for (i = a.length - 1; i >= 0; i -= 1) {
+            n = a[i].name;
+            if (typeof d[n] === 'function') {
+                d[n] = null;
+            }
+        }
+    }
+
+    a = d.childNodes;
+    if (a) {
+        l = a.length;
+        for (i = 0; i < l; i += 1) {
+            purgeElement(d.childNodes[i]);
+        }
+    }
+
+	/*
+	if(!skip)
+	{
+		for (i in d) {
+			if (typeof d[i] === 'function') {
+				d[i] = null;
+			}
+		}
+	}
+	*/
+}
 
 //enclose in a scope
 (function(){
@@ -1434,6 +1475,8 @@ var LiteGUI = {
 
 		while(menu)
 		{
+			if(current_token > 5)
+				throw("Error: Menubar too deep");
 			//token not found in this menu, create it
 			if(menu.length == current_pos)
 			{
@@ -1458,7 +1501,7 @@ var LiteGUI = {
 			//token found in this menu, get inside for next token
 			if(menu[current_pos] && tokens[current_token] == menu[current_pos].name)
 			{
-				if(current_token < tokens.length)
+				if(current_token < tokens.length - 1)
 				{
 					menu = menu[current_pos].children;
 					current_pos = 0;
@@ -2841,11 +2884,11 @@ var LiteGUI = {
 */
 
 jQuery.fn.wchange = function(callback) {
-	$(this[0]).bind("wchange",callback);
+	$(this[0]).on("wchange",callback);
 };
 
 jQuery.fn.wclick = function(callback) {
-	$(this[0]).bind("wclick",callback);
+	$(this[0]).on("wclick",callback);
 };
 
 function Inspector(id,options)
@@ -2882,6 +2925,7 @@ Inspector.prototype.appendTo = function(parent, at_front)
 
 Inspector.prototype.clear = function()
 {
+	purgeElement(this.root, true); //hack, but doesnt seem to work
 	$(this.root).empty();
 
 	this.sections = [];
@@ -2914,6 +2958,7 @@ Inspector.prototype.setup = function(info)
 	}
 }
 
+//given an instance it shows all the attributes
 Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info) 
 {
 	if(!instance) return;
@@ -2968,6 +3013,7 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 	return this.showAttributes( instance, attrs_info );
 }
 
+//extract all attributes from an instance (properties that are not null or function starting with alphabetic character)
 Inspector.prototype.collectAttributes = function(instance)
 {
 	var attrs = {};
@@ -2985,6 +3031,7 @@ Inspector.prototype.collectAttributes = function(instance)
 	return attrs;
 }
 
+//adds the widgets for the attributes specified in attrs_info of instance
 Inspector.prototype.showAttributes = function(instance, attrs_info ) 
 {
 	for(var i in attrs_info)
@@ -3327,7 +3374,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 	var dragger = new LiteGUI.Dragger(value, options);
 	$(element).find(".wcontent").append(dragger.root);
 
-	$(dragger).bind("start_dragging",inner_before_change);
+	$(dragger).on("start_dragging",inner_before_change);
 	function inner_before_change(e)
 	{
 		if(options.callback_before) options.callback_before.call(element);
@@ -3376,8 +3423,8 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
 	$(element).find(".wcontent").append(dragger2.root);
 
-	$(dragger1).bind("start_dragging",inner_before_change);
-	$(dragger2).bind("start_dragging",inner_before_change);
+	$(dragger1).on("start_dragging",inner_before_change);
+	$(dragger2).on("start_dragging",inner_before_change);
 
 	function inner_before_change(e)
 	{
@@ -3449,9 +3496,9 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
 	$(element).find(".wcontent").append(dragger3.root);
 
-	$(dragger1).bind("start_dragging",inner_before_change);
-	$(dragger2).bind("start_dragging",inner_before_change);
-	$(dragger3).bind("start_dragging",inner_before_change);
+	$(dragger1).on("start_dragging",inner_before_change);
+	$(dragger2).on("start_dragging",inner_before_change);
+	$(dragger3).on("start_dragging",inner_before_change);
 
 	function inner_before_change(e)
 	{
@@ -3504,7 +3551,7 @@ Inspector.prototype.addTextarea = function(name,value, options)
 	var element = this.createWidget(name,"<span class='inputfield textarea "+(options.disabled?"disabled":"")+"'><textarea tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+">"+value+"</textarea></span>", options);
 	this.tab_index++;
 
-	$(element).find(".wcontent textarea").bind( options.inmediate ? "keyup" : "change", function(e) { 
+	$(element).find(".wcontent textarea").on( options.inmediate ? "keyup" : "change", function(e) { 
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
 
@@ -3564,7 +3611,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 
 	var skip_change = false; //used to avoid recursive loops
 	var text_input = element.querySelector(".slider-text");
-	$(text_input).bind('change', function() {
+	$(text_input).on('change', function() {
 		if(skip_change) return;
 
 		var v = parseFloat( $(this).val() );
@@ -3582,7 +3629,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
 
-	$(slider).bind("change", function(e,v) {
+	$(slider).on("change", function(e,v) {
 		text_input.value = v;
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
@@ -3848,12 +3895,12 @@ Inspector.prototype.addList = function(name, values, options)
 
 	$(element).find("ul").focus(function() {
 		//trace("focus!");
-		$(document).bind("keypress",inner_key);
+		$(document).on("keypress",inner_key);
 	});
 
 	$(element).find("ul").blur(function() {
 		//trace("blur!");
-		$(document).unbind("keypress",inner_key);
+		$(document).off("keypress",inner_key);
 	});
 
 	function inner_key(e)

@@ -548,7 +548,7 @@
 			$(root).find(".list-item.selected").removeClass("selected");
 			$(this).addClass("selected");
 
-			$(that).trigger("wchanged", this);
+			$(that.root).trigger("wchanged", this);
 			if(that.callback)
 				that.callback( this.data  );
 		});
@@ -564,6 +564,7 @@
 
 	LiteGUI.List = List;
 
+	/* SLIDER *************/
 
 	function Slider(value, options)
 	{
@@ -595,7 +596,7 @@
 			if(value != this.value)
 			{
 				this.value = value;
-				$(this).trigger("change", value );
+				$(this.root).trigger("change", value );
 			}
 		}
 
@@ -620,7 +621,8 @@
 		function onMouseMove(e)
 		{
 			var rect = canvas.getClientRects()[0];
-			var mouseX = e.x - rect.left;
+			var x = e.x === undefined ? e.pageX : e.x;
+			var mouseX = x - rect.left;
 			setFromX(mouseX);
 			e.preventDefault();
 			return false;

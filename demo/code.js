@@ -83,8 +83,19 @@ function createSidePanel()
 	var docked = new LiteGUI.Panel("right_panel", {title:'Docked panel', close: true});
 	docked.dockTo(LiteGUI.mainarea.getSection(1).content,"full");
 	docked.show();
-
 	$(docked).bind("closed", function() { LiteGUI.mainarea.merge(); });
+
+	window.sidepanel = docked;
+
+	updateSidePanel( docked );
+}
+
+function updateSidePanel( root )
+{
+	root = root || window.sidepanel;
+	$(root.content).empty();
+
+	/*
 
 	//tabs 
 	var tabs_widget = new LiteGUI.Tabs("paneltab");
@@ -117,21 +128,32 @@ function createSidePanel()
 	//litetree.removeItem( "SubChild1" );
 	//litetree.moveItem( "FOO", "Child3" );
 	litetree.insertItem( {id:"MAX"}, "Rootnode",0 );
+	$(root.content).append(tabs_widget.root);
 
-
-	$(docked.content).append(tabs_widget.root);
+	*/
 
 	//side panel widget
 	var widgets = new LiteGUI.Inspector();
 	widgets.onchange = function(name,value,widget) {
 		//trace("Widget change: " + name + " -> " + value );
 	};
-	$(docked.content).append(widgets.root);
+	$(root.content).append(widgets.root);
 
-	widgets.addSeparator();
-	widgets.addInfo("info","This is an example of different widgets");
-	widgets.addSection("Numbers stuff");
-	widgets.addNumber("number",10, {min:0, callback: function(v) { trace("number change: " + v); } });
+	window.foo = "";
+
+	for(var i = 0; i < 500; i++)
+	{
+		/*
+		widgets.addButton("Num." + Math.random().toFixed(4),"Save",{callback: function(name) { window.foo = Math.random(); trace("Button pressed: " + window.foo); } });
+		widgets.addSeparator();
+		widgets.addInfo("info","This is an example of different widgets");
+		widgets.addSection("Numbers stuff");
+		widgets.addNumber("number",10, {min:0, callback: function(v) { trace("number change: " + v); } });
+		*/
+		widgets.addSlider("slider",10,{min:1,max:100,step:1});
+	}
+
+	/*
 	widgets.addSlider("slider",10,{min:1,max:100,step:1});
 	widgets.addSeparator();
 	widgets.addVector2("vector2",[10,20], {min:0});
@@ -152,6 +174,7 @@ function createSidePanel()
 	widgets.addColor("Color",[0,1,0]);
 	widgets.addFile("File","test.png");
 	widgets.addLine("Line",[[0.5,1],[0.75,0.25]],{defaulty:0,width:120}); 
+	*/
 
 	LiteGUI.mainarea.resize();
 }
@@ -170,6 +193,7 @@ function createWidgetsDialog()
 	minimenu.attachToPanel(dialog);
 
 	var widgets = new LiteGUI.Inspector();
+	widgets.addButton("button","Update", { callback: function() { updateSidePanel(); } });
 	widgets.addString("string","foo");
 	widgets.addNumber("number",10, {min:0});
 	widgets.addTree("tree",{ person: "javi", info: { age: 32, location: "barcelona" }, role: "worker"} );
@@ -184,7 +208,6 @@ function createWidgetsDialog()
 	widgets.addCheckbox("checkbox",true);
 	widgets.addCheckbox("checkbox2",false);
 	widgets.addCombo("combo","javi",{values:["foo","faa","super largo texto que no cabe entero","javi","nada"]});
-	widgets.addButton("Serialize","Save");
 	widgets.addButtons("Serialize",["Save","Load","New"]);
 	widgets.addButton(null,"Save");
 	$(dialog.content).append(widgets.root);

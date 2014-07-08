@@ -500,11 +500,11 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 	var dragger = new LiteGUI.Dragger(value, options);
 	$(element).find(".wcontent").append(dragger.root);
-
-	$(dragger).on("start_dragging",inner_before_change);
+	$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
 	function inner_before_change(e)
 	{
-		if(options.callback_before) options.callback_before.call(element);
+		if(this.callback_before) 
+			this.callback_before.call(element);
 	}
 
 	$(element).find("input").change( function(e) { 
@@ -550,12 +550,12 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
 	$(element).find(".wcontent").append(dragger2.root);
 
-	$(dragger1).on("start_dragging",inner_before_change);
-	$(dragger2).on("start_dragging",inner_before_change);
+	$(dragger1.root).bind("start_dragging",inner_before_change.bind(options) );
+	$(dragger2.root).bind("start_dragging",inner_before_change.bind(options) );
 
 	function inner_before_change(e)
 	{
-		if(options.callback_before) options.callback_before();
+		if(this.callback_before) this.callback_before(e);
 	}
 
 	$(element).find("input").change( function(e) { 
@@ -623,13 +623,13 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
 	$(element).find(".wcontent").append(dragger3.root);
 
-	$(dragger1).on("start_dragging",inner_before_change);
-	$(dragger2).on("start_dragging",inner_before_change);
-	$(dragger3).on("start_dragging",inner_before_change);
+	$(dragger1.root).bind("start_dragging", inner_before_change.bind(options) );
+	$(dragger2.root).bind("start_dragging", inner_before_change.bind(options) );
+	$(dragger3.root).bind("start_dragging", inner_before_change.bind(options) );
 
 	function inner_before_change(e)
 	{
-		if(options.callback_before) options.callback_before();
+		if(this.callback_before) this.callback_before();
 	}
 
 	$(element).find("input").change( function(e) { 
@@ -756,7 +756,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
 
-	$(slider).on("change", function(e,v) {
+	$(slider.root).on("change", function(e,v) {
 		text_input.value = v;
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});

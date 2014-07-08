@@ -6,6 +6,7 @@
 		options = options || {};
 		var element = document.createElement("div");
 		element.className = "dragger " + (options.extraclass ? options.extraclass : "");
+		this.root = element;
 
 		var wrap = document.createElement("span");
 		wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "");
@@ -20,11 +21,18 @@
 		input.value = value + (options.units ? options.units : "");
 		input.tabIndex = options.tab_index;
 		this.input = input;
+		element.input = input;
+
+		if(options.disabled)
+			input.disabled = true;
+		if(options.tab_index)
+			input.tabIndex = options.tab_index;
+		wrap.appendChild(input);
 
 		this.setValue = function(v) { 
 			$(input).val(v).trigger("change");
 		}
-
+		
 		$(input).bind("keydown",function(e) {
 			//trace(e.keyCode);
 			if(e.keyCode == 38)
@@ -38,14 +46,6 @@
 			return true;
 		});
 
-
-		if(options.disabled)
-			input.disabled = true;
-		if(options.tab_index)
-			input.tabIndex = options.tab_index;
-		wrap.appendChild(input);
-		element.input = input;
-
 		var dragger = document.createElement("div");
 		dragger.className = "drag_widget";
 		if(options.disabled)
@@ -54,12 +54,13 @@
 		wrap.appendChild(dragger);
 		element.dragger = dragger;
 
-		this.root = element;
-
 		$(dragger).bind("mousedown",inner_down);
 
 		function inner_down(e)
 		{
+			$(document).unbind("mousemove", inner_move);
+			$(document).unbind("mouseup", inner_up);
+
 			if(!options.disabled)
 			{
 				$(document).bind("mousemove", inner_move);
@@ -67,7 +68,7 @@
 
 				dragger.data = [e.screenX, e.screenY];
 
-				$(dragger).trigger("start_dragging");
+				$(element).trigger("start_dragging");
 			}
 
 			e.stopPropagation();
@@ -89,7 +90,7 @@
 
 		function inner_up(e)
 		{
-			$(dragger).trigger("stop_dragging");
+			$(element).trigger("stop_dragging");
 			$(document).unbind("mousemove", inner_move);
 			$(document).unbind("mouseup", inner_up);
 			$(dragger).trigger("blur");
@@ -119,7 +120,6 @@
 				input.value += options.units;
 			$(input).change();
 		}
-
 	}
 	LiteGUI.Dragger = Dragger;
 

@@ -1044,7 +1044,7 @@ function purgeElement(d, skip) {
 			$(root).find(".list-item.selected").removeClass("selected");
 			$(this).addClass("selected");
 
-			$(that).trigger("wchanged", this);
+			$(that.root).trigger("wchanged", this);
 			if(that.callback)
 				that.callback( this.data  );
 		});
@@ -1060,6 +1060,7 @@ function purgeElement(d, skip) {
 
 	LiteGUI.List = List;
 
+	/* SLIDER *************/
 
 	function Slider(value, options)
 	{
@@ -1091,7 +1092,7 @@ function purgeElement(d, skip) {
 			if(value != this.value)
 			{
 				this.value = value;
-				$(this).trigger("change", value );
+				$(this.root).trigger("change", value );
 			}
 		}
 
@@ -1116,7 +1117,8 @@ function purgeElement(d, skip) {
 		function onMouseMove(e)
 		{
 			var rect = canvas.getClientRects()[0];
-			var mouseX = e.x - rect.left;
+			var x = e.x === undefined ? e.pageX : e.x;
+			var mouseX = x - rect.left;
 			setFromX(mouseX);
 			e.preventDefault();
 			return false;
@@ -1916,6 +1918,7 @@ function purgeElement(d, skip) {
 		options = options || {};
 		var element = document.createElement("div");
 		element.className = "dragger " + (options.extraclass ? options.extraclass : "");
+		this.root = element;
 
 		var wrap = document.createElement("span");
 		wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "");
@@ -1930,11 +1933,18 @@ function purgeElement(d, skip) {
 		input.value = value + (options.units ? options.units : "");
 		input.tabIndex = options.tab_index;
 		this.input = input;
+		element.input = input;
+
+		if(options.disabled)
+			input.disabled = true;
+		if(options.tab_index)
+			input.tabIndex = options.tab_index;
+		wrap.appendChild(input);
 
 		this.setValue = function(v) { 
 			$(input).val(v).trigger("change");
 		}
-
+		
 		$(input).bind("keydown",function(e) {
 			//trace(e.keyCode);
 			if(e.keyCode == 38)
@@ -1948,14 +1958,6 @@ function purgeElement(d, skip) {
 			return true;
 		});
 
-
-		if(options.disabled)
-			input.disabled = true;
-		if(options.tab_index)
-			input.tabIndex = options.tab_index;
-		wrap.appendChild(input);
-		element.input = input;
-
 		var dragger = document.createElement("div");
 		dragger.className = "drag_widget";
 		if(options.disabled)
@@ -1964,12 +1966,13 @@ function purgeElement(d, skip) {
 		wrap.appendChild(dragger);
 		element.dragger = dragger;
 
-		this.root = element;
-
 		$(dragger).bind("mousedown",inner_down);
 
 		function inner_down(e)
 		{
+			$(document).unbind("mousemove", inner_move);
+			$(document).unbind("mouseup", inner_up);
+
 			if(!options.disabled)
 			{
 				$(document).bind("mousemove", inner_move);
@@ -1977,7 +1980,7 @@ function purgeElement(d, skip) {
 
 				dragger.data = [e.screenX, e.screenY];
 
-				$(dragger).trigger("start_dragging");
+				$(element).trigger("start_dragging");
 			}
 
 			e.stopPropagation();
@@ -1999,7 +2002,7 @@ function purgeElement(d, skip) {
 
 		function inner_up(e)
 		{
-			$(dragger).trigger("stop_dragging");
+			$(element).trigger("stop_dragging");
 			$(document).unbind("mousemove", inner_move);
 			$(document).unbind("mouseup", inner_up);
 			$(dragger).trigger("blur");
@@ -2029,7 +2032,6 @@ function purgeElement(d, skip) {
 				input.value += options.units;
 			$(input).change();
 		}
-
 	}
 	LiteGUI.Dragger = Dragger;
 
@@ -2126,14 +2128,14 @@ function purgeElement(d, skip) {
 			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
 			$(title).addClass("selected");
 			
-			$(that).trigger("item_selected", [item.data, item] );
+			$(that.root).trigger("item_selected", [item.data, item] );
 			if(item.callback) item.callback.call(that,item);
 		}
 
 		function onNodeDblClicked(e)
 		{
 			var item = this.parentNode;
-			$(that).trigger("item_dblclicked", [item.data, item] );
+			$(that.root).trigger("item_dblclicked", [item.data, item] );
 
 			if(!this._editing && that.options.allow_rename)
 			{
@@ -2147,7 +2149,7 @@ function purgeElement(d, skip) {
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
-					$(that).trigger("item_renamed", [that2._old_name, new_name, item]);
+					$(that.root).trigger("item_renamed", [that2._old_name, new_name, item]);
 					delete that2._old_name;
 				});
 				$(input).bind("keydown", function(e) {
@@ -2217,7 +2219,7 @@ function purgeElement(d, skip) {
 				try
 				{
 					if( that.moveItem(node_id, this.parentNode.id ) )
-						$(that).trigger("item_moved", [ that.getItem(node_id), that.getItem(this.parentNode.id) ] );
+						$(that.root).trigger("item_moved", [ that.getItem(node_id), that.getItem(this.parentNode.id) ] );
 				}
 				catch (err)
 				{
@@ -2226,7 +2228,7 @@ function purgeElement(d, skip) {
 			}
 			else
 			{
-				$(that).trigger("drop_on_item", [this, ev] );
+				$(that.root).trigger("drop_on_item", [this, ev] );
 			}
 		});
 
@@ -3373,11 +3375,11 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 	var dragger = new LiteGUI.Dragger(value, options);
 	$(element).find(".wcontent").append(dragger.root);
-
-	$(dragger).on("start_dragging",inner_before_change);
+	$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
 	function inner_before_change(e)
 	{
-		if(options.callback_before) options.callback_before.call(element);
+		if(this.callback_before) 
+			this.callback_before.call(element);
 	}
 
 	$(element).find("input").change( function(e) { 
@@ -3423,12 +3425,12 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
 	$(element).find(".wcontent").append(dragger2.root);
 
-	$(dragger1).on("start_dragging",inner_before_change);
-	$(dragger2).on("start_dragging",inner_before_change);
+	$(dragger1.root).bind("start_dragging",inner_before_change.bind(options) );
+	$(dragger2.root).bind("start_dragging",inner_before_change.bind(options) );
 
 	function inner_before_change(e)
 	{
-		if(options.callback_before) options.callback_before();
+		if(this.callback_before) this.callback_before(e);
 	}
 
 	$(element).find("input").change( function(e) { 
@@ -3496,13 +3498,13 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
 	$(element).find(".wcontent").append(dragger3.root);
 
-	$(dragger1).on("start_dragging",inner_before_change);
-	$(dragger2).on("start_dragging",inner_before_change);
-	$(dragger3).on("start_dragging",inner_before_change);
+	$(dragger1.root).bind("start_dragging", inner_before_change.bind(options) );
+	$(dragger2.root).bind("start_dragging", inner_before_change.bind(options) );
+	$(dragger3.root).bind("start_dragging", inner_before_change.bind(options) );
 
 	function inner_before_change(e)
 	{
-		if(options.callback_before) options.callback_before();
+		if(this.callback_before) this.callback_before();
 	}
 
 	$(element).find("input").change( function(e) { 
@@ -3629,7 +3631,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
 
-	$(slider).on("change", function(e,v) {
+	$(slider.root).on("change", function(e,v) {
 		text_input.value = v;
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});

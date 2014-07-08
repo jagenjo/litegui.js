@@ -90,14 +90,14 @@
 			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
 			$(title).addClass("selected");
 			
-			$(that).trigger("item_selected", [item.data, item] );
+			$(that.root).trigger("item_selected", [item.data, item] );
 			if(item.callback) item.callback.call(that,item);
 		}
 
 		function onNodeDblClicked(e)
 		{
 			var item = this.parentNode;
-			$(that).trigger("item_dblclicked", [item.data, item] );
+			$(that.root).trigger("item_dblclicked", [item.data, item] );
 
 			if(!this._editing && that.options.allow_rename)
 			{
@@ -111,7 +111,7 @@
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
-					$(that).trigger("item_renamed", [that2._old_name, new_name, item]);
+					$(that.root).trigger("item_renamed", [that2._old_name, new_name, item]);
 					delete that2._old_name;
 				});
 				$(input).bind("keydown", function(e) {
@@ -181,7 +181,7 @@
 				try
 				{
 					if( that.moveItem(node_id, this.parentNode.id ) )
-						$(that).trigger("item_moved", [ that.getItem(node_id), that.getItem(this.parentNode.id) ] );
+						$(that.root).trigger("item_moved", [ that.getItem(node_id), that.getItem(this.parentNode.id) ] );
 				}
 				catch (err)
 				{
@@ -190,7 +190,7 @@
 			}
 			else
 			{
-				$(that).trigger("drop_on_item", [this, ev] );
+				$(that.root).trigger("drop_on_item", [this, ev] );
 			}
 		});
 

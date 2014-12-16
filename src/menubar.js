@@ -78,7 +78,7 @@
 				}
 				else //last token
 				{
-					trace("Warning: Adding menu that already exists: " + path );
+					console.warn("Warning: Adding menu that already exists: " + path );
 					break;
 				}
 			}

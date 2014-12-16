@@ -5,11 +5,12 @@
 	{
 		options = options || {};
 
-		var element = document.createElement("DIV");
-		if(id) element.id = id;
-		element.data = this;
-		element.className = "litetabs";
-		this.root = element;
+		var root = document.createElement("DIV");
+		if(id) 
+			root.id = id;
+		root.data = this;
+		root.className = "litetabs";
+		this.root = root;
 
 		this.current_tab = null; //current tab array [name, tab, content]
 
@@ -27,6 +28,7 @@
 		this.list = list;
 		this.root.appendChild(this.list);
 
+		this.tabs = {};
 		this.contents = {};
 		this.selected = null;
 
@@ -37,6 +39,16 @@
 	}
 
 	Tabs.tabs_height = "30px";
+
+	Tabs.prototype.show = function()
+	{
+		this.root.style.display = "block";
+	}
+
+	Tabs.prototype.hide = function()
+	{
+		this.root.style.display = "none";
+	}
 
 	Tabs.prototype.getCurrentTab = function()
 	{
@@ -51,12 +63,18 @@
 			$(parent).append(this.root);
 	}
 
-	Tabs.prototype.get = function(name)
+	Tabs.prototype.getTab = function(name)
+	{
+		return this.tabs[name];
+	}
+
+	Tabs.prototype.getTabContent = function(name)
 	{
 		return this.contents[name];
 	}
 
-	Tabs.prototype.add = function(name,options)
+	//add something
+	Tabs.prototype.addTab = function(name,options)
 	{
 		options = options || {};
 		var that = this;
@@ -67,14 +85,13 @@
 		//if(options.selected) element.className += " selected";
 		element.data = name;
 		element.innerHTML = name;
-
-		$(this.list).append(element);
+		this.list.appendChild(element);
 
 		//the content of the tab
 		var content = document.createElement("div");
 		if(options.id)
 			content.id = options.id;
-		content.className = "wtabcontent " + "wtabcontent-" + name + " " + (options.className || "");
+		content.className = "wtabcontent " + "wtabcontent-" + name.replace(/ /gi,"_") + " " + (options.className || "");
 		content.data = name;
 		content.style.display = "none";
 		if(options.height)
@@ -98,12 +115,13 @@
 				content.appendChild(options.content);
 		}
 
-		$(this.root).append(content);
+		this.root.appendChild(content);
 		this.contents[ name ] = content;
 
 		//when clicked
-		$(element).click(function(e) {
-			if($(this).hasClass("selected")) return;
+		element.addEventListener("click", function(e) {
+			if( this.classList.contains("selected") ) 
+				return;
 
 			var tabname = this.data;
 			var tab = null;
@@ -118,7 +136,7 @@
 					$(that.contents[i]).hide();
 
 			$(that.list).find("li.wtab").removeClass("selected");
-			$(this).addClass("selected");
+			this.classList.add("selected");
 			if( that.current_tab && 
 				that.current_tab[0] != tabname && 
 				that.current_tab[2] && 
@@ -134,20 +152,53 @@
 		this.list.appendChild(element);
 
 		if (options.selected == true || this.selected == null)
-			this.select(name);
+			this.selectTab(name);
 
-		return {tab: element, content: content};
+		this.tabs[name] = {tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		return this.tabs[name];
 	}
 
-	Tabs.prototype.select = function(name)
+	Tabs.prototype.selectTab = function(name)
 	{
-		var tabs = $(this.list).find("li.wtab");
+		var tabs = this.list.querySelectorAll("li.wtab");
 		for(var i = 0; i < tabs.length; i++)
 			if( name == tabs[i].data)
 			{
 				$(tabs[i]).click();
 				break;
 			}
+	}
+
+	Tabs.prototype.setTabVisibility = function(name, v)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		tab.tab.style.display = v ? "none" : "inline-block";
+		tab.content.style.display = v ? "none" : "inline-block";
+	}
+
+	Tabs.prototype.removeTab = function(name)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		tab.tab.parentNode.removeChild( tab.tab );
+		tab.content.parentNode.removeChild( tab.content );
+		delete this.tabs[name];
+		delete this.contents[name];
+	}
+
+	Tabs.prototype.hideTab = function(name)
+	{
+		this.setTabVisibility(name, false);
+	}
+
+	Tabs.prototype.showTab = function(name)
+	{
+		this.setTabVisibility(name, true);
 	}
 
 	LiteGUI.Tabs = Tabs;

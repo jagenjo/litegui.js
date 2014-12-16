@@ -1,38 +1,61 @@
 //packer version
-var trace = console ? console.log.bind(console) : function(){};
-
 var LiteGUI = {
-	root_container: null,
+	root: null,
+	content: null,
+
 	panels: {},
+
+	//undo
 	undo_steps: [],
+
+	//used for blacken when a modal dialog is shown
 	modalbg_div: null,
+
 	_modules_initialized: false,
 
+	//the top menu
 	mainmenu: null,
+
+	//registered modules
 	modules: [],
 
 	init: function(options)
 	{
 		options = options || {};
 
-		trace("Init lite");
 		if(options.width && options.height)
 			this.setWindowSize(options.width,options.height);
 
-		//block back button
-		//window.onbeforeunload = function() { return "You work will be lost."; };
+		//choose main container
+		this.container = null;
+		if( options.container )
+			this.container = document.getElementById(options.container);
+		if(!this.container )
+			this.container = document.body;
 
-		this.root_container = $("#work-area")[0];
+		//create litegui root element
+		var root = document.createElement("div");
+		root.className = "litegui-wrap fullscreen";
+		root.style.position = "relative";
+		root.style.overflow = "hidden";
+		this.root = root;
+		this.container.appendChild( root );
 
-		this.modalbg_div = document.createElement("div");
+		//create modal dialogs container
+		var modalbg = this.modalbg_div = document.createElement("div");
 		this.modalbg_div.className = "litemodalbg";
-		$(document.body).append(this.modalbg_div);
+		this.root.appendChild(this.modalbg_div);
+		modalbg.style.display = "none";
 
+		//content: the main container for everything
+		var content = document.createElement("div");
+		content.className = "litegui-maincontent";
+		this.content = content;
+		this.root.appendChild(content);
+
+		//create menubar
 		if(options.menubar)
-		{
-			this.mainmenu = new LiteGUI.Menubar("mainmenubar");
-			$(options.menubar).append(this.mainmenu.root);
-		}
+			this.createMenubar();
 
 		//called before anything
 		if(options.gui_callback)
@@ -42,11 +65,18 @@ var LiteGUI = {
 		if(options.initModules != false) 
 			this.initModules();
 
+		//maximize
+		if( this.root.classList.contains("fullscreen") )
+		{
+			window.addEventListener("resize", function(e) { 
+				LiteGUI.maximizeWindow();
+			});
+		}
+
 		//grab some keys
-		$(document).bind("keydown",function(e){
+		document.addEventListener("keydown",function(e){
 			if(e.target.nodeName.toLowerCase() == "input" || e.target.nodeName.toLowerCase() == "textarea")
 				return;
-			//trace(e.keyCode);
 			if(e.keyCode == 17) return; //ctrl
 
 			if(e.keyCode == 26 || (e.keyCode == 90 && (e.ctrlKey || e.metaKey)) || (e.charCode == 122 && e.ctrlKey) ) //undo
@@ -55,34 +85,74 @@ var LiteGUI = {
 				$(LiteGUI).trigger("escape");
 
 		});
-
-		if( $("#wrap").hasClass("fullscreen") )
-		{
-			$(window).resize( function(e) { 
-				LiteGUI.maximizeWindow();
-			});
-		}
 	},
+
 
 	initModules: function()
 	{
+		var catch_exceptions = false;
+
 		//pre init
 		for(var i in this.modules)
 			if (this.modules[i].preInit)
-				this.modules[i].preInit();
+			{
+				if(!catch_exceptions)
+				{
+					this.modules[i].preInit();
+					continue;
+				}
+				try
+				{
+					this.modules[i].preInit();
+				}
+				catch (err)
+				{
+					console.error(err);
+				}
+			}
 
 		//init
 		for(var i in this.modules)
 			if (this.modules[i].init && !this.modules[i]._initialized)
 			{
-				this.modules[i].init();
+				if(!catch_exceptions)
+				{
+					this.modules[i].init();
+				}
+				else
+				{
+					try
+					{
+						this.modules[i].init();
+					}
+					catch (err)
+					{
+						console.error(err);
+					}
+				}
 				this.modules[i]._initialized = true;
 			}
 
 		//post init
 		for(var i in this.modules)
 			if (this.modules[i].postInit)
-				this.modules[i].postInit();
+			{
+				if(!catch_exceptions)
+				{
+					this.modules[i].postInit();
+				}
+				else
+				{
+					try
+					{
+						this.modules[i].postInit();
+					}
+					catch (err)
+					{
+						console.error(err);
+					}
+				}
+			}
 
 
 		this._modules_initialized = true;
@@ -103,19 +173,36 @@ var LiteGUI = {
 		$(this).trigger("module_registered",module);
 	},
 
+
+	add: function( litegui_element )
+	{
+		this.content.appendChild( litegui_element.root || litegui_element );
+	},
+
+	getById: function(id)
+	{
+		return document.getElementById(id);
+	},
+
+	createMenubar: function()
+	{
+		this.menubar = new LiteGUI.Menubar("mainmenubar");
+		this.add( this.menubar );
+	},
+
 	setWindowSize: function(w,h)
 	{
 		if(w && h)
 		{
-			$("#wrap").css( {width: w+"px", height: h + "px", "box-shadow":"0 0 4px black"}).removeClass("fullscreen");
+			$(this.root).css( {width: w+"px", height: h + "px", "box-shadow":"0 0 4px black"}).removeClass("fullscreen");
 
 		}
 		else
 		{
-			if( $("#wrap").hasClass("fullscreen") )
+			if( $(this.root).hasClass("fullscreen") )
 				return;
-			$("#wrap").addClass("fullscreen");
-			$("#wrap").css( {width: "100%", height: "100%", "box-shadow":"0 0 0"});
+			$(this.root).addClass("fullscreen");
+			$(this.root).css( {width: "100%", height: "100%", "box-shadow":"0 0 0"});
 		}
 		$(LiteGUI).trigger("resized");
 	},
@@ -143,7 +230,6 @@ var LiteGUI = {
 
 	doUndo: function()
 	{
-		//trace("Undo step");
 		if(!this.undo_steps.length) return;
 
 		var step = this.undo_steps.pop();
@@ -333,13 +419,21 @@ var LiteGUI = {
 		addScript();
 	},
 
+	newDiv: function(id, code)
+	{
+		var div = document.createElement("div");
+		div.id = id;
+		div.root = div;
+		if(code !== undefined)
+			div.innerHTML = code;
+		div.add = function(v) { this.appendChild( v.root || v); };
+		return div;
+	},
+
 	//* DIALOGS *******************
 	showModalBackground: function(v)
 	{
-		if(v)
-			$(LiteGUI.modalbg_div).show('fade');
-		else
-			$(LiteGUI.modalbg_div).hide('fade');
+		LiteGUI.modalbg_div.style.display = v ? "block" : "none";
 	},
 
 	showMessage: function(content, options)
@@ -355,6 +449,25 @@ var LiteGUI = {
 		dialog.makeModal('fade');
 		return dialog;
 	},
+
+	popup: function(content,options)
+	{
+		options = options || {};
+
+		options.min_height = 140;
+		if (typeof(content) == "string")
+			content = "<p>" + content + "</p>";
+
+		options.content = content;
+		options.close = 'fade';
+
+		var dialog = new LiteGUI.Dialog("info_message",options);
+		if(!options.noclose)
+			dialog.addButton("Close",{ close: true });
+		dialog.show();
+		return dialog;
+	},
+
 
 	alert: function(content,options)
 	{
@@ -383,13 +496,15 @@ var LiteGUI = {
 		options.className = "alert";
 		options.title = "Confirm";
 		options.width = 280;
-		options.height = 140;
+		//options.height = 100;
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
 
 		content +="<button class='yes-button' style='width:45%; margin-left: 10px'>Yes</button><button class='no-button' style='width:45%'>No</button>";
 		options.noclose = true;
+
 		var dialog = this.showMessage(content,options);
+		dialog.content.style.paddingBottom = "10px";
 		$(dialog.content).find(".yes-button").click(function() {
 			if(callback_yes) callback_yes();
 			dialog.close();
@@ -416,7 +531,7 @@ var LiteGUI = {
 		options.className = "alert";
 		options.title = "Prompt" || options.title;
 		options.width = 280;
-		options.height = 140 + (options.textarea ? 40 : 0);
+		//options.height = 140 + (options.textarea ? 40 : 0);
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
 
@@ -425,7 +540,7 @@ var LiteGUI = {
 		if (options.textarea)
 			textinput = "<textarea class='textfield' style='width:95%'>"+value+"</textarea>";
 
-		content +="<p>"+textinput+"</p><button class='yes-button' style='width:45%; margin-left: 10px'>Accept</button><button class='no-button' style='width:45%'>Cancel</button>";
+		content +="<p>"+textinput+"</p><button class='yes-button' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button class='no-button' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage(content,options);
 		$(dialog.content).find(".yes-button").click(function() {
@@ -458,6 +573,73 @@ var LiteGUI = {
 
 	getUrlVar: function(name) {
 		return LiteGUI.getUrlVars()[name];
+	},
+
+	trigger: function(event_name, element)
+	{
+		var evt = document.createEvent( 'CustomEvent' );
+		evt.initCustomEvent( event_name, true,true,true );
+		if(element.dispatchEvent)
+			element.dispatchEvent(evt);
+		else
+			throw("trigger can only be called in DOMElements");
+	},
+
+	draggable: function(container, dragger)
+	{
+		dragger = dragger || container;
+		dragger.addEventListener("mousedown", inner_mouse);
+		dragger.style.cursor = "move";
+		var prev_x = 0;
+		var prev_y = 0;
+
+		var rect = container.getClientRects()[0];
+		var x = rect ? rect.left : 0;
+		var y = rect ? rect.top : 0;
+
+		container.style.position = "absolute";
+		container.style.left = x + "px";
+		container.style.top = y + "px";
+
+		function inner_mouse(e)
+		{
+			if(e.type == "mousedown")
+			{
+				if(!rect)
+				{
+					rect = container.getClientRects()[0];
+					x = rect ? rect.left : 0;
+					y = rect ? rect.top : 0;
+				}
+
+				prev_x = e.clientX;
+				prev_y = e.clientY;
+				document.addEventListener("mousemove",inner_mouse);
+				document.addEventListener("mouseup",inner_mouse);
+				e.stopPropagation();
+				e.preventDefault();
+				return false;
+			}
+
+			if(e.type == "mouseup")
+			{
+				document.removeEventListener("mousemove",inner_mouse);
+				document.removeEventListener("mouseup",inner_mouse);
+				return;
+			}
+
+			if(e.type == "mousemove")
+			{
+				var deltax = e.clientX - prev_x;
+				var deltay = e.clientY - prev_y;
+				prev_x = e.clientX;
+				prev_y = e.clientY;
+				x += deltax;
+				y += deltay;
+				container.style.left = x + "px";
+				container.style.top = y + "px";
+			}
+		}
 	}
 };
 
@@ -494,8 +676,359 @@ function purgeElement(d, skip) {
 	*/
 }
 
+//useful functions
+
+//from stackoverflow http://stackoverflow.com/questions/1354064/how-to-convert-characters-to-html-entities-using-plain-javascript
+
+if(typeof escapeHtmlEntities == 'undefined') {
+        escapeHtmlEntities = function (text) {
+            return text.replace(/[\u00A0-\u2666<>\&]/g, function(c) {
+                return '&' + 
+                (escapeHtmlEntities.entityTable[c.charCodeAt(0)] || '#'+c.charCodeAt(0)) + ';';
+            });
+        };
+
+        // all HTML4 entities as defined here: http://www.w3.org/TR/html4/sgml/entities.html
+        // added: amp, lt, gt, quot and apos
+        escapeHtmlEntities.entityTable = {
+            34 : 'quot', 
+            38 : 'amp', 
+            39 : 'apos', 
+            60 : 'lt', 
+            62 : 'gt', 
+            160 : 'nbsp', 
+            161 : 'iexcl', 
+            162 : 'cent', 
+            163 : 'pound', 
+            164 : 'curren', 
+            165 : 'yen', 
+            166 : 'brvbar', 
+            167 : 'sect', 
+            168 : 'uml', 
+            169 : 'copy', 
+            170 : 'ordf', 
+            171 : 'laquo', 
+            172 : 'not', 
+            173 : 'shy', 
+            174 : 'reg', 
+            175 : 'macr', 
+            176 : 'deg', 
+            177 : 'plusmn', 
+            178 : 'sup2', 
+            179 : 'sup3', 
+            180 : 'acute', 
+            181 : 'micro', 
+            182 : 'para', 
+            183 : 'middot', 
+            184 : 'cedil', 
+            185 : 'sup1', 
+            186 : 'ordm', 
+            187 : 'raquo', 
+            188 : 'frac14', 
+            189 : 'frac12', 
+            190 : 'frac34', 
+            191 : 'iquest', 
+            192 : 'Agrave', 
+            193 : 'Aacute', 
+            194 : 'Acirc', 
+            195 : 'Atilde', 
+            196 : 'Auml', 
+            197 : 'Aring', 
+            198 : 'AElig', 
+            199 : 'Ccedil', 
+            200 : 'Egrave', 
+            201 : 'Eacute', 
+            202 : 'Ecirc', 
+            203 : 'Euml', 
+            204 : 'Igrave', 
+            205 : 'Iacute', 
+            206 : 'Icirc', 
+            207 : 'Iuml', 
+            208 : 'ETH', 
+            209 : 'Ntilde', 
+            210 : 'Ograve', 
+            211 : 'Oacute', 
+            212 : 'Ocirc', 
+            213 : 'Otilde', 
+            214 : 'Ouml', 
+            215 : 'times', 
+            216 : 'Oslash', 
+            217 : 'Ugrave', 
+            218 : 'Uacute', 
+            219 : 'Ucirc', 
+            220 : 'Uuml', 
+            221 : 'Yacute', 
+            222 : 'THORN', 
+            223 : 'szlig', 
+            224 : 'agrave', 
+            225 : 'aacute', 
+            226 : 'acirc', 
+            227 : 'atilde', 
+            228 : 'auml', 
+            229 : 'aring', 
+            230 : 'aelig', 
+            231 : 'ccedil', 
+            232 : 'egrave', 
+            233 : 'eacute', 
+            234 : 'ecirc', 
+            235 : 'euml', 
+            236 : 'igrave', 
+            237 : 'iacute', 
+            238 : 'icirc', 
+            239 : 'iuml', 
+            240 : 'eth', 
+            241 : 'ntilde', 
+            242 : 'ograve', 
+            243 : 'oacute', 
+            244 : 'ocirc', 
+            245 : 'otilde', 
+            246 : 'ouml', 
+            247 : 'divide', 
+            248 : 'oslash', 
+            249 : 'ugrave', 
+            250 : 'uacute', 
+            251 : 'ucirc', 
+            252 : 'uuml', 
+            253 : 'yacute', 
+            254 : 'thorn', 
+            255 : 'yuml', 
+            402 : 'fnof', 
+            913 : 'Alpha', 
+            914 : 'Beta', 
+            915 : 'Gamma', 
+            916 : 'Delta', 
+            917 : 'Epsilon', 
+            918 : 'Zeta', 
+            919 : 'Eta', 
+            920 : 'Theta', 
+            921 : 'Iota', 
+            922 : 'Kappa', 
+            923 : 'Lambda', 
+            924 : 'Mu', 
+            925 : 'Nu', 
+            926 : 'Xi', 
+            927 : 'Omicron', 
+            928 : 'Pi', 
+            929 : 'Rho', 
+            931 : 'Sigma', 
+            932 : 'Tau', 
+            933 : 'Upsilon', 
+            934 : 'Phi', 
+            935 : 'Chi', 
+            936 : 'Psi', 
+            937 : 'Omega', 
+            945 : 'alpha', 
+            946 : 'beta', 
+            947 : 'gamma', 
+            948 : 'delta', 
+            949 : 'epsilon', 
+            950 : 'zeta', 
+            951 : 'eta', 
+            952 : 'theta', 
+            953 : 'iota', 
+            954 : 'kappa', 
+            955 : 'lambda', 
+            956 : 'mu', 
+            957 : 'nu', 
+            958 : 'xi', 
+            959 : 'omicron', 
+            960 : 'pi', 
+            961 : 'rho', 
+            962 : 'sigmaf', 
+            963 : 'sigma', 
+            964 : 'tau', 
+            965 : 'upsilon', 
+            966 : 'phi', 
+            967 : 'chi', 
+            968 : 'psi', 
+            969 : 'omega', 
+            977 : 'thetasym', 
+            978 : 'upsih', 
+            982 : 'piv', 
+            8226 : 'bull', 
+            8230 : 'hellip', 
+            8242 : 'prime', 
+            8243 : 'Prime', 
+            8254 : 'oline', 
+            8260 : 'frasl', 
+            8472 : 'weierp', 
+            8465 : 'image', 
+            8476 : 'real', 
+            8482 : 'trade', 
+            8501 : 'alefsym', 
+            8592 : 'larr', 
+            8593 : 'uarr', 
+            8594 : 'rarr', 
+            8595 : 'darr', 
+            8596 : 'harr', 
+            8629 : 'crarr', 
+            8656 : 'lArr', 
+            8657 : 'uArr', 
+            8658 : 'rArr', 
+            8659 : 'dArr', 
+            8660 : 'hArr', 
+            8704 : 'forall', 
+            8706 : 'part', 
+            8707 : 'exist', 
+            8709 : 'empty', 
+            8711 : 'nabla', 
+            8712 : 'isin', 
+            8713 : 'notin', 
+            8715 : 'ni', 
+            8719 : 'prod', 
+            8721 : 'sum', 
+            8722 : 'minus', 
+            8727 : 'lowast', 
+            8730 : 'radic', 
+            8733 : 'prop', 
+            8734 : 'infin', 
+            8736 : 'ang', 
+            8743 : 'and', 
+            8744 : 'or', 
+            8745 : 'cap', 
+            8746 : 'cup', 
+            8747 : 'int', 
+            8756 : 'there4', 
+            8764 : 'sim', 
+            8773 : 'cong', 
+            8776 : 'asymp', 
+            8800 : 'ne', 
+            8801 : 'equiv', 
+            8804 : 'le', 
+            8805 : 'ge', 
+            8834 : 'sub', 
+            8835 : 'sup', 
+            8836 : 'nsub', 
+            8838 : 'sube', 
+            8839 : 'supe', 
+            8853 : 'oplus', 
+            8855 : 'otimes', 
+            8869 : 'perp', 
+            8901 : 'sdot', 
+            8968 : 'lceil', 
+            8969 : 'rceil', 
+            8970 : 'lfloor', 
+            8971 : 'rfloor', 
+            9001 : 'lang', 
+            9002 : 'rang', 
+            9674 : 'loz', 
+            9824 : 'spades', 
+            9827 : 'clubs', 
+            9829 : 'hearts', 
+            9830 : 'diams', 
+            338 : 'OElig', 
+            339 : 'oelig', 
+            352 : 'Scaron', 
+            353 : 'scaron', 
+            376 : 'Yuml', 
+            710 : 'circ', 
+            732 : 'tilde', 
+            8194 : 'ensp', 
+            8195 : 'emsp', 
+            8201 : 'thinsp', 
+            8204 : 'zwnj', 
+            8205 : 'zwj', 
+            8206 : 'lrm', 
+            8207 : 'rlm', 
+            8211 : 'ndash', 
+            8212 : 'mdash', 
+            8216 : 'lsquo', 
+            8217 : 'rsquo', 
+            8218 : 'sbquo', 
+            8220 : 'ldquo', 
+            8221 : 'rdquo', 
+            8222 : 'bdquo', 
+            8224 : 'dagger', 
+            8225 : 'Dagger', 
+            8240 : 'permil', 
+            8249 : 'lsaquo', 
+            8250 : 'rsaquo', 
+            8364 : 'euro'
+        };
+    }
+
+function beautifyCode(code, reserved)
+{
+	reserved = reserved || ["abstract", "else", "instanceof", "super", "boolean", "enum", "int", "switch", "break", "export", "interface", "synchronized", "byte", "extends", "let", "this", "case", "false", "long", "throw", "catch", "final", "native", "throws", "char", "finally", "new", "transient", "class", "float", "null", "true", "const", "for", "package", "try", "continue", "function", "private", "typeof", "debugger", "goto", "protected", "var", "default", "if", "public", "void", "delete", "implements", "return", "volatile", "do", "import", "short", "while", "double", "in", "static", "with"];
+
+	//reserved words
+	code = code.replace(/(\w+)/g, function(v) {
+		if(reserved.indexOf(v) != -1)
+			return "<span class='rsv'>" + v + "</span>";
+		return v;
+	});
+
+	//numbers
+	code = code.replace(/([0-9]+)/g, function(v) {
+		return "<span class='num'>" + v + "</span>";
+	});
+
+	//obj.method
+	code = code.replace(/(\w+\.\w+)/g, function(v) {
+		var t = v.split(".");
+		return "<span class='obj'>" + t[0] + "</span>.<span class='prop'>" + t[1] + "</span>";
+	});
+
+	//function
+	code = code.replace(/(\w+)\(/g, function(v) {
+		return "<span class='prop'>" + v.substr(0, v.length - 1) + "</span>(";
+	});
+
+	//strings
+	code = code.replace(/(\"(\\.|[^\"])*\")/g, function(v) {
+		return "<span class='str'>" + v + "</span>";
+	});
+
+	//comments
+	code = code.replace(/(\/\/[a-zA-Z0-9\?\!\(\)_ ]*)/g, function(v) {
+		return "<span class='cmnt'>" + v + "</span>";
+	});
+
+
+	return code;
+}
 //enclose in a scope
 (function(){
+
+
+	function Button(value,options)
+	{
+		options = options || {};
+
+		if(typeof(options) === "function")
+			options = { callback: options };
+
+		var that = this;
+		var element = document.createElement("div");
+		element.className = "litegui button";
+
+		this.root = element;
+		var button = document.createElement("button");
+		this.content = button;
+		element.appendChild(button);
+
+		button.innerHTML = value;		
+		button.addEventListener("click", function(e) { 
+			that.click();
+		});
+
+		this.click = function()
+		{
+			if(options.callback)
+				options.callback.call(that);
+		}
+	}
+
+	LiteGUI.Button = Button;
+
+	/**
+	* SearchBox 
+	*
+	* @class SearchBox
+	* @constructor
+	* @param {*} value
+	* @param {Object} options
+	*/
 
 	function SearchBox(value, options)
 	{
@@ -521,7 +1054,12 @@ function purgeElement(d, skip) {
 	LiteGUI.SearchBox = SearchBox;
 
 	/****************** AREA **************/
-	/* Areas can be split several times horizontally or vertically to fit different colums or rows */
+	/**
+	* Areas can be split several times horizontally or vertically to fit different colums or rows
+	*
+	* @class Area
+	* @constructor
+	*/
 	function Area(id, options)
 	{
 		options = options || {};
@@ -531,6 +1069,9 @@ function purgeElement(d, skip) {
 		if(id) element.id = id;
 		this.root = element;
 		this.root.litearea = this; //dbl link
+		element.style.width = options.width || "100%";
+		element.style.height = options.height || "100%";
+
 		this.options = options;
 
 		var that = this;
@@ -539,19 +1080,19 @@ function purgeElement(d, skip) {
 
 		this._computed_size = [ $(this.root).width(), $(this.root).height() ];
 
-		var element = document.createElement("div");
+		var content = document.createElement("div");
 		if(options.content_id)
-			element.id = options.content_id;
-		element.className = "liteareacontent";
-		element.style.width = "100%";
-		element.style.height = "100%";
-		this.root.appendChild(element);
-		this.content = element;
+			content.id = options.content_id;
+		content.className = "liteareacontent";
+		content.style.width = "100%";
+		content.style.height = "100%";
+		this.root.appendChild(content);
+		this.content = content;
 
 		this.split_direction = "none";
 		this.sections = [];
 
-		if(options.main)
+		if(options.autoresize)
 			$(LiteGUI).bind("resized", function() { 
 				that.resize(); 
 			});
@@ -572,6 +1113,29 @@ function purgeElement(d, skip) {
 		if( e && this._computed_size && computed_size[0] == this._computed_size[0] && computed_size[1] == this._computed_size[1])
 			return;
 
+		this.sendResizeEvent(e);
+	}
+
+	Area.prototype.adjustHeight = function()
+	{
+		if(!this.root.parentNode)
+		{
+			console.error("Cannot adjust height of LiteGUI.Area without parent");
+			return;
+		}
+
+		//check parent height
+		var h = this.root.parentNode.offsetHeight;
+
+		//check position
+		var y = this.root.getClientRects()[0].top;
+
+		//adjust height
+		this.root.style.height = "calc( 100% - " + y + "px )";
+	}
+
+	Area.prototype.sendResizeEvent = function(e)
+	{
 		if(this.sections.length)
 			for(var i in this.sections)
 			{
@@ -595,6 +1159,9 @@ function purgeElement(d, skip) {
 					$(element).trigger("resize");
 			}
 		}
+
+		if( this.onresize )
+			this.onresize();
 	}
 
 	Area.prototype.split = function(direction, sizes, editable)
@@ -610,14 +1177,15 @@ function purgeElement(d, skip) {
 		area2.root.style.display = "inline-block";
 
 		var splitinfo = "";
-		var split_root = null;
+		var splitbar = null;
 		var dynamic_section = null;
 		if(editable)
 		{
 			splitinfo = " - 5px";
-			split_root = document.createElement("div");
-			split_root.className = "litesplitbar " + direction;
-			$(split_root).bind("mousedown", inner_mousedown);
+			splitbar = document.createElement("div");
+			splitbar.className = "litesplitbar " + direction;
+			this.splitbar = splitbar;
+			splitbar.addEventListener("mousedown", inner_mousedown);
 		}
 
 		sizes = sizes || ["50%",null];
@@ -629,28 +1197,42 @@ function purgeElement(d, skip) {
 
 			if(sizes[0] == null)
 			{
-				area1.root.style.height = "-moz-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.height = "-webkit-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.height = "calc( 100% - " + sizes[1] + splitinfo + " )";
-				area2.root.style.height = sizes[1];
-				area2.size = sizes[1];
+				var h = sizes[1];
+				if(typeof(h) == "number")
+					h = sizes[1] + "px";
+
+				area1.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
+				area1.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
+				area1.root.style.height = "calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = h;
+				area2.size = h;
 				dynamic_section = area1;
 			}
 			else if(sizes[1] == null)
 			{
-				area1.root.style.height = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.height = "-moz-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.height = "-webkit-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.height = "calc( 100% - " + sizes[0] + splitinfo + " )";
+				var h = sizes[0];
+				if(typeof(h) == "number")
+					h = sizes[0] + "px";
+
+				area1.root.style.height = h;
+				area1.size = h;
+				area2.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = "calc( 100% - " + h + splitinfo + " )";
 				dynamic_section = area2;
 			}
 			else
 			{
-				area1.root.style.height = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.height = sizes[1];
-				area2.size = sizes[1];
+				var h1 = sizes[0];
+				if(typeof(h1) == "number")
+					h1 = sizes[0] + "px";
+				var h2 = sizes[1];
+				if(typeof(h2) == "number")
+					h2 = sizes[1] + "px";
+				area1.root.style.height = h1;
+				area1.size = h1;
+				area2.root.style.height = h2;
+				area2.size = h2;
 			}
 		}
 		else //horizontal
@@ -660,28 +1242,42 @@ function purgeElement(d, skip) {
 
 			if(sizes[0] == null)
 			{
-				area1.root.style.width = "-moz-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.width = "-webkit-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.width = "calc( 100% - " + sizes[1] + splitinfo + " )";
-				area2.root.style.width = sizes[1];
+				var w = sizes[1];
+				if(typeof(w) == "number")
+					w = sizes[1] + "px";
+				area1.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
+				area1.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
+				area1.root.style.width = "calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = w;
 				area2.size = sizes[1];
 				dynamic_section = area1;
 			}
 			else if(sizes[1] == null)
 			{
-				area1.root.style.width = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.width = "-moz-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.width = "-webkit-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.width = "calc( 100% - " + sizes[0] + splitinfo + " )";
+				var w = sizes[0];
+				if(typeof(w) == "number")
+					w = sizes[0] + "px";
+
+				area1.root.style.width = w;
+				area1.size = w;
+				area2.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = "calc( 100% - " + w + splitinfo + " )";
 				dynamic_section = area2;
 			}
 			else
 			{
-				area1.root.style.width = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.width = sizes[1];
-				area2.size = sizes[1];
+				var w1 = sizes[0];
+				if(typeof(w1) == "number")
+					w1 = sizes[0] + "px";
+				var w2 = sizes[1];
+				if(typeof(w2) == "number")
+					w2 = sizes[1] + "px";
+
+				area1.root.style.width = w1;
+				area1.size = w1;
+				area2.root.style.width = w2;
+				area2.size = w2;
 			}
 		}
 
@@ -690,8 +1286,8 @@ function purgeElement(d, skip) {
 		area1.content = this.content;
 
 		this.root.appendChild( area1.root );
-		if(split_root)
-			this.root.appendChild( split_root );
+		if(splitbar)
+			this.root.appendChild( splitbar );
 		this.root.appendChild( area2.root );
 
 		this.sections = [area1, area2];
@@ -703,11 +1299,10 @@ function purgeElement(d, skip) {
 		var last_pos = [0,0];
 		function inner_mousedown(e)
 		{
-			$(document).bind("mousemove",inner_mousemove);
-			$(document).bind("mouseup",inner_mouseup);
+			document.addEventListener("mousemove",inner_mousemove);
+			document.addEventListener("mouseup",inner_mouseup);
 			last_pos[0] = e.pageX;
 			last_pos[1] = e.pageY;
-			trace("Dragging");
 			e.stopPropagation();
 			e.preventDefault();
 		}
@@ -722,7 +1317,7 @@ function purgeElement(d, skip) {
 			else if(direction == "vertical")
 			{
 				if (last_pos[1] != e.pageY)
-					that.moveSplit(last_pos[1] - e.pageY);
+					that.moveSplit(e.pageY - last_pos[1]);
 			}
 
 			last_pos[0] = e.pageX;
@@ -735,11 +1330,74 @@ function purgeElement(d, skip) {
 
 		function inner_mouseup(e)
 		{
-			trace("Stop Dragging");
-			$(document).unbind("mousemove",inner_mousemove);
-			$(document).unbind("mouseup",inner_mouseup);
+			document.removeEventListener("mousemove",inner_mousemove);
+			document.removeEventListener("mouseup",inner_mouseup);
 			that.resize();
 		}
+	}
+
+	Area.prototype.hide = function()
+	{
+		this.root.style.display = "none";
+	}
+
+	Area.prototype.show = function()
+	{
+		this.root.style.display = "block";
+	}
+
+	Area.prototype.showSection = function(num)
+	{
+		var section = this.sections[num];
+		var size = 0;
+		
+		if(this.direction == "horizontal")
+			size = section.root.style.width;
+		else
+			size = section.root.style.height;
+
+		for(var i in this.sections)
+		{
+			var section = this.sections[i];
+
+			if(i == num)
+				section.root.style.display = "inline-block";
+			else
+			{
+				if(this.direction == "horizontal")
+					section.root.style.width = "calc( 100% - " + size + " - 5px)";
+				else
+					section.root.style.height = "calc( 100% - " + size + " - 5px)";
+			}
+		}
+
+		if(this.splitbar)
+			this.splitbar.style.display = "inline-block";
+
+		this.sendResizeEvent();
+	}
+
+	Area.prototype.hideSection = function(num)
+	{
+		for(var i in this.sections)
+		{
+			var section = this.sections[i];
+
+			if(i == num)
+				section.root.style.display = "none";
+			else
+			{
+				if(this.direction == "horizontal")
+					section.root.style.width = "100%";
+				else
+					section.root.style.height = "100%";
+			}
+		}
+
+		if(this.splitbar)
+			this.splitbar.style.display = "none";
+
+		this.sendResizeEvent();
 	}
 
 	Area.prototype.moveSplit = function(delta)
@@ -829,16 +1487,21 @@ function purgeElement(d, skip) {
 		this.resize();
 	}
 
-	Area.prototype.hideSection = function(section)
+	Area.prototype.add = function(v)
 	{
-		if(this.sections.length == 0) throw "not splitted";
-
-		
+		this.content.appendChild( v.root || v );
 	}
 
 	LiteGUI.Area = Area;
 
 	/***************** SPLIT ******************/
+
+	/**
+	* Split 
+	*
+	* @class Split
+	* @constructor
+	*/
 	function Split(id, sections, options)
 	{
 		options = options || {};
@@ -893,7 +1556,13 @@ function purgeElement(d, skip) {
 
 
 
-	/******* LiteContextualMenu *******************/
+	/**
+	* ContextualMenu 
+	*
+	* @class ContextualMenu
+	* @constructor
+	* @param {Array} values
+	*/
 
 	function ContextualMenu(values,options)
 	{
@@ -1005,8 +1674,15 @@ function purgeElement(d, skip) {
 
 	LiteGUI.createLitebox = createLitebox;
 
-	/******* LiteList ***********************/
-
+	/**
+	* List 
+	*
+	* @class List
+	* @constructor
+	* @param {String} id
+	* @param {Array} values
+	* @param {Object} options
+	*/
 	function List(id,items,options)
 	{
 		options = options || {};
@@ -1060,8 +1736,14 @@ function purgeElement(d, skip) {
 
 	LiteGUI.List = List;
 
-	/* SLIDER *************/
-
+	/**
+	* Slider 
+	*
+	* @class Slider
+	* @constructor
+	* @param {Number} value
+	* @param {Object} options
+	*/
 	function Slider(value, options)
 	{
 		options = options || {};
@@ -1137,6 +1819,14 @@ function purgeElement(d, skip) {
 
 	LiteGUI.Slider = Slider;
 
+	/**
+	* LineEditor 
+	*
+	* @class LineEditor
+	* @constructor
+	* @param {Number} value
+	* @param {Object} options
+	*/
 
 	function LineEditor(value, options)
 	{
@@ -1512,7 +2202,7 @@ function purgeElement(d, skip) {
 				}
 				else //last token
 				{
-					trace("Warning: Adding menu that already exists: " + path );
+					console.warn("Warning: Adding menu that already exists: " + path );
 					break;
 				}
 			}
@@ -1763,11 +2453,12 @@ function purgeElement(d, skip) {
 	{
 		options = options || {};
 
-		var element = document.createElement("DIV");
-		if(id) element.id = id;
-		element.data = this;
-		element.className = "litetabs";
-		this.root = element;
+		var root = document.createElement("DIV");
+		if(id) 
+			root.id = id;
+		root.data = this;
+		root.className = "litetabs";
+		this.root = root;
 
 		this.current_tab = null; //current tab array [name, tab, content]
 
@@ -1785,6 +2476,7 @@ function purgeElement(d, skip) {
 		this.list = list;
 		this.root.appendChild(this.list);
 
+		this.tabs = {};
 		this.contents = {};
 		this.selected = null;
 
@@ -1795,6 +2487,16 @@ function purgeElement(d, skip) {
 	}
 
 	Tabs.tabs_height = "30px";
+
+	Tabs.prototype.show = function()
+	{
+		this.root.style.display = "block";
+	}
+
+	Tabs.prototype.hide = function()
+	{
+		this.root.style.display = "none";
+	}
 
 	Tabs.prototype.getCurrentTab = function()
 	{
@@ -1809,12 +2511,18 @@ function purgeElement(d, skip) {
 			$(parent).append(this.root);
 	}
 
-	Tabs.prototype.get = function(name)
+	Tabs.prototype.getTab = function(name)
+	{
+		return this.tabs[name];
+	}
+
+	Tabs.prototype.getTabContent = function(name)
 	{
 		return this.contents[name];
 	}
 
-	Tabs.prototype.add = function(name,options)
+	//add something
+	Tabs.prototype.addTab = function(name,options)
 	{
 		options = options || {};
 		var that = this;
@@ -1825,14 +2533,13 @@ function purgeElement(d, skip) {
 		//if(options.selected) element.className += " selected";
 		element.data = name;
 		element.innerHTML = name;
-
-		$(this.list).append(element);
+		this.list.appendChild(element);
 
 		//the content of the tab
 		var content = document.createElement("div");
 		if(options.id)
 			content.id = options.id;
-		content.className = "wtabcontent " + "wtabcontent-" + name + " " + (options.className || "");
+		content.className = "wtabcontent " + "wtabcontent-" + name.replace(/ /gi,"_") + " " + (options.className || "");
 		content.data = name;
 		content.style.display = "none";
 		if(options.height)
@@ -1856,12 +2563,13 @@ function purgeElement(d, skip) {
 				content.appendChild(options.content);
 		}
 
-		$(this.root).append(content);
+		this.root.appendChild(content);
 		this.contents[ name ] = content;
 
 		//when clicked
-		$(element).click(function(e) {
-			if($(this).hasClass("selected")) return;
+		element.addEventListener("click", function(e) {
+			if( this.classList.contains("selected") ) 
+				return;
 
 			var tabname = this.data;
 			var tab = null;
@@ -1876,7 +2584,7 @@ function purgeElement(d, skip) {
 					$(that.contents[i]).hide();
 
 			$(that.list).find("li.wtab").removeClass("selected");
-			$(this).addClass("selected");
+			this.classList.add("selected");
 			if( that.current_tab && 
 				that.current_tab[0] != tabname && 
 				that.current_tab[2] && 
@@ -1892,20 +2600,53 @@ function purgeElement(d, skip) {
 		this.list.appendChild(element);
 
 		if (options.selected == true || this.selected == null)
-			this.select(name);
+			this.selectTab(name);
 
-		return {tab: element, content: content};
+		this.tabs[name] = {tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		return this.tabs[name];
 	}
 
-	Tabs.prototype.select = function(name)
+	Tabs.prototype.selectTab = function(name)
 	{
-		var tabs = $(this.list).find("li.wtab");
+		var tabs = this.list.querySelectorAll("li.wtab");
 		for(var i = 0; i < tabs.length; i++)
 			if( name == tabs[i].data)
 			{
 				$(tabs[i]).click();
 				break;
 			}
+	}
+
+	Tabs.prototype.setTabVisibility = function(name, v)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		tab.tab.style.display = v ? "none" : "inline-block";
+		tab.content.style.display = v ? "none" : "inline-block";
+	}
+
+	Tabs.prototype.removeTab = function(name)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		tab.tab.parentNode.removeChild( tab.tab );
+		tab.content.parentNode.removeChild( tab.content );
+		delete this.tabs[name];
+		delete this.contents[name];
+	}
+
+	Tabs.prototype.hideTab = function(name)
+	{
+		this.setTabVisibility(name, false);
+	}
+
+	Tabs.prototype.showTab = function(name)
+	{
+		this.setTabVisibility(name, true);
 	}
 
 	LiteGUI.Tabs = Tabs;
@@ -1946,7 +2687,6 @@ function purgeElement(d, skip) {
 		}
 		
 		$(input).bind("keydown",function(e) {
-			//trace(e.keyCode);
 			if(e.keyCode == 38)
 				inner_inc(1,e);
 			else if(e.keyCode == 40)
@@ -2040,11 +2780,13 @@ function purgeElement(d, skip) {
 (function(){
 
 	/*********** LiteTree *****************************/
-	function Tree(id,data,options)
+	function Tree(id, data, options)
 	{
 		var root = document.createElement("div");
 		this.root = root;
-		root.id = id;
+		if(id)
+			root.id = id;
+
 		root.className = "litetree";
 		this.tree = data;
 		var that = this;
@@ -2177,7 +2919,6 @@ function purgeElement(d, skip) {
 
 		//starts dragging this element
 		draggable_element.addEventListener("dragstart", function(ev) {
-			//trace("DRAGSTART!");
 			//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
 			ev.dataTransfer.setData("node-id", this.parentNode.id);
 		});
@@ -2212,7 +2953,6 @@ function purgeElement(d, skip) {
 			ev.preventDefault();
 			var node_id = ev.dataTransfer.getData("node-id");
 
-			//trace("DROP! \"" + node_id + "\"");
 			//var data = ev.dataTransfer.getData("Text");
 			if(node_id != "")
 			{
@@ -2223,7 +2963,7 @@ function purgeElement(d, skip) {
 				}
 				catch (err)
 				{
-					trace("Error: " + err );
+					console.error("Error: " + err );
 				}
 			}
 			else
@@ -2340,7 +3080,6 @@ function purgeElement(d, skip) {
 			parent.list.appendChild( element );
 		else
 		{
-			//trace(parent.list.childNodes);
 			parent.list.insertBefore(element, parent.list.childNodes[position]);
 		}
 
@@ -2499,13 +3238,67 @@ function purgeElement(d, skip) {
 	function Panel(id, options)
 	{
 		options = options || {};
-		this.width = options.width || 200;
-		this.height = options.height || 100;
+		this._ctor(id,options);
+	}
+
+	Panel.title_height = "20px";
+
+	Panel.prototype._ctor = function(id, options)
+	{
+		this.content = options.content || "";
+
+		var root = this.root = document.createElement("div");
+		if(id)
+			root.id = id;
+
+		root.className = "litepanel " + (options.className || "");
+		root.data = this;
+
+		var code = "";
+		if(options.title)
+			code += "<div class='panel-header'>"+options.title+"</div>";
+		code += "<div class='content'>"+this.content+"</div>";
+		code += "<div class='panel-footer'></div>";
+		root.innerHTML = code;
+
+		if(options.title)
+			this.header = this.root.querySelector(".panel-header");
+
+		this.content = this.root.querySelector(".content");
+		this.footer = this.root.querySelector(".panel-footer");
+
+		//if(options.scroll == false)	this.content.style.overflow = "hidden";
+		if(options.scroll == true)	this.content.style.overflow = "auto";
+	}
+
+	Panel.prototype.add = function( litegui_item )
+	{
+		this.content.appendChild( litegui_item.root );
+	}
+
+	/****************** DIALOG **********************/
+	function Dialog(id, options)
+	{
+		this._ctor( id, options );
+		//this.makeDialog(options);
+	}
+
+	Dialog.MINIMIZED_WIDTH = 200;
+	Dialog.title_height = "20px";
+
+	Dialog.prototype._ctor = function(id, options)
+	{
+		this.width = options.width;
+		this.height = options.height;
+		this.minWidth = options.minWidth || 150;
+		this.minHeight = options.minHeight || 100;
 		this.content = options.content || "";
 
 		var panel = document.createElement("div");
-		panel.id = id;
-		panel.className = "litepanel " + (options.className || "");
+		if(id)
+			panel.id = id;
+
+		panel.className = "litedialog " + (options.className || "");
 		panel.data = this;
 
 		var code = "";
@@ -2548,29 +3341,46 @@ function purgeElement(d, skip) {
 		this.makeDialog(options);
 	}
 
-	Panel.MINIMIZED_WIDTH = 200;
-	Panel.title_height = "20px";
+	Dialog.prototype.add = function( litegui_item )
+	{
+		this.content.appendChild( litegui_item.root );
+	}
 
-	Panel.prototype.makeDialog = function(options)
+	Dialog.prototype.makeDialog = function(options)
 	{
 		options = options || {};
 
 		var panel = this.root;
 		panel.style.position = "absolute";
-		panel.style.display = "none";
-		panel.style.width = this.width + "px";
-		if(this.height)
-			panel.style.height = this.height + "px";
+		//panel.style.display = "none";
+
+		panel.style.minWidth = this.minWidth + "px";
+		panel.style.minHeight = this.minHeight + "px";
+
+		if(this.width)
+			panel.style.width = this.width + "px";
 
 		if(this.height)
-			$(panel).find(".content").css({height: this.height - 24});
+		{
+			if(typeof(this.height) == "number")
+			{
+				panel.style.height = this.height + "px";
+			}
+			else
+			{
+				if(this.height.indexOf("%") != -1)
+					panel.style.height = this.height;
+			}
+
+			this.content.style.height = "calc( " + this.height + " - 24px )";
+		}
 
 		panel.style.boxShadow = "0 0 3px black";
 
 		if(options.draggable)
 		{
 			this.draggable = true;
-			$(panel).draggable({handle:".panel-header"});
+			LiteGUI.draggable( panel, panel.querySelector(".panel-header") );
 		}
 
 		if(options.resizable)
@@ -2578,13 +3388,18 @@ function purgeElement(d, skip) {
 
 		//$(panel).bind("click",function(){});
 
-		var parent = options.parent || LiteGUI.root_container;
-		$(parent).append(this.root);
+		var parent = null;
+		if(options.parent)
+			parent = typeof(options.parent) == "string" ? document.querySelector(options.parent) : options.parent;
 
+		if(!parent)
+			parent = LiteGUI.root;
+
+		parent.appendChild( this.root );
 		this.center();
 	}
 
-	Panel.prototype.setResizable = function()
+	Dialog.prototype.setResizable = function()
 	{
 		if(this.resizable) return;
 
@@ -2628,10 +3443,13 @@ function purgeElement(d, skip) {
 		}
 	}
 
-	Panel.prototype.dockTo = function(parent, dock_type)
+	Dialog.prototype.dockTo = function(parent, dock_type)
 	{
 		if(!parent) return;
 		var panel = this.root;
+
+		dock_type = dock_type || "full";
+		parent = parent.content || parent;
 
 		panel.style.top = 0;
 		panel.style.left = 0;
@@ -2691,7 +3509,7 @@ function purgeElement(d, skip) {
 			parent.appendChild(panel); 
 	}
 
-	Panel.prototype.addButton = function(name,options)
+	Dialog.prototype.addButton = function(name,options)
 	{
 		var that = this;
 		var button = document.createElement("button");
@@ -2718,19 +3536,17 @@ function purgeElement(d, skip) {
 
 		if(!v)
 		{
-			//trace("Panel closed");
 			$(this.root).remove();
 			return
 		}
 
 		$(this.root).hide('fade',null,function() {
-			//trace("Panel closed");
 			$(this).remove();
 		});
 	}
 	*/	
 
-	Panel.prototype.close = function() {
+	Dialog.prototype.close = function() {
 		$(this.root).remove();
 		$(this).trigger("closed");
 
@@ -2739,22 +3555,20 @@ function purgeElement(d, skip) {
 		if(fade_out == true)
 		{
 			$(this.root).hide('fade',null,function() {
-				//trace("Panel closed");
 				$(that.root).remove();
 			});
 		}
 		else
 		{
-			//trace("Panel closed");
 			$(this.root).remove();
 			return;
 		}
 		*/
 	}
 
-	Panel.minimized = [];
+	Dialog.minimized = [];
 
-	Panel.prototype.minimize = function() {
+	Dialog.prototype.minimize = function() {
 		if(this.minimized) return;
 
 		this.minimized = true;
@@ -2764,32 +3578,32 @@ function purgeElement(d, skip) {
 		$(this.root).draggable({ disabled: true });
 		$(this.root).find(".minimize-button").hide();
 		$(this.root).find(".maximize-button").show();
-		$(this.root).css({width: LiteGUI.Panel.MINIMIZED_WIDTH});
+		$(this.root).css({width: LiteGUI.Dialog.MINIMIZED_WIDTH});
 
 
 		$(this).bind("closed", function() {
-			LiteGUI.Panel.minimized.splice( LiteGUI.Panel.minimized.indexOf( this ), 1);
-			LiteGUI.Panel.arrangeMinimized();
+			LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
+			LiteGUI.Dialog.arrangeMinimized();
 		});
 
-		LiteGUI.Panel.minimized.push( this );
-		LiteGUI.Panel.arrangeMinimized();
+		LiteGUI.Dialog.minimized.push( this );
+		LiteGUI.Dialog.arrangeMinimized();
 
 		$(this).trigger("minimizing");
 	}
 
-	Panel.arrangeMinimized = function()
+	Dialog.arrangeMinimized = function()
 	{
-		for(var i in LiteGUI.Panel.minimized)
+		for(var i in LiteGUI.Dialog.minimized)
 		{
-			var panel = LiteGUI.Panel.minimized[i];
-			var parent = panel.root.parentNode;
+			var dialog = LiteGUI.Dialog.minimized[i];
+			var parent = dialog.root.parentNode;
 			var pos = $(parent).height() - 20;
-			$(panel.root).animate({ left: LiteGUI.Panel.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+			$(panel.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
 		}
 	}
 
-	Panel.prototype.maximize = function() {
+	Dialog.prototype.maximize = function() {
 		if(!this.minimized) return;
 		this.minimized = false;
 
@@ -2799,16 +3613,16 @@ function purgeElement(d, skip) {
 		$(this.root).find(".minimize-button").show();
 		$(this.root).find(".maximize-button").hide();
 
-		LiteGUI.Panel.minimized.splice( LiteGUI.Panel.minimized.indexOf( this ), 1);
-		LiteGUI.Panel.arrangeMinimized();
+		LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
+		LiteGUI.Dialog.arrangeMinimized();
 		$(this).trigger("maximizing");
 	}
 
-	Panel.prototype.makeModal = function()
+	Dialog.prototype.makeModal = function()
 	{
 		LiteGUI.showModalBackground(true);
-		$(LiteGUI.modalbg_div).append( this.root ); //add panel
-		$(this.root).draggable({ disabled: true });
+		LiteGUI.modalbg_div.appendChild( this.root ); //add panel
+		//$(this.root).draggable({ disabled: true });
 		this.show();
 		this.center();
 
@@ -2816,51 +3630,55 @@ function purgeElement(d, skip) {
 
 		function inner(e)
 		{
-			trace("closing");
 			LiteGUI.showModalBackground(false);
 		}
 	}
 
-	Panel.prototype.bringToFront = function()
+	Dialog.prototype.bringToFront = function()
 	{
 		var parent = $(this.root).parent();
 		parent.detach(this.root);
 		parent.attach(this.root);
 	}
 
-	Panel.prototype.show = function(v,callback)
+	Dialog.prototype.show = function(v,callback)
 	{
-		$(this.root).show(v,null,100,callback);
+		if(!this.root.parentNode)
+			LiteGUI.add(this);
+
+		//$(this.root).show(v,null,100,callback);
+		$(this.root).show();
 		$(this).trigger("shown");
 	}
 
-	Panel.prototype.hide = function(v,callback)
+	Dialog.prototype.hide = function(v,callback)
 	{
-		$(this.root).hide(v,null,100,callback);
+		//$(this.root).hide(v,null,100,callback);
+		$(this.root).hide();
 		$(this).trigger("hidden");
 	}
 
-	Panel.prototype.setPosition = function(x,y)
+	Dialog.prototype.setPosition = function(x,y)
 	{
 		this.root.position = "absolute";
 		this.root.style.left = x + "px";
 		this.root.style.top = y + "px";
 	}
 
-	Panel.prototype.setSize = function(w,h)
+	Dialog.prototype.setSize = function(w,h)
 	{
 		this.root.style.width = w + "px";
 		this.root.style.height = h + "px";
 	}
 
-	Panel.prototype.center = function()
+	Dialog.prototype.center = function()
 	{
 		this.root.position = "absolute";
 		this.root.style.left = Math.floor(( $(this.root.parentNode).width() - $(this.root).width() ) * 0.5) + "px";
 		this.root.style.top = Math.floor(( $(this.root.parentNode).height() - $(this.root).height() ) * 0.5) + "px";
 	}
 
-	Panel.prototype.adjustSize = function()
+	Dialog.prototype.adjustSize = function()
 	{
 		this.content.style.height = "auto";
 		var width = $(this.content).width();
@@ -2871,7 +3689,7 @@ function purgeElement(d, skip) {
 
 
 	LiteGUI.Panel = Panel;
-	LiteGUI.Dialog = Panel;
+	LiteGUI.Dialog = Dialog;
 })();
 /* Attributes editor panel 
 	Dependencies: 
@@ -2893,6 +3711,13 @@ jQuery.fn.wclick = function(callback) {
 	$(this[0]).on("wclick",callback);
 };
 
+/**
+* Inspector allows to create a list of widgets easily
+*
+* @class Inspector
+* @constructor
+*/
+
 function Inspector(id,options)
 {
 	options = options || {};
@@ -2901,7 +3726,8 @@ function Inspector(id,options)
 	if(options.one_line)
 		this.root.className += " one-line";
 
-	if(id) this.root.id = id;
+	if(id)
+		this.root.id = id;
 
 	this.values = {};
 	this.sections = [];
@@ -2911,7 +3737,7 @@ function Inspector(id,options)
 	this.tab_index = Math.floor(Math.random() * 10000);
 
 	if(options.name_width)
-		this.widget_name_width = options.name_width;
+		this.name_width = options.name_width;
 
 	if(options.parent) this.appendTo(options.parent);
 	this.widgets_per_row = options.widgets_per_row || 1;
@@ -2961,7 +3787,7 @@ Inspector.prototype.setup = function(info)
 }
 
 //given an instance it shows all the attributes
-Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info) 
+Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example ) 
 {
 	if(!instance) return;
 
@@ -2971,26 +3797,33 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 		attrs = this.collectAttributes(instance);
 
 	var classObject = instance.constructor;
-	if(!attrs_info && classObject.attributes)
-		attrs_info = classObject.attributes;
+	if(!attrs_info_example && classObject.attributes)
+		attrs_info_example = classObject.attributes;
 
-	if(!attrs_info)
-		attrs_info = {};
+	//clone to ensure there is no overlap between widgets reusing the same container
+	var attrs_info = {};
 
+	//add to attrs_info the ones that are not specified 
 	for(var i in attrs)
 	{
-		if(attrs_info[i])
+		if(attrs_info_example && attrs_info_example[i])
+		{
+			//clone
+			attrs_info[i] = inner_clone( attrs_info_example[i] );
 			continue;
+		}
 
 		var v = attrs[i];
 
 		if(classObject["@" + i]) //in class object
 		{
-			var options = {}; 
 			var shared_options = classObject["@" + i];
+			attrs_info[i] = inner_clone( shared_options );
+			/*
 			for(var j in shared_options) //clone, because cannot be shared or errors could appear
 				options[j] = shared_options[j];
-			attrs_info[i] = options;
+				attrs_info[i] = options;
+			*/
 		}
 		else if(instance["@" + i])
 			attrs_info[i] = instance["@" + i];
@@ -3013,6 +3846,14 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 	}
 
 	return this.showAttributes( instance, attrs_info );
+
+	function inner_clone(original, target)
+	{
+		target = target || {};
+		for(var j in original)
+			target[j] = original[j]
+		return target;
+	}
 }
 
 //extract all attributes from an instance (properties that are not null or function starting with alphabetic character)
@@ -3043,6 +3884,7 @@ Inspector.prototype.showAttributes = function(instance, attrs_info )
 		{
 			var o = { instance: instance, name: i, options: options };
 			options.callback = Inspector.assignValue.bind(o);
+
 		}
 		options.instance = instance;
 
@@ -3086,6 +3928,29 @@ Inspector.assignValue = function(value)
 }
 
 
+/*
+Inspector.assignValue = function(value)
+{
+	var instance = this.instance;
+	var current_value = instance[this.name];
+
+	if(current_value == null || value == null)
+		instance[this.name] = value;
+	else if(typeof(current_value) == "number")
+		instance[this.name] = parseFloat(value);
+	else if(typeof(current_value) == "string")
+		instance[this.name] = value;
+	else if(value && value.length && current_value && current_value.length)
+	{
+		for(var i = 0; i < current_value.length; ++i)
+			current_value[i] = value[i];
+	}
+	else
+		instance[this.name] = value;
+}
+*/
+
+
 Inspector.prototype.createWidget = function(name, content, options) 
 {
 	options = options || {};
@@ -3113,9 +3978,9 @@ Inspector.prototype.createWidget = function(name, content, options)
 
 	var namewidth = "";
 	var contentwidth = "";
-	if(this.widget_name_width || options.widget_name_width)
+	if(name != null && (this.name_width || options.name_width))
 	{
-		var w = this.widget_name_width || options.widget_name_width;
+		var w = this.name_width || options.name_width;
 		if(typeof(w) == "number") w = w.toFixed() + "px";
 		namewidth = "style='width: calc(" + w + " - 0px); width: -webkit-calc(" + w + " - 0px); width: -moz-calc(" + w + " - 0px); '"; //hack 
 		contentwidth = "style='width: calc( 100% - " + w + "); width: -webkit-calc(100% - " + w + "); width: -moz-calc( 100% - " + w + "); '";
@@ -3176,6 +4041,14 @@ Inspector.widget_constructors = {
 	separator: 'addSeparator'
 };
 
+
+Inspector.registerWidget = function(name, callback)
+{
+	var func_name = "add" + name.charAt(0).toUpperCase() + name.slice(1);
+	Inspector.prototype[func_name] = callback;
+	Inspector.widget_constructors[name] = func_name;
+}
+
 Inspector.prototype.add = function(type,name,value,options)
 {
 	if(typeof(type) == "object" && arguments.length == 1)
@@ -3187,7 +4060,10 @@ Inspector.prototype.add = function(type,name,value,options)
 	}
 
 	var func = Inspector.widget_constructors[type];
-	if(!func) return;
+	if(!func){
+		console.warn("LiteGUI.Inspector do not have a widget called",type);
+		return;
+	}
 
 	if(typeof(func) == "string")
 		func = Inspector.prototype[func];
@@ -3212,7 +4088,7 @@ Inspector.prototype.set = function(name, value)
 
 Inspector.prototype.addSection = function(name, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
 
 	if(this.current_group)
 		this.endGroup();
@@ -3245,13 +4121,14 @@ Inspector.prototype.addSection = function(name, options)
 
 Inspector.prototype.beginGroup = function(name, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
 
 	if(this.current_group)
 		this.endGroup();
 
 	var element = document.createElement("DIV");
 	element.className = "wgroup";
+	name = name || "";
 	element.innerHTML = "<div class='wgroupheader "+ (options.title ? "wtitle" : "") +"'><span class='wgrouptoggle'>-</span>"+name+"</div>";
 
 	var content = document.createElement("DIV");
@@ -3286,7 +4163,8 @@ Inspector.prototype.endGroup = function(options)
 
 Inspector.prototype.addTitle = function(title,options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	var element = document.createElement("DIV");
 	var code = "<span class='wtitle'><span class='text'>"+title+"</span>";
 	if(options.help)
@@ -3312,7 +4190,8 @@ Inspector.prototype.addSeparator = function()
 
 Inspector.prototype.addString = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -3335,7 +4214,8 @@ Inspector.prototype.addString = function(name,value, options)
 
 Inspector.prototype.addStringButton = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -3360,7 +4240,11 @@ Inspector.prototype.addStringButton = function(name,value, options)
 
 Inspector.prototype.addNumber = function(name, value, options)
 {
-	options = options || { step: 0.1 };
+	options = this.processOptions(options);
+
+	if(!options.step)
+		options.step = 0.1;
+
 	value = value || 0;
 	var that = this;
 	this.values[name] = value;
@@ -3403,7 +4287,10 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 Inspector.prototype.addVector2 = function(name,value, options)
 {
-	options = options || { step: 0.1 };
+	options = this.processOptions(options);
+	if(!options.step)
+		options.step = 0.1;
+
 	value = value || [0,0];
 	var that = this;
 	this.values[name] = value;
@@ -3470,7 +4357,10 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 Inspector.prototype.addVector3 = function(name,value, options)
 {
-	options = options || { step: 0.1 };
+	options = this.processOptions(options);
+	if(!options.step)
+		options.step = 0.1;
+
 	value = value || [0,0,0];
 	var that = this;
 	this.values[name] = value;
@@ -3544,7 +4434,8 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 Inspector.prototype.addTextarea = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -3567,7 +4458,8 @@ Inspector.prototype.addTextarea = function(name,value, options)
 
 Inspector.prototype.addInfo = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var element = null;
 	if(name != null)
@@ -3575,7 +4467,8 @@ Inspector.prototype.addInfo = function(name,value, options)
 	else
 	{
 		element = document.createElement("div");
-		element.className = options.className;
+		if(options.className)
+			element.className = options.className;
 		element.innerHTML = "<span class='winfo'>"+value+"</span>";
 	}
 
@@ -3595,10 +4488,16 @@ Inspector.prototype.addInfo = function(name,value, options)
 
 Inspector.prototype.addSlider = function(name, value, options)
 {
-	options = options || {};
-	options.min = options.min || 0;
-	options.max = options.max || 1;
-	options.step = options.step || 0.01;
+	options = this.processOptions(options);
+
+	if(options.min === undefined)
+		options.min = 0;
+
+	if(options.max === undefined)
+		options.max = 1;
+
+	if(options.step === undefined)
+		options.step = 0.01;
 
 	var that = this;
 	this.values[name] = value;
@@ -3699,7 +4598,8 @@ Inspector.prototype.addSlider = function(name, value, options)
 
 Inspector.prototype.addCheckbox = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -3756,7 +4656,8 @@ Inspector.prototype.addFlags = function(flags, force_flags)
 
 Inspector.prototype.addCombo = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	//value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -3796,7 +4697,8 @@ Inspector.prototype.addCombo = function(name, value, options)
 
 Inspector.prototype.addComboButtons = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -3824,7 +4726,8 @@ Inspector.prototype.addComboButtons = function(name, value, options)
 
 Inspector.prototype.addTags = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || [];
 	var that = this;
 	this.values[name] = value;
@@ -3883,7 +4786,8 @@ Inspector.prototype.addTags = function(name, value, options)
 
 Inspector.prototype.addList = function(name, values, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	var that = this;
 	
 	var height = "";
@@ -3896,18 +4800,15 @@ Inspector.prototype.addList = function(name, values, options)
 	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'>"+code+"</span>", options);
 
 	$(element).find("ul").focus(function() {
-		//trace("focus!");
 		$(document).on("keypress",inner_key);
 	});
 
 	$(element).find("ul").blur(function() {
-		//trace("blur!");
 		$(document).off("keypress",inner_key);
 	});
 
 	function inner_key(e)
 	{
-		//trace(e);
 		var selected = $(element).find("li.selected");
 		if(!selected || !selected.length) return;
 
@@ -4006,11 +4907,16 @@ Inspector.prototype.addList = function(name, values, options)
 
 Inspector.prototype.addButton = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
+
+	var c = "";
+	if(name === null)
+		c = "single";
 	
-	var element = this.createWidget(name,"<button tabIndex='"+ this.tab_index + "'>"+value+"</button>", options);
+	var element = this.createWidget(name,"<button class='"+c+"' tabIndex='"+ this.tab_index + "'>"+value+"</button>", options);
 	this.tab_index++;
 	$(element).find("button").click(function() {
 		Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
@@ -4027,7 +4933,8 @@ Inspector.prototype.addButton = function(name, value, options)
 
 Inspector.prototype.addButtons = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 
@@ -4052,7 +4959,8 @@ Inspector.prototype.addButtons = function(name, value, options)
 
 Inspector.prototype.addColor = function(name,value,options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || [0.0,0.0,0.0];
 	var that = this;
 	this.values[name] = value;
@@ -4123,7 +5031,8 @@ Inspector.prototype.addColor = function(name,value,options)
 
 Inspector.prototype.addFile = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -4141,7 +5050,8 @@ Inspector.prototype.addFile = function(name, value, options)
 
 Inspector.prototype.addLine = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -4163,7 +5073,8 @@ Inspector.prototype.addLine = function(name, value, options)
 
 Inspector.prototype.addTree = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var element = this.createWidget(name,"<div class='wtree'></div>", options);
 	
@@ -4238,7 +5149,6 @@ Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)
 
 	function onFileDrop(evt)
 	{
-		trace("processing drag and drop...");
 		$(slot).removeClass("highlight");
 		evt.stopPropagation();
 		evt.preventDefault();
@@ -4267,11 +5177,16 @@ Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)
 */
 
 
+Inspector.prototype.processOptions = function(options)
+{
+	if(typeof(options) == "function")
+		options = { callback: options };
+	return options || {};
+}
 
 Inspector.parseColor = function(color)
 {
 	return "<span style='color: #FAA'>" + color[0].toFixed(2) + "</span>,<span style='color: #AFA'>" + color[1].toFixed(2) + "</span>,<span style='color: #AAF'>" + color[2].toFixed(2) + "</span>";
 }
-
 
 LiteGUI.Inspector = Inspector;

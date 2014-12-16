@@ -2,11 +2,13 @@
 (function(){
 
 	/*********** LiteTree *****************************/
-	function Tree(id,data,options)
+	function Tree(id, data, options)
 	{
 		var root = document.createElement("div");
 		this.root = root;
-		root.id = id;
+		if(id)
+			root.id = id;
+
 		root.className = "litetree";
 		this.tree = data;
 		var that = this;
@@ -139,7 +141,6 @@
 
 		//starts dragging this element
 		draggable_element.addEventListener("dragstart", function(ev) {
-			//trace("DRAGSTART!");
 			//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
 			ev.dataTransfer.setData("node-id", this.parentNode.id);
 		});
@@ -174,7 +175,6 @@
 			ev.preventDefault();
 			var node_id = ev.dataTransfer.getData("node-id");
 
-			//trace("DROP! \"" + node_id + "\"");
 			//var data = ev.dataTransfer.getData("Text");
 			if(node_id != "")
 			{
@@ -185,7 +185,7 @@
 				}
 				catch (err)
 				{
-					trace("Error: " + err );
+					console.error("Error: " + err );
 				}
 			}
 			else
@@ -302,7 +302,6 @@
 			parent.list.appendChild( element );
 		else
 		{
-			//trace(parent.list.childNodes);
 			parent.list.insertBefore(element, parent.list.childNodes[position]);
 		}
 

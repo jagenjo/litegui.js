@@ -18,6 +18,13 @@ jQuery.fn.wclick = function(callback) {
 	$(this[0]).on("wclick",callback);
 };
 
+/**
+* Inspector allows to create a list of widgets easily
+*
+* @class Inspector
+* @constructor
+*/
+
 function Inspector(id,options)
 {
 	options = options || {};
@@ -26,7 +33,8 @@ function Inspector(id,options)
 	if(options.one_line)
 		this.root.className += " one-line";
 
-	if(id) this.root.id = id;
+	if(id)
+		this.root.id = id;
 
 	this.values = {};
 	this.sections = [];
@@ -36,7 +44,7 @@ function Inspector(id,options)
 	this.tab_index = Math.floor(Math.random() * 10000);
 
 	if(options.name_width)
-		this.widget_name_width = options.name_width;
+		this.name_width = options.name_width;
 
 	if(options.parent) this.appendTo(options.parent);
 	this.widgets_per_row = options.widgets_per_row || 1;
@@ -86,7 +94,7 @@ Inspector.prototype.setup = function(info)
 }
 
 //given an instance it shows all the attributes
-Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info) 
+Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example ) 
 {
 	if(!instance) return;
 
@@ -96,26 +104,33 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 		attrs = this.collectAttributes(instance);
 
 	var classObject = instance.constructor;
-	if(!attrs_info && classObject.attributes)
-		attrs_info = classObject.attributes;
+	if(!attrs_info_example && classObject.attributes)
+		attrs_info_example = classObject.attributes;
 
-	if(!attrs_info)
-		attrs_info = {};
+	//clone to ensure there is no overlap between widgets reusing the same container
+	var attrs_info = {};
 
+	//add to attrs_info the ones that are not specified 
 	for(var i in attrs)
 	{
-		if(attrs_info[i])
+		if(attrs_info_example && attrs_info_example[i])
+		{
+			//clone
+			attrs_info[i] = inner_clone( attrs_info_example[i] );
 			continue;
+		}
 
 		var v = attrs[i];
 
 		if(classObject["@" + i]) //in class object
 		{
-			var options = {}; 
 			var shared_options = classObject["@" + i];
+			attrs_info[i] = inner_clone( shared_options );
+			/*
 			for(var j in shared_options) //clone, because cannot be shared or errors could appear
 				options[j] = shared_options[j];
-			attrs_info[i] = options;
+				attrs_info[i] = options;
+			*/
 		}
 		else if(instance["@" + i])
 			attrs_info[i] = instance["@" + i];
@@ -138,6 +153,14 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info)
 	}
 
 	return this.showAttributes( instance, attrs_info );
+
+	function inner_clone(original, target)
+	{
+		target = target || {};
+		for(var j in original)
+			target[j] = original[j]
+		return target;
+	}
 }
 
 //extract all attributes from an instance (properties that are not null or function starting with alphabetic character)
@@ -168,6 +191,7 @@ Inspector.prototype.showAttributes = function(instance, attrs_info )
 		{
 			var o = { instance: instance, name: i, options: options };
 			options.callback = Inspector.assignValue.bind(o);
+
 		}
 		options.instance = instance;
 
@@ -211,6 +235,29 @@ Inspector.assignValue = function(value)
 }
 
 
+/*
+Inspector.assignValue = function(value)
+{
+	var instance = this.instance;
+	var current_value = instance[this.name];
+
+	if(current_value == null || value == null)
+		instance[this.name] = value;
+	else if(typeof(current_value) == "number")
+		instance[this.name] = parseFloat(value);
+	else if(typeof(current_value) == "string")
+		instance[this.name] = value;
+	else if(value && value.length && current_value && current_value.length)
+	{
+		for(var i = 0; i < current_value.length; ++i)
+			current_value[i] = value[i];
+	}
+	else
+		instance[this.name] = value;
+}
+*/
+
+
 Inspector.prototype.createWidget = function(name, content, options) 
 {
 	options = options || {};
@@ -238,9 +285,9 @@ Inspector.prototype.createWidget = function(name, content, options)
 
 	var namewidth = "";
 	var contentwidth = "";
-	if(this.widget_name_width || options.widget_name_width)
+	if(name != null && (this.name_width || options.name_width))
 	{
-		var w = this.widget_name_width || options.widget_name_width;
+		var w = this.name_width || options.name_width;
 		if(typeof(w) == "number") w = w.toFixed() + "px";
 		namewidth = "style='width: calc(" + w + " - 0px); width: -webkit-calc(" + w + " - 0px); width: -moz-calc(" + w + " - 0px); '"; //hack 
 		contentwidth = "style='width: calc( 100% - " + w + "); width: -webkit-calc(100% - " + w + "); width: -moz-calc( 100% - " + w + "); '";
@@ -301,6 +348,14 @@ Inspector.widget_constructors = {
 	separator: 'addSeparator'
 };
 
+
+Inspector.registerWidget = function(name, callback)
+{
+	var func_name = "add" + name.charAt(0).toUpperCase() + name.slice(1);
+	Inspector.prototype[func_name] = callback;
+	Inspector.widget_constructors[name] = func_name;
+}
+
 Inspector.prototype.add = function(type,name,value,options)
 {
 	if(typeof(type) == "object" && arguments.length == 1)
@@ -312,7 +367,10 @@ Inspector.prototype.add = function(type,name,value,options)
 	}
 
 	var func = Inspector.widget_constructors[type];
-	if(!func) return;
+	if(!func){
+		console.warn("LiteGUI.Inspector do not have a widget called",type);
+		return;
+	}
 
 	if(typeof(func) == "string")
 		func = Inspector.prototype[func];
@@ -337,7 +395,7 @@ Inspector.prototype.set = function(name, value)
 
 Inspector.prototype.addSection = function(name, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
 
 	if(this.current_group)
 		this.endGroup();
@@ -370,13 +428,14 @@ Inspector.prototype.addSection = function(name, options)
 
 Inspector.prototype.beginGroup = function(name, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
 
 	if(this.current_group)
 		this.endGroup();
 
 	var element = document.createElement("DIV");
 	element.className = "wgroup";
+	name = name || "";
 	element.innerHTML = "<div class='wgroupheader "+ (options.title ? "wtitle" : "") +"'><span class='wgrouptoggle'>-</span>"+name+"</div>";
 
 	var content = document.createElement("DIV");
@@ -411,7 +470,8 @@ Inspector.prototype.endGroup = function(options)
 
 Inspector.prototype.addTitle = function(title,options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	var element = document.createElement("DIV");
 	var code = "<span class='wtitle'><span class='text'>"+title+"</span>";
 	if(options.help)
@@ -437,7 +497,8 @@ Inspector.prototype.addSeparator = function()
 
 Inspector.prototype.addString = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -460,7 +521,8 @@ Inspector.prototype.addString = function(name,value, options)
 
 Inspector.prototype.addStringButton = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -485,7 +547,11 @@ Inspector.prototype.addStringButton = function(name,value, options)
 
 Inspector.prototype.addNumber = function(name, value, options)
 {
-	options = options || { step: 0.1 };
+	options = this.processOptions(options);
+
+	if(!options.step)
+		options.step = 0.1;
+
 	value = value || 0;
 	var that = this;
 	this.values[name] = value;
@@ -528,7 +594,10 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 Inspector.prototype.addVector2 = function(name,value, options)
 {
-	options = options || { step: 0.1 };
+	options = this.processOptions(options);
+	if(!options.step)
+		options.step = 0.1;
+
 	value = value || [0,0];
 	var that = this;
 	this.values[name] = value;
@@ -595,7 +664,10 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 Inspector.prototype.addVector3 = function(name,value, options)
 {
-	options = options || { step: 0.1 };
+	options = this.processOptions(options);
+	if(!options.step)
+		options.step = 0.1;
+
 	value = value || [0,0,0];
 	var that = this;
 	this.values[name] = value;
@@ -669,7 +741,8 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 Inspector.prototype.addTextarea = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -692,7 +765,8 @@ Inspector.prototype.addTextarea = function(name,value, options)
 
 Inspector.prototype.addInfo = function(name,value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var element = null;
 	if(name != null)
@@ -700,7 +774,8 @@ Inspector.prototype.addInfo = function(name,value, options)
 	else
 	{
 		element = document.createElement("div");
-		element.className = options.className;
+		if(options.className)
+			element.className = options.className;
 		element.innerHTML = "<span class='winfo'>"+value+"</span>";
 	}
 
@@ -720,10 +795,16 @@ Inspector.prototype.addInfo = function(name,value, options)
 
 Inspector.prototype.addSlider = function(name, value, options)
 {
-	options = options || {};
-	options.min = options.min || 0;
-	options.max = options.max || 1;
-	options.step = options.step || 0.01;
+	options = this.processOptions(options);
+
+	if(options.min === undefined)
+		options.min = 0;
+
+	if(options.max === undefined)
+		options.max = 1;
+
+	if(options.step === undefined)
+		options.step = 0.01;
 
 	var that = this;
 	this.values[name] = value;
@@ -824,7 +905,8 @@ Inspector.prototype.addSlider = function(name, value, options)
 
 Inspector.prototype.addCheckbox = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -881,7 +963,8 @@ Inspector.prototype.addFlags = function(flags, force_flags)
 
 Inspector.prototype.addCombo = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	//value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -921,7 +1004,8 @@ Inspector.prototype.addCombo = function(name, value, options)
 
 Inspector.prototype.addComboButtons = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -949,7 +1033,8 @@ Inspector.prototype.addComboButtons = function(name, value, options)
 
 Inspector.prototype.addTags = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || [];
 	var that = this;
 	this.values[name] = value;
@@ -1008,7 +1093,8 @@ Inspector.prototype.addTags = function(name, value, options)
 
 Inspector.prototype.addList = function(name, values, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	var that = this;
 	
 	var height = "";
@@ -1021,18 +1107,15 @@ Inspector.prototype.addList = function(name, values, options)
 	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'>"+code+"</span>", options);
 
 	$(element).find("ul").focus(function() {
-		//trace("focus!");
 		$(document).on("keypress",inner_key);
 	});
 
 	$(element).find("ul").blur(function() {
-		//trace("blur!");
 		$(document).off("keypress",inner_key);
 	});
 
 	function inner_key(e)
 	{
-		//trace(e);
 		var selected = $(element).find("li.selected");
 		if(!selected || !selected.length) return;
 
@@ -1131,11 +1214,16 @@ Inspector.prototype.addList = function(name, values, options)
 
 Inspector.prototype.addButton = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
+
+	var c = "";
+	if(name === null)
+		c = "single";
 	
-	var element = this.createWidget(name,"<button tabIndex='"+ this.tab_index + "'>"+value+"</button>", options);
+	var element = this.createWidget(name,"<button class='"+c+"' tabIndex='"+ this.tab_index + "'>"+value+"</button>", options);
 	this.tab_index++;
 	$(element).find("button").click(function() {
 		Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
@@ -1152,7 +1240,8 @@ Inspector.prototype.addButton = function(name, value, options)
 
 Inspector.prototype.addButtons = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 
@@ -1177,7 +1266,8 @@ Inspector.prototype.addButtons = function(name, value, options)
 
 Inspector.prototype.addColor = function(name,value,options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || [0.0,0.0,0.0];
 	var that = this;
 	this.values[name] = value;
@@ -1248,7 +1338,8 @@ Inspector.prototype.addColor = function(name,value,options)
 
 Inspector.prototype.addFile = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -1266,7 +1357,8 @@ Inspector.prototype.addFile = function(name, value, options)
 
 Inspector.prototype.addLine = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
@@ -1288,7 +1380,8 @@ Inspector.prototype.addLine = function(name, value, options)
 
 Inspector.prototype.addTree = function(name, value, options)
 {
-	options = options || {};
+	options = this.processOptions(options);
+
 	value = value || "";
 	var element = this.createWidget(name,"<div class='wtree'></div>", options);
 	
@@ -1363,7 +1456,6 @@ Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)
 
 	function onFileDrop(evt)
 	{
-		trace("processing drag and drop...");
 		$(slot).removeClass("highlight");
 		evt.stopPropagation();
 		evt.preventDefault();
@@ -1392,11 +1484,16 @@ Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)
 */
 
 
+Inspector.prototype.processOptions = function(options)
+{
+	if(typeof(options) == "function")
+		options = { callback: options };
+	return options || {};
+}
 
 Inspector.parseColor = function(color)
 {
 	return "<span style='color: #FAA'>" + color[0].toFixed(2) + "</span>,<span style='color: #AFA'>" + color[1].toFixed(2) + "</span>,<span style='color: #AAF'>" + color[2].toFixed(2) + "</span>";
 }
-
 
 LiteGUI.Inspector = Inspector;

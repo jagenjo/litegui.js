@@ -1,6 +1,46 @@
 //enclose in a scope
 (function(){
 
+
+	function Button(value,options)
+	{
+		options = options || {};
+
+		if(typeof(options) === "function")
+			options = { callback: options };
+
+		var that = this;
+		var element = document.createElement("div");
+		element.className = "litegui button";
+
+		this.root = element;
+		var button = document.createElement("button");
+		this.content = button;
+		element.appendChild(button);
+
+		button.innerHTML = value;		
+		button.addEventListener("click", function(e) { 
+			that.click();
+		});
+
+		this.click = function()
+		{
+			if(options.callback)
+				options.callback.call(that);
+		}
+	}
+
+	LiteGUI.Button = Button;
+
+	/**
+	* SearchBox 
+	*
+	* @class SearchBox
+	* @constructor
+	* @param {*} value
+	* @param {Object} options
+	*/
+
 	function SearchBox(value, options)
 	{
 		options = options || {};
@@ -25,7 +65,12 @@
 	LiteGUI.SearchBox = SearchBox;
 
 	/****************** AREA **************/
-	/* Areas can be split several times horizontally or vertically to fit different colums or rows */
+	/**
+	* Areas can be split several times horizontally or vertically to fit different colums or rows
+	*
+	* @class Area
+	* @constructor
+	*/
 	function Area(id, options)
 	{
 		options = options || {};
@@ -35,6 +80,9 @@
 		if(id) element.id = id;
 		this.root = element;
 		this.root.litearea = this; //dbl link
+		element.style.width = options.width || "100%";
+		element.style.height = options.height || "100%";
+
 		this.options = options;
 
 		var that = this;
@@ -43,19 +91,19 @@
 
 		this._computed_size = [ $(this.root).width(), $(this.root).height() ];
 
-		var element = document.createElement("div");
+		var content = document.createElement("div");
 		if(options.content_id)
-			element.id = options.content_id;
-		element.className = "liteareacontent";
-		element.style.width = "100%";
-		element.style.height = "100%";
-		this.root.appendChild(element);
-		this.content = element;
+			content.id = options.content_id;
+		content.className = "liteareacontent";
+		content.style.width = "100%";
+		content.style.height = "100%";
+		this.root.appendChild(content);
+		this.content = content;
 
 		this.split_direction = "none";
 		this.sections = [];
 
-		if(options.main)
+		if(options.autoresize)
 			$(LiteGUI).bind("resized", function() { 
 				that.resize(); 
 			});
@@ -76,6 +124,29 @@
 		if( e && this._computed_size && computed_size[0] == this._computed_size[0] && computed_size[1] == this._computed_size[1])
 			return;
 
+		this.sendResizeEvent(e);
+	}
+
+	Area.prototype.adjustHeight = function()
+	{
+		if(!this.root.parentNode)
+		{
+			console.error("Cannot adjust height of LiteGUI.Area without parent");
+			return;
+		}
+
+		//check parent height
+		var h = this.root.parentNode.offsetHeight;
+
+		//check position
+		var y = this.root.getClientRects()[0].top;
+
+		//adjust height
+		this.root.style.height = "calc( 100% - " + y + "px )";
+	}
+
+	Area.prototype.sendResizeEvent = function(e)
+	{
 		if(this.sections.length)
 			for(var i in this.sections)
 			{
@@ -99,6 +170,9 @@
 					$(element).trigger("resize");
 			}
 		}
+
+		if( this.onresize )
+			this.onresize();
 	}
 
 	Area.prototype.split = function(direction, sizes, editable)
@@ -114,14 +188,15 @@
 		area2.root.style.display = "inline-block";
 
 		var splitinfo = "";
-		var split_root = null;
+		var splitbar = null;
 		var dynamic_section = null;
 		if(editable)
 		{
 			splitinfo = " - 5px";
-			split_root = document.createElement("div");
-			split_root.className = "litesplitbar " + direction;
-			$(split_root).bind("mousedown", inner_mousedown);
+			splitbar = document.createElement("div");
+			splitbar.className = "litesplitbar " + direction;
+			this.splitbar = splitbar;
+			splitbar.addEventListener("mousedown", inner_mousedown);
 		}
 
 		sizes = sizes || ["50%",null];
@@ -133,28 +208,42 @@
 
 			if(sizes[0] == null)
 			{
-				area1.root.style.height = "-moz-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.height = "-webkit-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.height = "calc( 100% - " + sizes[1] + splitinfo + " )";
-				area2.root.style.height = sizes[1];
-				area2.size = sizes[1];
+				var h = sizes[1];
+				if(typeof(h) == "number")
+					h = sizes[1] + "px";
+
+				area1.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
+				area1.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
+				area1.root.style.height = "calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = h;
+				area2.size = h;
 				dynamic_section = area1;
 			}
 			else if(sizes[1] == null)
 			{
-				area1.root.style.height = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.height = "-moz-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.height = "-webkit-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.height = "calc( 100% - " + sizes[0] + splitinfo + " )";
+				var h = sizes[0];
+				if(typeof(h) == "number")
+					h = sizes[0] + "px";
+
+				area1.root.style.height = h;
+				area1.size = h;
+				area2.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = "calc( 100% - " + h + splitinfo + " )";
 				dynamic_section = area2;
 			}
 			else
 			{
-				area1.root.style.height = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.height = sizes[1];
-				area2.size = sizes[1];
+				var h1 = sizes[0];
+				if(typeof(h1) == "number")
+					h1 = sizes[0] + "px";
+				var h2 = sizes[1];
+				if(typeof(h2) == "number")
+					h2 = sizes[1] + "px";
+				area1.root.style.height = h1;
+				area1.size = h1;
+				area2.root.style.height = h2;
+				area2.size = h2;
 			}
 		}
 		else //horizontal
@@ -164,28 +253,42 @@
 
 			if(sizes[0] == null)
 			{
-				area1.root.style.width = "-moz-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.width = "-webkit-calc( 100% - " + sizes[1] + splitinfo + " )";
-				area1.root.style.width = "calc( 100% - " + sizes[1] + splitinfo + " )";
-				area2.root.style.width = sizes[1];
+				var w = sizes[1];
+				if(typeof(w) == "number")
+					w = sizes[1] + "px";
+				area1.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
+				area1.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
+				area1.root.style.width = "calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = w;
 				area2.size = sizes[1];
 				dynamic_section = area1;
 			}
 			else if(sizes[1] == null)
 			{
-				area1.root.style.width = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.width = "-moz-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.width = "-webkit-calc( 100% - " + sizes[0] + splitinfo + " )";
-				area2.root.style.width = "calc( 100% - " + sizes[0] + splitinfo + " )";
+				var w = sizes[0];
+				if(typeof(w) == "number")
+					w = sizes[0] + "px";
+
+				area1.root.style.width = w;
+				area1.size = w;
+				area2.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = "calc( 100% - " + w + splitinfo + " )";
 				dynamic_section = area2;
 			}
 			else
 			{
-				area1.root.style.width = sizes[0];
-				area1.size = sizes[0];
-				area2.root.style.width = sizes[1];
-				area2.size = sizes[1];
+				var w1 = sizes[0];
+				if(typeof(w1) == "number")
+					w1 = sizes[0] + "px";
+				var w2 = sizes[1];
+				if(typeof(w2) == "number")
+					w2 = sizes[1] + "px";
+
+				area1.root.style.width = w1;
+				area1.size = w1;
+				area2.root.style.width = w2;
+				area2.size = w2;
 			}
 		}
 
@@ -194,8 +297,8 @@
 		area1.content = this.content;
 
 		this.root.appendChild( area1.root );
-		if(split_root)
-			this.root.appendChild( split_root );
+		if(splitbar)
+			this.root.appendChild( splitbar );
 		this.root.appendChild( area2.root );
 
 		this.sections = [area1, area2];
@@ -207,11 +310,10 @@
 		var last_pos = [0,0];
 		function inner_mousedown(e)
 		{
-			$(document).bind("mousemove",inner_mousemove);
-			$(document).bind("mouseup",inner_mouseup);
+			document.addEventListener("mousemove",inner_mousemove);
+			document.addEventListener("mouseup",inner_mouseup);
 			last_pos[0] = e.pageX;
 			last_pos[1] = e.pageY;
-			trace("Dragging");
 			e.stopPropagation();
 			e.preventDefault();
 		}
@@ -226,7 +328,7 @@
 			else if(direction == "vertical")
 			{
 				if (last_pos[1] != e.pageY)
-					that.moveSplit(last_pos[1] - e.pageY);
+					that.moveSplit(e.pageY - last_pos[1]);
 			}
 
 			last_pos[0] = e.pageX;
@@ -239,11 +341,74 @@
 
 		function inner_mouseup(e)
 		{
-			trace("Stop Dragging");
-			$(document).unbind("mousemove",inner_mousemove);
-			$(document).unbind("mouseup",inner_mouseup);
+			document.removeEventListener("mousemove",inner_mousemove);
+			document.removeEventListener("mouseup",inner_mouseup);
 			that.resize();
 		}
+	}
+
+	Area.prototype.hide = function()
+	{
+		this.root.style.display = "none";
+	}
+
+	Area.prototype.show = function()
+	{
+		this.root.style.display = "block";
+	}
+
+	Area.prototype.showSection = function(num)
+	{
+		var section = this.sections[num];
+		var size = 0;
+		
+		if(this.direction == "horizontal")
+			size = section.root.style.width;
+		else
+			size = section.root.style.height;
+
+		for(var i in this.sections)
+		{
+			var section = this.sections[i];
+
+			if(i == num)
+				section.root.style.display = "inline-block";
+			else
+			{
+				if(this.direction == "horizontal")
+					section.root.style.width = "calc( 100% - " + size + " - 5px)";
+				else
+					section.root.style.height = "calc( 100% - " + size + " - 5px)";
+			}
+		}
+
+		if(this.splitbar)
+			this.splitbar.style.display = "inline-block";
+
+		this.sendResizeEvent();
+	}
+
+	Area.prototype.hideSection = function(num)
+	{
+		for(var i in this.sections)
+		{
+			var section = this.sections[i];
+
+			if(i == num)
+				section.root.style.display = "none";
+			else
+			{
+				if(this.direction == "horizontal")
+					section.root.style.width = "100%";
+				else
+					section.root.style.height = "100%";
+			}
+		}
+
+		if(this.splitbar)
+			this.splitbar.style.display = "none";
+
+		this.sendResizeEvent();
 	}
 
 	Area.prototype.moveSplit = function(delta)
@@ -333,16 +498,21 @@
 		this.resize();
 	}
 
-	Area.prototype.hideSection = function(section)
+	Area.prototype.add = function(v)
 	{
-		if(this.sections.length == 0) throw "not splitted";
-
-		
+		this.content.appendChild( v.root || v );
 	}
 
 	LiteGUI.Area = Area;
 
 	/***************** SPLIT ******************/
+
+	/**
+	* Split 
+	*
+	* @class Split
+	* @constructor
+	*/
 	function Split(id, sections, options)
 	{
 		options = options || {};
@@ -397,7 +567,13 @@
 
 
 
-	/******* LiteContextualMenu *******************/
+	/**
+	* ContextualMenu 
+	*
+	* @class ContextualMenu
+	* @constructor
+	* @param {Array} values
+	*/
 
 	function ContextualMenu(values,options)
 	{
@@ -509,8 +685,15 @@
 
 	LiteGUI.createLitebox = createLitebox;
 
-	/******* LiteList ***********************/
-
+	/**
+	* List 
+	*
+	* @class List
+	* @constructor
+	* @param {String} id
+	* @param {Array} values
+	* @param {Object} options
+	*/
 	function List(id,items,options)
 	{
 		options = options || {};
@@ -564,8 +747,14 @@
 
 	LiteGUI.List = List;
 
-	/* SLIDER *************/
-
+	/**
+	* Slider 
+	*
+	* @class Slider
+	* @constructor
+	* @param {Number} value
+	* @param {Object} options
+	*/
 	function Slider(value, options)
 	{
 		options = options || {};
@@ -641,6 +830,14 @@
 
 	LiteGUI.Slider = Slider;
 
+	/**
+	* LineEditor 
+	*
+	* @class LineEditor
+	* @constructor
+	* @param {Number} value
+	* @param {Object} options
+	*/
 
 	function LineEditor(value, options)
 	{

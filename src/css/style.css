@@ -158,7 +158,7 @@ button:disabled {
 	opacity: 0.5;
 }
 
-.litepanel button.mini-button {
+.litedialog button.mini-button {
 	margin: 2px 2px 0 0;
 	padding: 0;
 	width: 1.1em;
@@ -489,6 +489,13 @@ ul.file-list li.file-item span.info {
 .litesplitbar {
 	background-color: #222;
 	display: inline-block;
+}
+
+
+.litesplitbar:hover {
+	background-color: #888;
+	transition: all 0.5s;
+	transition-delay: 0.3s;
 }
 
 .litesplitbar.horizontal {

@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<!--
+<meta property="og:title" content="GameEditor" />
+<meta property="og:description" content="GameEditor for simple games" />
+<meta property="og:image" content="" />
+-->
+
+<title>LiteGUI Demo</title>
+	<style type='text/css'></style>
+	<link rel="stylesheet" type="text/css" href="../build/litegui.css">
+
+	<script type="text/javascript" src="../external/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="../external/jquery-ui-1.10.4.min.js"></script>
+	<script type="text/javascript" src="../external/jscolor/jscolor.js"></script>
+
+	<script type="text/javascript" src="../build/litegui.js"></script>
+	<style>
+		.obj { color: #79B; }
+		.prop { color: #B97; }
+		.str,.num { color: #A79; }
+		.cmnt { color: #798; }
+		.rsv { color: #9AB; }
+	</style>
+</title>
+</head>
+<body>
+
+	<script type="text/javascript">
+		//call the init to setup 
+		LiteGUI.init();
+
+		//create a main container and split it in two
+		var mainarea = new LiteGUI.Area("mainarea",{content_id:"canvasarea", autoresize: true, inmediateResize: true});
+		mainarea.split("horizontal",[200,null], true);
+		LiteGUI.add( mainarea );
+
+		//create a left panel
+		var side_panel = new LiteGUI.Panel("sidepanel",{title:"Inspector", width: 200});
+		mainarea.getSection(0).add( side_panel );
+
+		//create a inspector (widget container)
+		var widgets = new LiteGUI.Inspector();
+		widgets.addTitle("Dialogs");
+		widgets.addButton("Alert","Show", function() { LiteGUI.alert("foo"); } );
+		widgets.addButton("Prompt","Show", function() { LiteGUI.prompt("What are you?"); } );
+		widgets.addButton("Confirm","Show", function() { LiteGUI.confirm("Are you sure?"); } );
+		widgets.addButton("Dialog","Show", function() {
+			var dialog = new LiteGUI.Dialog("simple-dialog",{title:"My dialog",close:true, draggable: true});
+			dialog.show();
+			dialog.center();
+		});
+		widgets.addSeparator();
+		side_panel.add( widgets );
+
+		//create right panel
+		var main_panel = new LiteGUI.Panel("mainpanel");
+		mainarea.getSection(1).add( main_panel );
+
+		//create some tabs
+		var tabs = new LiteGUI.Tabs("tabs");
+		var code_tab = tabs.addTab("Code");
+
+		//show the code applying the most basic code beautify algorithm (by me!)
+		var code = escapeHtmlEntities(document.querySelector("body script").innerHTML);
+		code = beautifyCode(code);
+
+		code_tab.content.innerHTML = "<h2>Code of this example</h2><pre>" + code + "</pre>";
+		tabs.addTab("Example");
+
+		main_panel.add(tabs);
+	
+	</script>
+
+
+</body>
+</html>

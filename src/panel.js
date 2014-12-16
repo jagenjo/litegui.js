@@ -5,13 +5,67 @@
 	function Panel(id, options)
 	{
 		options = options || {};
-		this.width = options.width || 200;
-		this.height = options.height || 100;
+		this._ctor(id,options);
+	}
+
+	Panel.title_height = "20px";
+
+	Panel.prototype._ctor = function(id, options)
+	{
+		this.content = options.content || "";
+
+		var root = this.root = document.createElement("div");
+		if(id)
+			root.id = id;
+
+		root.className = "litepanel " + (options.className || "");
+		root.data = this;
+
+		var code = "";
+		if(options.title)
+			code += "<div class='panel-header'>"+options.title+"</div>";
+		code += "<div class='content'>"+this.content+"</div>";
+		code += "<div class='panel-footer'></div>";
+		root.innerHTML = code;
+
+		if(options.title)
+			this.header = this.root.querySelector(".panel-header");
+
+		this.content = this.root.querySelector(".content");
+		this.footer = this.root.querySelector(".panel-footer");
+
+		//if(options.scroll == false)	this.content.style.overflow = "hidden";
+		if(options.scroll == true)	this.content.style.overflow = "auto";
+	}
+
+	Panel.prototype.add = function( litegui_item )
+	{
+		this.content.appendChild( litegui_item.root );
+	}
+
+	/****************** DIALOG **********************/
+	function Dialog(id, options)
+	{
+		this._ctor( id, options );
+		//this.makeDialog(options);
+	}
+
+	Dialog.MINIMIZED_WIDTH = 200;
+	Dialog.title_height = "20px";
+
+	Dialog.prototype._ctor = function(id, options)
+	{
+		this.width = options.width;
+		this.height = options.height;
+		this.minWidth = options.minWidth || 150;
+		this.minHeight = options.minHeight || 100;
 		this.content = options.content || "";
 
 		var panel = document.createElement("div");
-		panel.id = id;
-		panel.className = "litepanel " + (options.className || "");
+		if(id)
+			panel.id = id;
+
+		panel.className = "litedialog " + (options.className || "");
 		panel.data = this;
 
 		var code = "";
@@ -54,29 +108,46 @@
 		this.makeDialog(options);
 	}
 
-	Panel.MINIMIZED_WIDTH = 200;
-	Panel.title_height = "20px";
+	Dialog.prototype.add = function( litegui_item )
+	{
+		this.content.appendChild( litegui_item.root );
+	}
 
-	Panel.prototype.makeDialog = function(options)
+	Dialog.prototype.makeDialog = function(options)
 	{
 		options = options || {};
 
 		var panel = this.root;
 		panel.style.position = "absolute";
-		panel.style.display = "none";
-		panel.style.width = this.width + "px";
-		if(this.height)
-			panel.style.height = this.height + "px";
+		//panel.style.display = "none";
+
+		panel.style.minWidth = this.minWidth + "px";
+		panel.style.minHeight = this.minHeight + "px";
+
+		if(this.width)
+			panel.style.width = this.width + "px";
 
 		if(this.height)
-			$(panel).find(".content").css({height: this.height - 24});
+		{
+			if(typeof(this.height) == "number")
+			{
+				panel.style.height = this.height + "px";
+			}
+			else
+			{
+				if(this.height.indexOf("%") != -1)
+					panel.style.height = this.height;
+			}
+
+			this.content.style.height = "calc( " + this.height + " - 24px )";
+		}
 
 		panel.style.boxShadow = "0 0 3px black";
 
 		if(options.draggable)
 		{
 			this.draggable = true;
-			$(panel).draggable({handle:".panel-header"});
+			LiteGUI.draggable( panel, panel.querySelector(".panel-header") );
 		}
 
 		if(options.resizable)
@@ -84,13 +155,18 @@
 
 		//$(panel).bind("click",function(){});
 
-		var parent = options.parent || LiteGUI.root_container;
-		$(parent).append(this.root);
+		var parent = null;
+		if(options.parent)
+			parent = typeof(options.parent) == "string" ? document.querySelector(options.parent) : options.parent;
 
+		if(!parent)
+			parent = LiteGUI.root;
+
+		parent.appendChild( this.root );
 		this.center();
 	}
 
-	Panel.prototype.setResizable = function()
+	Dialog.prototype.setResizable = function()
 	{
 		if(this.resizable) return;
 
@@ -134,10 +210,13 @@
 		}
 	}
 
-	Panel.prototype.dockTo = function(parent, dock_type)
+	Dialog.prototype.dockTo = function(parent, dock_type)
 	{
 		if(!parent) return;
 		var panel = this.root;
+
+		dock_type = dock_type || "full";
+		parent = parent.content || parent;
 
 		panel.style.top = 0;
 		panel.style.left = 0;
@@ -197,7 +276,7 @@
 			parent.appendChild(panel); 
 	}
 
-	Panel.prototype.addButton = function(name,options)
+	Dialog.prototype.addButton = function(name,options)
 	{
 		var that = this;
 		var button = document.createElement("button");
@@ -224,19 +303,17 @@
 
 		if(!v)
 		{
-			//trace("Panel closed");
 			$(this.root).remove();
 			return
 		}
 
 		$(this.root).hide('fade',null,function() {
-			//trace("Panel closed");
 			$(this).remove();
 		});
 	}
 	*/	
 
-	Panel.prototype.close = function() {
+	Dialog.prototype.close = function() {
 		$(this.root).remove();
 		$(this).trigger("closed");
 
@@ -245,22 +322,20 @@
 		if(fade_out == true)
 		{
 			$(this.root).hide('fade',null,function() {
-				//trace("Panel closed");
 				$(that.root).remove();
 			});
 		}
 		else
 		{
-			//trace("Panel closed");
 			$(this.root).remove();
 			return;
 		}
 		*/
 	}
 
-	Panel.minimized = [];
+	Dialog.minimized = [];
 
-	Panel.prototype.minimize = function() {
+	Dialog.prototype.minimize = function() {
 		if(this.minimized) return;
 
 		this.minimized = true;
@@ -270,32 +345,32 @@
 		$(this.root).draggable({ disabled: true });
 		$(this.root).find(".minimize-button").hide();
 		$(this.root).find(".maximize-button").show();
-		$(this.root).css({width: LiteGUI.Panel.MINIMIZED_WIDTH});
+		$(this.root).css({width: LiteGUI.Dialog.MINIMIZED_WIDTH});
 
 
 		$(this).bind("closed", function() {
-			LiteGUI.Panel.minimized.splice( LiteGUI.Panel.minimized.indexOf( this ), 1);
-			LiteGUI.Panel.arrangeMinimized();
+			LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
+			LiteGUI.Dialog.arrangeMinimized();
 		});
 
-		LiteGUI.Panel.minimized.push( this );
-		LiteGUI.Panel.arrangeMinimized();
+		LiteGUI.Dialog.minimized.push( this );
+		LiteGUI.Dialog.arrangeMinimized();
 
 		$(this).trigger("minimizing");
 	}
 
-	Panel.arrangeMinimized = function()
+	Dialog.arrangeMinimized = function()
 	{
-		for(var i in LiteGUI.Panel.minimized)
+		for(var i in LiteGUI.Dialog.minimized)
 		{
-			var panel = LiteGUI.Panel.minimized[i];
-			var parent = panel.root.parentNode;
+			var dialog = LiteGUI.Dialog.minimized[i];
+			var parent = dialog.root.parentNode;
 			var pos = $(parent).height() - 20;
-			$(panel.root).animate({ left: LiteGUI.Panel.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+			$(panel.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
 		}
 	}
 
-	Panel.prototype.maximize = function() {
+	Dialog.prototype.maximize = function() {
 		if(!this.minimized) return;
 		this.minimized = false;
 
@@ -305,16 +380,16 @@
 		$(this.root).find(".minimize-button").show();
 		$(this.root).find(".maximize-button").hide();
 
-		LiteGUI.Panel.minimized.splice( LiteGUI.Panel.minimized.indexOf( this ), 1);
-		LiteGUI.Panel.arrangeMinimized();
+		LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
+		LiteGUI.Dialog.arrangeMinimized();
 		$(this).trigger("maximizing");
 	}
 
-	Panel.prototype.makeModal = function()
+	Dialog.prototype.makeModal = function()
 	{
 		LiteGUI.showModalBackground(true);
-		$(LiteGUI.modalbg_div).append( this.root ); //add panel
-		$(this.root).draggable({ disabled: true });
+		LiteGUI.modalbg_div.appendChild( this.root ); //add panel
+		//$(this.root).draggable({ disabled: true });
 		this.show();
 		this.center();
 
@@ -322,51 +397,55 @@
 
 		function inner(e)
 		{
-			trace("closing");
 			LiteGUI.showModalBackground(false);
 		}
 	}
 
-	Panel.prototype.bringToFront = function()
+	Dialog.prototype.bringToFront = function()
 	{
 		var parent = $(this.root).parent();
 		parent.detach(this.root);
 		parent.attach(this.root);
 	}
 
-	Panel.prototype.show = function(v,callback)
+	Dialog.prototype.show = function(v,callback)
 	{
-		$(this.root).show(v,null,100,callback);
+		if(!this.root.parentNode)
+			LiteGUI.add(this);
+
+		//$(this.root).show(v,null,100,callback);
+		$(this.root).show();
 		$(this).trigger("shown");
 	}
 
-	Panel.prototype.hide = function(v,callback)
+	Dialog.prototype.hide = function(v,callback)
 	{
-		$(this.root).hide(v,null,100,callback);
+		//$(this.root).hide(v,null,100,callback);
+		$(this.root).hide();
 		$(this).trigger("hidden");
 	}
 
-	Panel.prototype.setPosition = function(x,y)
+	Dialog.prototype.setPosition = function(x,y)
 	{
 		this.root.position = "absolute";
 		this.root.style.left = x + "px";
 		this.root.style.top = y + "px";
 	}
 
-	Panel.prototype.setSize = function(w,h)
+	Dialog.prototype.setSize = function(w,h)
 	{
 		this.root.style.width = w + "px";
 		this.root.style.height = h + "px";
 	}
 
-	Panel.prototype.center = function()
+	Dialog.prototype.center = function()
 	{
 		this.root.position = "absolute";
 		this.root.style.left = Math.floor(( $(this.root.parentNode).width() - $(this.root).width() ) * 0.5) + "px";
 		this.root.style.top = Math.floor(( $(this.root.parentNode).height() - $(this.root).height() ) * 0.5) + "px";
 	}
 
-	Panel.prototype.adjustSize = function()
+	Dialog.prototype.adjustSize = function()
 	{
 		this.content.style.height = "auto";
 		var width = $(this.content).width();
@@ -377,5 +456,5 @@
 
 
 	LiteGUI.Panel = Panel;
-	LiteGUI.Dialog = Panel;
+	LiteGUI.Dialog = Dialog;
 })();

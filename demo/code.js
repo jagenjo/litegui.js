@@ -1,18 +1,19 @@
-
+var mainarea = null;
 
 
 $(window).bind("load", function() { 
 	//LiteGUI.init({width:1000,height:500}); 
-	LiteGUI.init({
-		menubar:"#menu-bar"
-	}); 
+	LiteGUI.init(); 
 
-	LiteGUI.mainarea = new LiteGUI.Area("mainarea",{content_id:"canvasarea", main:true, inmediateResize: true});
-	$(LiteGUI.root_container).append( LiteGUI.mainarea.root );
+	var mainmenu = new LiteGUI.Menubar("mainmenubar");
+	LiteGUI.add( mainmenu );
+
+	mainarea = new LiteGUI.Area("mainarea",{content_id:"canvasarea", height: "calc( 100% - 20px )", main:true, inmediateResize: true});
+	LiteGUI.add( mainarea );
 	//$(window).resize(function() { $(LiteGUI.mainarea).trigger("resize"); });
 
 
-	//create main canvas
+	//create main canvas to test redraw
 	var canvas = document.createElement("canvas");
 	canvas.width = canvas.height = 100;
 	canvas.times = 0;
@@ -27,48 +28,48 @@ $(window).bind("load", function() {
 		ctx.strokeText("Times: " + this.times,20.5,30.5);
 		this.times += 1;
 	}
-	$(LiteGUI.mainarea.content).bind("resize",function() { canvas.redraw(); });
-	LiteGUI.mainarea.content.appendChild(canvas);
+	mainarea.onresize = function() { canvas.redraw(); };
+	mainarea.content.appendChild(canvas);
 	canvas.redraw();
 
+	//split mainarea
 	createSidePanel();
 
-	LiteGUI.mainarea.getSection(0).split("vertical",[null,"100px"],true);
+	mainarea.getSection(0).split("vertical",[null,"100px"],true);
 	var docked_bottom = new LiteGUI.Panel("bottom_panel", {title:'Docked panel',hide:true});
-	docked_bottom.dockTo(LiteGUI.mainarea.getSection(0).getSection(1),"full");
+	docked_bottom.dockTo( mainarea.getSection(0).getSection(1),"full");
 	docked_bottom.show();
 	$(docked_bottom).trigger("closed",function() { LiteGUI.mainarea.getSection(0).merge() });
-	LiteGUI.mainarea.resize();
+	mainarea.resize();
 
 	var dialog = createWidgetsDialog();
 
-	//this.mainmenu = new LiteMenubar("mainmenubar");
 	//$("#menu-bar").append(this.mainmenu.root);
-	LiteGUI.mainmenu.add("file/new");
-	LiteGUI.mainmenu.add("file/open");
-	LiteGUI.mainmenu.add("file/save");
-	LiteGUI.mainmenu.add("edit/undo");
-	LiteGUI.mainmenu.add("edit/redo");
-	LiteGUI.mainmenu.add("edit/");
-	LiteGUI.mainmenu.add("edit/copy", { callback: function(){ trace("FOOOO"); } });
-	LiteGUI.mainmenu.add("edit/paste");
-	LiteGUI.mainmenu.add("edit/clear");
+	mainmenu.add("file/new");
+	mainmenu.add("file/open");
+	mainmenu.add("file/save");
+	mainmenu.add("edit/undo");
+	mainmenu.add("edit/redo");
+	mainmenu.add("edit/");
+	mainmenu.add("edit/copy", { callback: function(){ trace("FOOOO"); } });
+	mainmenu.add("edit/paste");
+	mainmenu.add("edit/clear");
 		
-	LiteGUI.mainmenu.add("view/bottom panel", { callback: function() { docked_bottom.show(); } });
-	LiteGUI.mainmenu.add("view/fixed size", { callback: function() { LiteGUI.setWindowSize(1000,600); } });
-	LiteGUI.mainmenu.add("view/");
-	LiteGUI.mainmenu.add("view/side panel", { callback: function() { createSidePanel(); } });
-	LiteGUI.mainmenu.add("view/maximize", { callback: function() { LiteGUI.setWindowSize(); } });
+	mainmenu.add("view/bottom panel", { callback: function() { docked_bottom.show(); } });
+	mainmenu.add("view/fixed size", { callback: function() { LiteGUI.setWindowSize(1000,600); } });
+	mainmenu.add("view/");
+	mainmenu.add("view/side panel", { callback: function() { createSidePanel(); } });
+	mainmenu.add("view/maximize", { callback: function() { LiteGUI.setWindowSize(); } });
 
-	LiteGUI.mainmenu.add("debug/dialog", { callback: function() { 
+	mainmenu.add("debug/dialog", { callback: function() { 
 		createDialog();
 	}});
 
-	LiteGUI.mainmenu.add("debug/message", { callback: function() { 
+	mainmenu.add("debug/message", { callback: function() { 
 		LiteGUI.showMessage("This is an example of message");
 	}});
 
-	LiteGUI.mainmenu.add("debug/modal", { callback: function() { 
+	mainmenu.add("debug/modal", { callback: function() { 
 		var dialog = new LiteGUI.Panel("blarg",{width:300,height:100,close:true, content:"This is an example of modal dialog"}); 
 		dialog.makeModal();
 		dialog.addButton("Accept",{ close: true });
@@ -78,12 +79,12 @@ $(window).bind("load", function() {
 
 function createSidePanel()
 {
-	LiteGUI.mainarea.split("horizontal",[null,"240px"],true);
+	mainarea.split("horizontal",[null,"240px"],true);
 
 	var docked = new LiteGUI.Panel("right_panel", {title:'Docked panel', close: true});
-	docked.dockTo(LiteGUI.mainarea.getSection(1).content,"full");
+	docked.dockTo( mainarea.getSection(1).content,"full");
 	docked.show();
-	$(docked).bind("closed", function() { LiteGUI.mainarea.merge(); });
+	$(docked).bind("closed", function() { mainarea.merge(); });
 
 	window.sidepanel = docked;
 
@@ -95,13 +96,11 @@ function updateSidePanel( root )
 	root = root || window.sidepanel;
 	$(root.content).empty();
 
-	/*
-
 	//tabs 
 	var tabs_widget = new LiteGUI.Tabs("paneltab");
-	tabs_widget.add("Info");
-	tabs_widget.add("Tree",{selected:true});
-	tabs_widget.add("Extra");
+	tabs_widget.addTab("Info");
+	tabs_widget.addTab("Tree",{selected:true});
+	tabs_widget.addTab("Extra");
 
 	$(tabs_widget.contents["Info"]).append("<strong>Example of code inside tab container</strong>");
 
@@ -130,8 +129,6 @@ function updateSidePanel( root )
 	litetree.insertItem( {id:"MAX"}, "Rootnode",0 );
 	$(root.content).append(tabs_widget.root);
 
-	*/
-
 	//side panel widget
 	var widgets = new LiteGUI.Inspector();
 	widgets.onchange = function(name,value,widget) {
@@ -139,21 +136,6 @@ function updateSidePanel( root )
 	};
 	$(root.content).append(widgets.root);
 
-	window.foo = "";
-
-	for(var i = 0; i < 500; i++)
-	{
-		/*
-		widgets.addButton("Num." + Math.random().toFixed(4),"Save",{callback: function(name) { window.foo = Math.random(); trace("Button pressed: " + window.foo); } });
-		widgets.addSeparator();
-		widgets.addInfo("info","This is an example of different widgets");
-		widgets.addSection("Numbers stuff");
-		widgets.addNumber("number",10, {min:0, callback: function(v) { trace("number change: " + v); } });
-		*/
-		widgets.addSlider("slider",10,{min:1,max:100,step:1});
-	}
-
-	/*
 	widgets.addSlider("slider",10,{min:1,max:100,step:1});
 	widgets.addSeparator();
 	widgets.addVector2("vector2",[10,20], {min:0});
@@ -174,16 +156,15 @@ function updateSidePanel( root )
 	widgets.addColor("Color",[0,1,0]);
 	widgets.addFile("File","test.png");
 	widgets.addLine("Line",[[0.5,1],[0.75,0.25]],{defaulty:0,width:120}); 
-	*/
 
-	LiteGUI.mainarea.resize();
+	mainarea.resize();
 }
 
 function createWidgetsDialog()
 {
 	//test floating panel
 	var name = "Dialog_" + ((Math.random() * 100)>>0);
-	var dialog = new LiteGUI.Dialog(name, {title:name, close: true, minimize: true, width: 300, height: 200, scroll: true, resizable:true, draggable: true});
+	var dialog = new LiteGUI.Dialog(name, {title:name, close: true, minimize: true, width: 300, scroll: true, resizable:true, draggable: true});
 	dialog.show('fade');
 
 	//test menu in panel
@@ -210,7 +191,7 @@ function createWidgetsDialog()
 	widgets.addCombo("combo","javi",{values:["foo","faa","super largo texto que no cabe entero","javi","nada"]});
 	widgets.addButtons("Serialize",["Save","Load","New"]);
 	widgets.addButton(null,"Save");
-	$(dialog.content).append(widgets.root);
+	dialog.add(widgets);
 
 	return dialog;
 }

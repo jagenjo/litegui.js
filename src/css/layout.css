@@ -1,12 +1,8 @@
 /* Here goes all the CSS related to layout the web (panels, windows, bars, etc) */
 
-html {
+html, body {
 	height: 100%;
-}
-
-body {
 	background-color: #111;
-	height: 100%;
 }
 
 div {
@@ -14,81 +10,21 @@ div {
 	padding: 0;
 }
 
-#wrap {
+.litegui-wrap {
 	width: 1000px;
 	height: 600px;
 	margin: auto;
 	background-color: #333;
 }
 
-#wrap.fullscreen {
+.litegui-wrap.fullscreen {
 	width: 100%;
 	height: 100%;
 }
 
-#header {
-	height: 48px;
-	background-color: #454545;
-	/*
-    background-color: #1B1B1B;
-    background-image: -moz-linear-gradient(center top , #333333, #222222);
-    background-image: -webkit-linear-gradient(center top , #222222, #111111);
-    background-image: linear-gradient(center top , #222222, #111111);
-    background-repeat: repeat-x;
-	*/
-
-	/*box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2) inset, 0 1px 10px rgba(0, 0, 0, 0.5);*/
-	z-index: 1000;
-}
-
-#title-bar {
-	position: relative;
-}
-
-#login-area {
-	position: absolute;
-	top: 0;
-	right: 0;
-	padding-right: 10px;
-	color: #aaa;
-}
-
-#main-area {
-	width: 100%;
-	-moz-box-sizing: border-box;	
-	-webkit-box-sizing: border-box;	
-	box-sizing: border-box;	
-	height: -moz-calc(100% - 60px);
-	height: -webkit-calc(100% - 60px);
-	height: calc(100% - 60px);
-	position: relative;
-}
-
-#menu-bar {
-	width: 100%;
-	height: 20px;
-	line-height: 20px;
-}
-
-#work-area {
-	position: relative;
-	-moz-box-sizing: border-box;	
-	-webkit-box-sizing: border-box;	
-	box-sizing: border-box;	
+.litegui-maincontent {
 	width: 100%;
 	height: 100%;
-	/*
-	height: -moz-calc(100% - 44px);
-	height: -webkit-calc(100% - 44px);
-	height: calc(100% - 44px);
-	*/
-	/*background: #111111;*/
-	/*
-    background-image: linear-gradient(top , #222222, #000000, #111111);
-    background-image: -moz-linear-gradient(top , #222222, #000000, #111111);
-    background-image: -webkit-linear-gradient(top , #222222, #000000, #111111);
-	*/
-	overflow: hidden;
 }
 
 .litearea {
@@ -107,9 +43,17 @@ div {
 }
 
 .litepanel {
+	width: 100%;
+	height: 100%;
+}
+
+.litedialog {
+	position: absolute;
+}
+
+.litepanel, .litedialog {
 	background-color: #444;
 	box-sizing: border-box;
-	position: absolute;
 	overflow:hidden;
     background-image: linear-gradient(top , #444444, #333333);
     background-image: -moz-linear-gradient(top , #444444, #333333);
@@ -117,7 +61,7 @@ div {
 	color: #888;
 }
 
-.litepanel .panel-header {
+.litepanel .panel-header, .litedialog .panel-header {
 	font-size: 1em;
 	padding: 0.2em 0 0 0.2em;
 	background-color: #778;
@@ -131,13 +75,6 @@ div {
 	color: white;
 
 	width: 100%;
-	/*
-	margin: 2px;
-	border-radius: 2px;
-	width: -moz-calc(100% - 6px);
-	width: -webkit-calc(100% - 6px);
-	width: calc(100% - 6px);
-	*/
 	min-height: 20px;
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
@@ -145,20 +82,29 @@ div {
 	overflow: hidden;
 }
 
-.litepanel.alert {
+.litepanel .panel-header button, .litedialog .panel-header button {
+	margin-top: 0;
+    background-image: none;
+	border: 0;
+	box-shadow: 0 0 0 transparent;
+	background-color: #333;
+}
+
+.litedialog.alert {
 	font-size: 1.6em; 
 }
 
-.litepanel.ui-draggable .panel-header{
+.litedialog.ui-draggable .panel-header{
 	cursor: move;
 }
 
 .litepanel .content {
 	/*overflow: auto; */
+	height: calc( 100% - 20px );
 }
 
 
-.litepanel .panel-footer {
+.litepanel .panel-footer, .litedialog .panel-footer {
 	position: absolute;
 	bottom: 0;
 	font-size: 0.8em;
@@ -173,22 +119,22 @@ div {
 	text-align: right;
 }
 
-.litepanel .panel-footer.resizable {
+.litedialog .panel-footer.resizable {
 	cursor: s-resize;
 }
 
-.litepanel .panel-footer button {
+.litedialog .panel-footer button {
 	font-size: inherit;
 	padding: 0.1em 0.6em;
 }
 
-.litepanel .buttons {
+.litedialog .buttons {
 	position: absolute;
 	top: 2px;
 	right: 2px;
 }
 
-.litepanel .content p {
+.litedialog .content p {
 	padding: 0.2em;	
 	margin: 0.2em;
 }
@@ -201,50 +147,6 @@ div {
 	background-color: rgba(0,0,0,0.8);
 	width: 100%;
 	height: 100%;
-	display: none;
+	z-index: 100;
 }
 
-
-#left-panel {
-	width: 200px;
-	height: 100%;
-	top: 0;
-	left: 0;
-}
-
-#right-panel {
-	width: 200px;
-	height: 100%;
-	top: 0;
-	right: 0;
-}
-
-#center-area {
-	-moz-box-sizing: border-box;	
-	-webkit-box-sizing: border-box;	
-	box-sizing: border-box;	
-
-	position: absolute;
-	left: 200px;
-	right: 200px;
-	background-color: #333;
-	height: 100%;
-
-	padding: 10px;
-}
-
-
-#status-bar {
-	color: #AAB;
-	position: absolute;
-	left: 0;
-	bottom: 0;
-	width: 100%;
-	height: 24px;
-	line-height: 24px;
-	background-color: #444;
-	padding-left: 4px;
-	-moz-box-sizing: border-box;	
-	-webkit-box-sizing: border-box;	
-	box-sizing: border-box;	
-}

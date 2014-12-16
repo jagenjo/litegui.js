@@ -34,7 +34,6 @@
 		}
 		
 		$(input).bind("keydown",function(e) {
-			//trace(e.keyCode);
 			if(e.keyCode == 38)
 				inner_inc(1,e);
 			else if(e.keyCode == 40)

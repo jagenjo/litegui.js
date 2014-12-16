@@ -88,6 +88,10 @@
 	color: #AAA;
 }
 
+.inspector .wtitle:first-child {
+	margin-top: 0;
+}
+
 .inspector .wtitle .help {
 	text-decoration: underline;
 }
@@ -109,6 +113,10 @@
 	box-shadow: 0 0 0;
 	padding: 0 1px 0 1px;
 	margin-left: 2px;
+}
+
+.inspector .wcontent button.single {
+	padding: 4px;
 }
 
 .inspector .icon {
@@ -339,7 +347,8 @@
 }
 
 .inspector .wcontent input.nano {
-	width: 22px;
+	/*width: 22px;*/
+	width: 1.5em;
 	/* margin-left: 3px; */
 }
 

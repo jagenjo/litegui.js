@@ -761,14 +761,17 @@
 		var canvas = document.createElement("canvas");
 		canvas.className = "slider " + (options.extraclass ? options.extraclass : "");
 		canvas.width = 100;
-		canvas.height = 10;
+		canvas.height = 1;
 		canvas.style.position = "relative";
+		canvas.style.width = "calc( 100% - 2em )";
+		canvas.style.height = "1.2em";
 		this.root = canvas;
 		var that = this;
 		this.value = value;
 
 		this.setValue = function(value)
 		{
+			//var width = canvas.getClientRects()[0].width;
 			var ctx = canvas.getContext("2d");
 			var min = options.min || 0.0;
 			var max = options.max || 1.0;
@@ -791,7 +794,8 @@
 
 		function setFromX(x)
 		{
-			var norm = x / canvas.width;
+			var width = canvas.getClientRects()[0].width;
+			var norm = x / width;
 			var min = options.min || 0.0;
 			var max = options.max || 1.0;
 			var range = max - min;

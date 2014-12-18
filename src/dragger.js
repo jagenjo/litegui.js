@@ -9,7 +9,7 @@
 		this.root = element;
 
 		var wrap = document.createElement("span");
-		wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "");
+		wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "") + (options.full ? " full" : "");
 		if(options.disabled)
 		wrap.className += " disabled";
 		element.appendChild(wrap);

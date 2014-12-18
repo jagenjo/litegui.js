@@ -389,7 +389,7 @@
 }
 
 .inspector .wcontent .checkbox {
-	width: 2em;
+	width: 4em;
 	display: inline-block;
 	background-color: black;
 	border: 0;
@@ -475,7 +475,7 @@
 	margin-right: 2px;
 }
 
-.inspector .dragger.full {
+.inspector .dragger .full {
 	width: 100%;
 	margin-left: 0;
 	margin-right: 0;
@@ -488,7 +488,7 @@
 	background-color: transparent;
 }
 
-.inspector .dragger.full input {
+.inspector .dragger .full input {
 	width: -moz-calc(100% - 14px);
 	width: -webkit-calc(100% - 14px);
 	width: calc(100% - 14px);
@@ -1918,7 +1918,7 @@ input[type="range"]::-moz-slider-thumb {
 
 .slider-container {
     margin-left: 5px;
-    margin-right: 5px;
+    /*margin-right: 5px;*/
 }
 
 .colorpicker-window {

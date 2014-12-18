@@ -1750,14 +1750,17 @@ function beautifyCode(code, reserved)
 		var canvas = document.createElement("canvas");
 		canvas.className = "slider " + (options.extraclass ? options.extraclass : "");
 		canvas.width = 100;
-		canvas.height = 10;
+		canvas.height = 1;
 		canvas.style.position = "relative";
+		canvas.style.width = "calc( 100% - 2em )";
+		canvas.style.height = "1.2em";
 		this.root = canvas;
 		var that = this;
 		this.value = value;
 
 		this.setValue = function(value)
 		{
+			//var width = canvas.getClientRects()[0].width;
 			var ctx = canvas.getContext("2d");
 			var min = options.min || 0.0;
 			var max = options.max || 1.0;
@@ -1780,7 +1783,8 @@ function beautifyCode(code, reserved)
 
 		function setFromX(x)
 		{
-			var norm = x / canvas.width;
+			var width = canvas.getClientRects()[0].width;
+			var norm = x / width;
 			var min = options.min || 0.0;
 			var max = options.max || 1.0;
 			var range = max - min;
@@ -2662,7 +2666,7 @@ function beautifyCode(code, reserved)
 		this.root = element;
 
 		var wrap = document.createElement("span");
-		wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "");
+		wrap.className = "inputfield " + (options.extraclass ? options.extraclass : "") + (options.full ? " full" : "");
 		if(options.disabled)
 		wrap.className += " disabled";
 		element.appendChild(wrap);
@@ -2815,7 +2819,12 @@ function beautifyCode(code, reserved)
 	{
 		var root = document.createElement("li");
 		root.className = "ltreeitem";
-		if(data.id) root.id = data.id;
+		//if(data.id) root.id = data.id;
+		if(data.id)
+		{
+			root.className += " ltreeitem-" + data.id;
+			root.dataset["item_id"] = data.id;
+		}
 		root.data = data;
 		data.DOM = root;
 		options = options || this.options;
@@ -2868,10 +2877,11 @@ function beautifyCode(code, reserved)
 
 			$(that.root).removeClass("selected");
 			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
-			$(title).addClass("selected");
+			title.classList.add("selected");
 			
 			$(that.root).trigger("item_selected", [item.data, item] );
-			if(item.callback) item.callback.call(that,item);
+			if(item.callback) 
+				item.callback.call(that,item);
 		}
 
 		function onNodeDblClicked(e)
@@ -2927,7 +2937,7 @@ function beautifyCode(code, reserved)
 		draggable_element.addEventListener("dragenter", function (ev)
 		{
 			//console.log(data.id);
-			$(title_element).addClass("dragover");
+			title_element.classList.add("dragover");
 			//if(ev.srcElement == this) return;
 			ev.preventDefault();
 		});
@@ -2935,7 +2945,7 @@ function beautifyCode(code, reserved)
 		draggable_element.addEventListener("dragleave", function (ev)
 		{
 			//console.log(data.id);
-			$(title_element).removeClass("dragover");
+			title_element.classList.remove("dragover");
 			//if(ev.srcElement == this) return;
 			ev.preventDefault();
 		});
@@ -3009,9 +3019,9 @@ function beautifyCode(code, reserved)
 
 	Tree.prototype.getItem = function(id)
 	{
-		var node = this.root.querySelector("#"+id);
+		var node = this.root.querySelector(".ltreeitem-"+id);
 		if(!node) return null;
-		if( !$(node).hasClass("ltreeitem") )
+		if( !node.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 		return node;
 	}
@@ -3045,7 +3055,7 @@ function beautifyCode(code, reserved)
 
 		var node = this.getItem(id);
 		if(!node) return null;
-		if( $(node).hasClass("selected") ) return node;
+		if( node.classList.contains("selected") ) return node;
 
 		$(this.root).removeClass("selected");
 		$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
@@ -3066,13 +3076,13 @@ function beautifyCode(code, reserved)
 		if(id_parent)
 		{
 			if(typeof(id_parent) == "string")
-				parent = this.getItem(id_parent);
+				parent = this.getItem( id_parent );
 			else
 				parent = id_parent;
 			if(!parent)
 				return null; //not found
 		}
-		if( !$(parent).hasClass("ltreeitem") )
+		if( !parent.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 
 		var element = this.createTreeItem(data, options);
@@ -3145,7 +3155,7 @@ function beautifyCode(code, reserved)
 		for(var i in childs)
 		{
 			var c = childs[i];
-			if(c.localName == "li" && $(c).hasClass("ltreeitem"))
+			if(c.localName == "li" && c.classList.contains("ltreeitem"))
 				child_elements.push(c);
 		}
 
@@ -3163,7 +3173,7 @@ function beautifyCode(code, reserved)
 		var aux = node.parentNode;
 		while(aux)
 		{
-			if( $(aux).hasClass("ltreeitem") )
+			if( aux.classList.contains("ltreeitem") )
 				return aux;
 			aux = aux.parentNode;
 		}
@@ -4254,10 +4264,12 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 	options.extraclass = "full";
 	options.tab_index = this.tab_index;
-	options.dragger_class = "full";
+	//options.dragger_class = "full";
+	options.full = true;
 	this.tab_index++;
 
 	var dragger = new LiteGUI.Dragger(value, options);
+	dragger.root.style.width = "calc( 100% - 3px )";
 	$(element).find(".wcontent").append(dragger.root);
 	$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
 	function inner_before_change(e)
@@ -4298,18 +4310,21 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	var element = this.createWidget(name,"", options);
 
 	options.step = options.step ||0.1;
-	options.dragger_class = "medium";
+	//options.dragger_class = "medium";
 	options.tab_index = this.tab_index;
+	options.full = true;
 	this.tab_index++;
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options);
 	dragger1.root.style.marginLeft = 0;
+	dragger1.root.style.width = "calc( 50% - 3px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
+	dragger2.root.style.width = "calc( 50% - 3px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	$(dragger1.root).bind("start_dragging",inner_before_change.bind(options) );
@@ -4368,24 +4383,28 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	var element = this.createWidget(name,"", options);
 
 	options.step = options.step || 0.1;
-	options.dragger_class = "mini";
+	//options.dragger_class = "mini";
 	options.tab_index = this.tab_index;
+	options.full = true;
 	this.tab_index++;
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options );
 	dragger1.root.style.marginLeft = 0;
+	dragger1.root.style.width = "calc( 33% - 3px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options );
+	dragger2.root.style.width = "calc( 33% - 3px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
+	dragger3.root.style.width = "calc( 33% - 3px )";
 	$(element).find(".wcontent").append(dragger3.root);
 
 	$(dragger1.root).bind("start_dragging", inner_before_change.bind(options) );
@@ -4502,7 +4521,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 
-	var element = this.createWidget(name,"<span class='inputfield'>\
+	var element = this.createWidget(name,"<span class='inputfield full'>\
 				<input tabIndex='"+this.tab_index+"' type='text' class='slider-text fixed nano' value='"+value+"' /><span class='slider-container'></span></span>", options);
 
 	var slider_container = element.querySelector(".slider-container");

@@ -37,7 +37,12 @@
 	{
 		var root = document.createElement("li");
 		root.className = "ltreeitem";
-		if(data.id) root.id = data.id;
+		//if(data.id) root.id = data.id;
+		if(data.id)
+		{
+			root.className += " ltreeitem-" + data.id;
+			root.dataset["item_id"] = data.id;
+		}
 		root.data = data;
 		data.DOM = root;
 		options = options || this.options;
@@ -90,10 +95,11 @@
 
 			$(that.root).removeClass("selected");
 			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
-			$(title).addClass("selected");
+			title.classList.add("selected");
 			
 			$(that.root).trigger("item_selected", [item.data, item] );
-			if(item.callback) item.callback.call(that,item);
+			if(item.callback) 
+				item.callback.call(that,item);
 		}
 
 		function onNodeDblClicked(e)
@@ -149,7 +155,7 @@
 		draggable_element.addEventListener("dragenter", function (ev)
 		{
 			//console.log(data.id);
-			$(title_element).addClass("dragover");
+			title_element.classList.add("dragover");
 			//if(ev.srcElement == this) return;
 			ev.preventDefault();
 		});
@@ -157,7 +163,7 @@
 		draggable_element.addEventListener("dragleave", function (ev)
 		{
 			//console.log(data.id);
-			$(title_element).removeClass("dragover");
+			title_element.classList.remove("dragover");
 			//if(ev.srcElement == this) return;
 			ev.preventDefault();
 		});
@@ -231,9 +237,9 @@
 
 	Tree.prototype.getItem = function(id)
 	{
-		var node = this.root.querySelector("#"+id);
+		var node = this.root.querySelector(".ltreeitem-"+id);
 		if(!node) return null;
-		if( !$(node).hasClass("ltreeitem") )
+		if( !node.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 		return node;
 	}
@@ -267,7 +273,7 @@
 
 		var node = this.getItem(id);
 		if(!node) return null;
-		if( $(node).hasClass("selected") ) return node;
+		if( node.classList.contains("selected") ) return node;
 
 		$(this.root).removeClass("selected");
 		$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
@@ -288,13 +294,13 @@
 		if(id_parent)
 		{
 			if(typeof(id_parent) == "string")
-				parent = this.getItem(id_parent);
+				parent = this.getItem( id_parent );
 			else
 				parent = id_parent;
 			if(!parent)
 				return null; //not found
 		}
-		if( !$(parent).hasClass("ltreeitem") )
+		if( !parent.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 
 		var element = this.createTreeItem(data, options);
@@ -367,7 +373,7 @@
 		for(var i in childs)
 		{
 			var c = childs[i];
-			if(c.localName == "li" && $(c).hasClass("ltreeitem"))
+			if(c.localName == "li" && c.classList.contains("ltreeitem"))
 				child_elements.push(c);
 		}
 
@@ -385,7 +391,7 @@
 		var aux = node.parentNode;
 		while(aux)
 		{
-			if( $(aux).hasClass("ltreeitem") )
+			if( aux.classList.contains("ltreeitem") )
 				return aux;
 			aux = aux.parentNode;
 		}

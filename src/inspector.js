@@ -561,10 +561,12 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 	options.extraclass = "full";
 	options.tab_index = this.tab_index;
-	options.dragger_class = "full";
+	//options.dragger_class = "full";
+	options.full = true;
 	this.tab_index++;
 
 	var dragger = new LiteGUI.Dragger(value, options);
+	dragger.root.style.width = "calc( 100% - 3px )";
 	$(element).find(".wcontent").append(dragger.root);
 	$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
 	function inner_before_change(e)
@@ -605,18 +607,21 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	var element = this.createWidget(name,"", options);
 
 	options.step = options.step ||0.1;
-	options.dragger_class = "medium";
+	//options.dragger_class = "medium";
 	options.tab_index = this.tab_index;
+	options.full = true;
 	this.tab_index++;
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options);
 	dragger1.root.style.marginLeft = 0;
+	dragger1.root.style.width = "calc( 50% - 3px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
+	dragger2.root.style.width = "calc( 50% - 3px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	$(dragger1.root).bind("start_dragging",inner_before_change.bind(options) );
@@ -675,24 +680,28 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	var element = this.createWidget(name,"", options);
 
 	options.step = options.step || 0.1;
-	options.dragger_class = "mini";
+	//options.dragger_class = "mini";
 	options.tab_index = this.tab_index;
+	options.full = true;
 	this.tab_index++;
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options );
 	dragger1.root.style.marginLeft = 0;
+	dragger1.root.style.width = "calc( 33% - 3px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options );
+	dragger2.root.style.width = "calc( 33% - 3px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
+	dragger3.root.style.width = "calc( 33% - 3px )";
 	$(element).find(".wcontent").append(dragger3.root);
 
 	$(dragger1.root).bind("start_dragging", inner_before_change.bind(options) );
@@ -809,7 +818,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 
-	var element = this.createWidget(name,"<span class='inputfield'>\
+	var element = this.createWidget(name,"<span class='inputfield full'>\
 				<input tabIndex='"+this.tab_index+"' type='text' class='slider-text fixed nano' value='"+value+"' /><span class='slider-container'></span></span>", options);
 
 	var slider_container = element.querySelector(".slider-container");

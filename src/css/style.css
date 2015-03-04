@@ -315,16 +315,17 @@ li.ltreeitem .ltreeitemtitle .postcontent {
 	font-size: 1em;
 	width: 0.9em;
 	height: 0.9em;
-	margin-left: -2px;
+	margin-left: -1px;
 	margin-bottom: 2px;
 	line-height: 1em;
 	display: inline-block;
-	outline: 1px solid #678;
+	/*outline: 1px solid #678;*/
 	text-align: center;
+	color: #79A;
 }
 
 .listbox.empty {
-	margin-left: 0px;
+	margin-left: 2px;
 	width: 0.4em;
 	height: 0.4em;
 
@@ -344,19 +345,20 @@ li.ltreeitem .ltreeitemtitle .postcontent {
 .listbox.listopen {
 }
 
+.listbox.listclosed {
+}
+
+/*
 .listbox.listopen::after
 { 
 	content:"-";
-}
-
-.listbox.listclosed {
 }
 
 .listbox.listclosed::after
 { 
 	content:"+";
 }
-
+*/
 
 /**** LiteList ***/
 

@@ -85,6 +85,8 @@ var LiteGUI = {
 				$(LiteGUI).trigger("escape");
 
 		});
+
+		window.onbeforeunload = this.onUnload.bind(this);
 	},
 
 
@@ -173,6 +175,12 @@ var LiteGUI = {
 		$(this).trigger("module_registered",module);
 	},
 
+	onUnload: function()
+	{
+		for(var i in this.modules)
+			if (this.modules[i].onUnload)
+				this.modules[i].onUnload();
+	},
 
 	add: function( litegui_element )
 	{
@@ -361,7 +369,7 @@ var LiteGUI = {
 		return xhr;
 	},	
 
-	requireScript: function(url, on_complete, on_progress )
+	requireScript: function(url, on_complete, on_progress, on_error )
 	{
 		if(typeof(url)=="string")
 			url = [url];
@@ -371,6 +379,7 @@ var LiteGUI = {
 		for(var i in url)
 		{
 			var script = document.createElement('script');
+			script.num = i;
 			script.type = 'text/javascript';
 			script.src = url[i];
 			script.async = false;
@@ -379,11 +388,15 @@ var LiteGUI = {
 				if(total)
 				{
 					if(on_progress)
-						on_progress(this.src, size - total - 1);
+						on_progress(this.src, this.num);
 				}
 				else if(on_complete)
 					on_complete();
 			};
+			if(on_error)
+				script.onerror = function(err) { 
+					on_error(err, this.src, this.num );
+				}
 			document.getElementsByTagName('head')[0].appendChild(script);
 		}
 	},
@@ -428,6 +441,36 @@ var LiteGUI = {
 			div.innerHTML = code;
 		div.add = function(v) { this.appendChild( v.root || v); };
 		return div;
+	},
+
+	//used to create a window that retains all the CSS info or the scripts.
+	newWindow: function(title, width, height, options)
+	{
+		options = options || {};
+		var new_window = window.open("","","width="+width+", height="+height+", location=no, status=no, menubar=no, titlebar=no, fullscreen=yes");
+		new_window.document.write( "<html><head><title>"+title+"</title>" );
+
+		//transfer style
+		var styles = document.querySelectorAll("link[rel='stylesheet'],style");
+		for(var i = 0; i < styles.length; i++)
+			new_window.document.write( styles[i].outerHTML );
+
+		//transfer scripts (optional because it can produce some errors)
+		if(options.scripts)
+		{
+			var scripts = document.querySelectorAll("script");
+			for(var i = 0; i < scripts.length; i++)
+			{
+				if(scripts[i].src) //avoid inline scripts, otherwise a cloned website would be created
+					new_window.document.write( scripts[i].outerHTML );
+			}
+		}
+
+
+		var content = options.content || "";
+		new_window.document.write( "</head><body>"+content+"</body></html>" );
+		new_window.document.close();
+		return new_window;
 	},
 
 	//* DIALOGS *******************
@@ -483,16 +526,9 @@ var LiteGUI = {
 		return this.showMessage(content,options);
 	},
 
-	confirm: function(content,options, callback_yes, callback_no)
+	confirm: function(content, callback, options)
 	{
 		options = options || {};
-		if(typeof(options) == "function")
-		{
-			callback_no = callback_yes;
-			callback_yes = options;
-			options = {};
-		}
-
 		options.className = "alert";
 		options.title = "Confirm";
 		options.width = 280;
@@ -500,34 +536,24 @@ var LiteGUI = {
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
 
-		content +="<button class='yes-button' style='width:45%; margin-left: 10px'>Yes</button><button class='no-button' style='width:45%'>No</button>";
+		content +="<button data-value='yes' style='width:45%; margin-left: 10px'>Yes</button><button data-value='no' style='width:45%'>No</button>";
 		options.noclose = true;
 
 		var dialog = this.showMessage(content,options);
 		dialog.content.style.paddingBottom = "10px";
-		$(dialog.content).find(".yes-button").click(function() {
-			if(callback_yes) callback_yes();
-			dialog.close();
-		});
-
-		$(dialog.content).find(".no-button").click(function() {
-			if(callback_no) callback_no();
+		$(dialog.content).find("button").click(function() {
+			var v = this.dataset["value"] == "yes";
+			if(callback) 
+				callback(v);
 			dialog.close();
 		});
 
 		return dialog;
 	},
 
-	prompt: function(content,options, callback_yes, callback_no)
+	prompt: function(content, callback, options )
 	{
 		options = options || {};
-		if(typeof(options) == "function")
-		{
-			callback_no = callback_yes;
-			callback_yes = options;
-			options = {};
-		}
-
 		options.className = "alert";
 		options.title = "Prompt" || options.title;
 		options.width = 280;
@@ -540,20 +566,20 @@ var LiteGUI = {
 		if (options.textarea)
 			textinput = "<textarea class='textfield' style='width:95%'>"+value+"</textarea>";
 
-		content +="<p>"+textinput+"</p><button class='yes-button' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button class='no-button' style='width:45%'>Cancel</button>";
+		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage(content,options);
-		$(dialog.content).find(".yes-button").click(function() {
+		$(dialog.content).find("button").click(function() {
 			var input = $(dialog.content).find(options.textarea ? "textarea" : "input").val();
+			if(this.dataset["value"] == "cancel")
+				input = null;
 
-			if(callback_yes) callback_yes( input );
+			if(callback)
+				callback( input );
 			dialog.close();
 		});
 
-		$(dialog.content).find(".no-button").click(function() {
-			if(callback_no) callback_no();
-			dialog.close();
-		});
+		$(dialog.content).find("input,textarea").focus();
 
 		return dialog;
 	},
@@ -1299,8 +1325,9 @@ function beautifyCode(code, reserved)
 		var last_pos = [0,0];
 		function inner_mousedown(e)
 		{
-			document.addEventListener("mousemove",inner_mousemove);
-			document.addEventListener("mouseup",inner_mouseup);
+			var doc = that.root.ownerDocument;
+			doc.addEventListener("mousemove",inner_mousemove);
+			doc.addEventListener("mouseup",inner_mouseup);
 			last_pos[0] = e.pageX;
 			last_pos[1] = e.pageY;
 			e.stopPropagation();
@@ -1330,8 +1357,9 @@ function beautifyCode(code, reserved)
 
 		function inner_mouseup(e)
 		{
-			document.removeEventListener("mousemove",inner_mousemove);
-			document.removeEventListener("mouseup",inner_mouseup);
+			var doc = that.root.ownerDocument;
+			doc.removeEventListener("mousemove",inner_mousemove);
+			doc.removeEventListener("mouseup",inner_mouseup);
 			that.resize();
 		}
 	}
@@ -1355,6 +1383,9 @@ function beautifyCode(code, reserved)
 			size = section.root.style.width;
 		else
 			size = section.root.style.height;
+
+		if(size.indexOf("calc") != -1)
+			size = "50%";
 
 		for(var i in this.sections)
 		{
@@ -1432,7 +1463,7 @@ function beautifyCode(code, reserved)
 		{
 			if (this.dynamic_section == area1)
 			{
-				var size = ($(area2.root).height() + delta) + "px";
+				var size = ($(area2.root).height() - delta) + "px";
 				area1.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
 				area1.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
 				area1.root.style.height = "calc( 100% - " + size + splitinfo + " )";
@@ -1489,7 +1520,19 @@ function beautifyCode(code, reserved)
 
 	Area.prototype.add = function(v)
 	{
+		if(typeof(v) == "string")
+		{
+			var element = document.createElement("div");
+			element.innerHTML = v;
+			v = element;
+		}
+
 		this.content.appendChild( v.root || v );
+	}
+
+	Area.prototype.query = function(v)
+	{
+		return this.root.querySelector(v);
 	}
 
 	LiteGUI.Area = Area;
@@ -1625,8 +1668,8 @@ function beautifyCode(code, reserved)
 	function createLitebox(state, on_change)
 	{
 		var element = document.createElement("span");
-		element.className = "listbox listopen";
-		element.innerHTML = "";
+		element.className = "listbox " + (state ? "listopen" : "listclosed");
+		element.innerHTML = state ? "&#9660;" : "&#9658;";
 		element.dataset["value"] = state ? "open" : "closed";
 		element.addEventListener("click", onClick );
 		element.on_change_callback = on_change;
@@ -1634,9 +1677,9 @@ function beautifyCode(code, reserved)
 		element.setEmpty = function(v)
 		{
 			if(v)
-				$(this).addClass("empty");
+				this.classList.add("empty");
 			else
-				$(this).removeClass("empty");
+				this.classList.remove("empty");
 		}
 
 		element.setValue = function(v)
@@ -1647,16 +1690,16 @@ function beautifyCode(code, reserved)
 			if(!v)
 			{
 				this.dataset["value"] = "closed";
-				//this.innerHTML = "+";
-				$(this).removeClass("listopen");
-				$(this).addClass("listclosed");
+				this.innerHTML = "&#9658;";
+				this.classList.remove("listopen");
+				this.classList.add("listclosed");
 			}
 			else
 			{
 				this.dataset["value"] = "open";
-				//this.innerHTML = "-";
-				$(this).addClass("listopen");
-				$(this).removeClass("listclosed");
+				this.innerHTML = "&#9660;";
+				this.classList.add("listopen");
+				this.classList.remove("listclosed");
 			}
 
 			if(on_change)
@@ -2463,6 +2506,7 @@ function beautifyCode(code, reserved)
 		root.data = this;
 		root.className = "litetabs";
 		this.root = root;
+		this.root.tabs = this;
 
 		this.current_tab = null; //current tab array [name, tab, content]
 
@@ -2477,11 +2521,11 @@ function beautifyCode(code, reserved)
 		//container of tab elements
 		var list = document.createElement("UL");
 		list.className = "wtabcontainer";
+		list.style.height = LiteGUI.Tabs.tabs_height + "px";
 		this.list = list;
 		this.root.appendChild(this.list);
 
 		this.tabs = {};
-		this.contents = {};
 		this.selected = null;
 
 		this.onchange = options.callback;
@@ -2522,8 +2566,22 @@ function beautifyCode(code, reserved)
 
 	Tabs.prototype.getTabContent = function(name)
 	{
-		return this.contents[name];
+		var tab = this.tabs[name];
+		if(tab)
+			return tab.content;
 	}
+
+	Tabs.prototype.getTabIndex = function(name)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return -1;
+		for(var i = 0; i < this.list.childNodes.length; i++)
+			if( this.list.childNodes[i] == tab.tab )
+				return i;
+		return -1;
+	}
+
 
 	//add something
 	Tabs.prototype.addTab = function(name,options)
@@ -2537,7 +2595,13 @@ function beautifyCode(code, reserved)
 		//if(options.selected) element.className += " selected";
 		element.data = name;
 		element.innerHTML = name;
-		this.list.appendChild(element);
+
+		if(options.index && options.index != -1)
+		{
+			this.list.insertBefore(element, this.list.childNodes[options.index]);
+		}
+		else
+			this.list.appendChild(element);
 
 		//the content of the tab
 		var content = document.createElement("div");
@@ -2546,6 +2610,8 @@ function beautifyCode(code, reserved)
 		content.className = "wtabcontent " + "wtabcontent-" + name.replace(/ /gi,"_") + " " + (options.className || "");
 		content.data = name;
 		content.style.display = "none";
+
+		//adapt height
 		if(options.height)
 		{
 			content.style.overflow = "auto";
@@ -2559,6 +2625,8 @@ function beautifyCode(code, reserved)
 			else
 				content.style.height = options.height;
 		}
+
+		//add content
 		if(options.content)
 		{
 			if (typeof(options.content) == "string")
@@ -2566,48 +2634,76 @@ function beautifyCode(code, reserved)
 			else
 				content.appendChild(options.content);
 		}
-
 		this.root.appendChild(content);
-		this.contents[ name ] = content;
 
 		//when clicked
-		element.addEventListener("click", function(e) {
-			if( this.classList.contains("selected") ) 
-				return;
-
-			var tabname = this.data;
-			var tab = null;
-
-			for(var i in that.contents)
-				if( i == tabname )
-				{
-					$(that.contents[i]).show();
-					tab = that.contents[i];
-				}
-				else
-					$(that.contents[i]).hide();
-
-			$(that.list).find("li.wtab").removeClass("selected");
-			this.classList.add("selected");
-			if( that.current_tab && 
-				that.current_tab[0] != tabname && 
-				that.current_tab[2] && 
-				that.current_tab[2].callback_leave)
-					that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
-			that.current_tab = [tabname, tab, options];
-			if(options.callback) options.callback(tabname, tab);
-			$(that).trigger("wchange",[tabname,tab]);
-			if(that.onchange) that.onchange(name,tabname,tab);
-			that.selected = name;
-		});
+		element.addEventListener("click", Tabs.prototype.onTabClicked );
+		element.options = options;
+		element.tabs = this;
 
 		this.list.appendChild(element);
+
+		this.tabs[name] = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
 
 		if (options.selected == true || this.selected == null)
 			this.selectTab(name);
 
-		this.tabs[name] = {tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
 		return this.tabs[name];
+	}
+
+	//this is tab
+	Tabs.prototype.onTabClicked = function()
+	{
+		//skip if already selected
+		if( this.classList.contains("selected") ) 
+			return;
+
+		var options = this.options;
+		var tabs = this.parentNode.parentNode.tabs;
+		if(!tabs)
+			throw("tabs not found");
+		var that = tabs;
+
+		//check if this tab is available
+		if(options.callback_canopen && options.callback_canopen() == false)
+			return;
+
+		var tabname = this.data;
+		var tab_content = null;
+
+		//iterate tab labels
+		for(var i in that.tabs)
+		{
+			var tab_info = that.tabs[i];
+			if( i == tabname )
+			{
+				$(tab_info.content).show();
+				tab_content = tab_info.content;
+			}
+			else
+				$(tab_info.content).hide();
+		}
+
+		$(that.list).find("li.wtab").removeClass("selected");
+		this.classList.add("selected");
+
+		//launch leaving current tab event
+		if( that.current_tab && 
+			that.current_tab[0] != tabname && 
+			that.current_tab[2] && 
+			that.current_tab[2].callback_leave)
+				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
+
+		//change tab
+		that.current_tab = [tabname, tab_content, options];
+
+		//launch callback
+		if(options.callback) 
+			options.callback(tabname, tab_content);
+
+		$(that).trigger("wchange",[tabname,tab_content]);
+		if(that.onchange) that.onchange(name,tabname,tab_content);
+		that.selected = name;
 	}
 
 	Tabs.prototype.selectTab = function(name)
@@ -2640,7 +2736,6 @@ function beautifyCode(code, reserved)
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
 		delete this.tabs[name];
-		delete this.contents[name];
 	}
 
 	Tabs.prototype.hideTab = function(name)
@@ -2652,6 +2747,85 @@ function beautifyCode(code, reserved)
 	{
 		this.setTabVisibility(name, true);
 	}
+
+	Tabs.prototype.transferTab = function(name, target_tabs, index)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		target_tabs.tabs[name] = tab;
+
+		if(index !== undefined)
+			target_tabs.list.insertBefore(tab.tab, target_tabs.list.childNodes[index]);
+		else
+			target_tabs.list.appendChild(tab.tab);
+		target_tabs.root.appendChild(tab.content);
+		delete this.tabs[name];
+
+		var newtab = null;
+		for(var i in this.tabs)
+		{
+			newtab = i;
+			break;
+		}
+
+		if(newtab)
+			this.selectTab(newtab);
+
+		tab.tab.classList.remove("selected");
+		target_tabs.selectTab(name);
+	}
+
+	Tabs.prototype.detachTab = function(name, on_complete, on_close )
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		var index = this.getTabIndex( name );
+
+		//create window
+		var w = 800;
+		var h = 600;
+		var tab_window = window.open("","","width="+w+", height="+h+", location=no, status=no, menubar=no, titlebar=no, fullscreen=yes");
+		tab_window.document.write( "<head><title>"+name+"</title>" );
+
+		//transfer style
+		var styles = document.querySelectorAll("link[rel='stylesheet'],style");
+		for(var i = 0; i < styles.length; i++)
+			tab_window.document.write( styles[i].outerHTML );
+		tab_window.document.write( "</head><body></body>" );
+		tab_window.document.close();
+
+		var that = this;
+
+		//transfer content after a while so the window is propertly created
+		setTimeout( function() {
+
+			var newtabs = new LiteGUI.Tabs();
+			tab_window.tabs = newtabs;
+
+			//closing event
+			tab_window.onbeforeunload = function(){
+				newtabs.transferTab(name, that, index);
+				if(on_close)
+					on_close();
+			}
+
+			//move the content there
+			newtabs.list.style.height = "20px";
+			tab_window.document.body.appendChild(newtabs.root);
+			that.transferTab(name, newtabs);
+			newtabs.tabs[name].tab.classList.add("selected");
+
+			if(on_complete)
+				on_complete();
+		},1);
+
+		return tab_window;
+	}
+
 
 	LiteGUI.Tabs = Tabs;
 })();
@@ -2822,7 +2996,8 @@ function beautifyCode(code, reserved)
 		//if(data.id) root.id = data.id;
 		if(data.id)
 		{
-			root.className += " ltreeitem-" + data.id;
+			var safe_id = data.id.replace(/\s/g,"_");
+			root.className += " ltreeitem-" + safe_id;
 			root.dataset["item_id"] = data.id;
 		}
 		root.data = data;
@@ -2836,7 +3011,10 @@ function beautifyCode(code, reserved)
 
 		var content = data.content || data.id || "";
 		title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
-		//root.dataset["item"] = data.id || data.content || "";
+
+		if(data.dataset)
+			for(var i in data.dataset)
+				root.dataset[i] = data.dataset[i];
 
 		root.appendChild(title_element);
 		root.title_element = title_element;
@@ -2878,8 +3056,10 @@ function beautifyCode(code, reserved)
 			$(that.root).removeClass("selected");
 			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
 			title.classList.add("selected");
-			
+						
 			$(that.root).trigger("item_selected", [item.data, item] );
+			if(that.onItemSelected)
+				that.onItemSelected(item.data, item);
 			if(item.callback) 
 				item.callback.call(that,item);
 		}
@@ -2930,24 +3110,26 @@ function beautifyCode(code, reserved)
 		//starts dragging this element
 		draggable_element.addEventListener("dragstart", function(ev) {
 			//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
-			ev.dataTransfer.setData("node-id", this.parentNode.id);
+			//ev.dataTransfer.setData("node-id", this.parentNode.id);
+			ev.dataTransfer.setData("item_id", this.parentNode.dataset["item_id"]);
 		});
 
 		//something being dragged entered
 		draggable_element.addEventListener("dragenter", function (ev)
 		{
-			//console.log(data.id);
-			title_element.classList.add("dragover");
-			//if(ev.srcElement == this) return;
 			ev.preventDefault();
+			if(data.skipdrag)
+				return false;
+
+			title_element.classList.add("dragover");
 		});
 
 		draggable_element.addEventListener("dragleave", function (ev)
 		{
+			ev.preventDefault();
 			//console.log(data.id);
 			title_element.classList.remove("dragover");
 			//if(ev.srcElement == this) return;
-			ev.preventDefault();
 		});
 
 		//test if allows to drag stuff on top?
@@ -2961,15 +3143,23 @@ function beautifyCode(code, reserved)
 		{
 			$(title_element).removeClass("dragover");
 			ev.preventDefault();
-			var node_id = ev.dataTransfer.getData("node-id");
+			if(data.skipdrag)
+				return false;
+
+			var item_id = ev.dataTransfer.getData("item_id");
 
 			//var data = ev.dataTransfer.getData("Text");
-			if(node_id != "")
+			if(item_id != "")
 			{
 				try
 				{
-					if( that.moveItem(node_id, this.parentNode.id ) )
-						$(that.root).trigger("item_moved", [ that.getItem(node_id), that.getItem(this.parentNode.id) ] );
+					var parent_id = this.parentNode.dataset["item_id"];
+
+					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+					{
+						if( that.moveItem( item_id, parent_id ) )
+							$(that.root).trigger("item_moved", [ that.getItem( item_id ), that.getItem( parent_id ) ] );
+					}
 				}
 				catch (err)
 				{
@@ -3017,10 +3207,12 @@ function beautifyCode(code, reserved)
 			list.style.display = "none";
 	}
 
-	Tree.prototype.getItem = function(id)
+	Tree.prototype.getItem = function( id )
 	{
-		var node = this.root.querySelector(".ltreeitem-"+id);
-		if(!node) return null;
+		var safe_id = id.replace(/\s/g,"_");
+		var node = this.root.querySelector(".ltreeitem-"+safe_id);
+		if(!node) 
+			return null;
 		if( !node.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 		return node;
@@ -4041,6 +4233,8 @@ Inspector.widget_constructors = {
 	vector2: 'addVector2',
 	vec3: 'addVector3',
 	vector3: 'addVector3',
+	vec4: 'addVector4',
+	vector4: 'addVector4',
 	"enum": 'addCombo',
 	combo: 'addCombo',
 	button: 'addButton',
@@ -4048,6 +4242,8 @@ Inspector.widget_constructors = {
 	file: 'addFile',
 	line: 'addLine',
 	list: 'addList',
+	tree: 'addTree',
+	datatree: 'addDataTree',
 	separator: 'addSeparator'
 };
 
@@ -4208,8 +4404,9 @@ Inspector.prototype.addString = function(name,value, options)
 
 	var inputtype = "text";
 	if(options.password) inputtype = "password";
-	
-	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
+	var focus = options.focus ? "autofocus" : "";
+
+	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' "+focus+" class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
 	$(element).find(".wcontent input").change( function(e) { 
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
@@ -4217,6 +4414,7 @@ Inspector.prototype.addString = function(name,value, options)
 
 	element.setValue = function(v) { $(this).find("input").val(v).change(); };
 	element.getValue = function() { return $(this).find("input").val(); };
+	element.focus = function() { $(this).find("input").focus(); };
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	this.append(element,options);
 	return element;
@@ -4245,6 +4443,9 @@ Inspector.prototype.addStringButton = function(name,value, options)
 	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
+	element.setValue = function(v) { $(this).find("input").val(v).change(); };
+	element.getValue = function() { return $(this).find("input").val(); };
+	element.focus = function() { $(this).find("input").focus(); };
 	return element;
 }
 
@@ -4269,7 +4470,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 	this.tab_index++;
 
 	var dragger = new LiteGUI.Dragger(value, options);
-	dragger.root.style.width = "calc( 100% - 3px )";
+	dragger.root.style.width = "calc( 100% - 1px )";
 	$(element).find(".wcontent").append(dragger.root);
 	$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
 	function inner_before_change(e)
@@ -4293,6 +4494,8 @@ Inspector.prototype.addNumber = function(name, value, options)
 	});
 
 	element.setValue = function(v) { $(this).find("input").val(v).change(); };
+	element.getValue = function() { return $(this).find("input").val(); };
+	element.focus = function() { $(this).find("input").focus(); };
 
 	return element;
 }
@@ -4317,14 +4520,14 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options);
 	dragger1.root.style.marginLeft = 0;
-	dragger1.root.style.width = "calc( 50% - 3px )";
+	dragger1.root.style.width = "calc( 50% - 1px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
-	dragger2.root.style.width = "calc( 50% - 3px )";
+	dragger2.root.style.width = "calc( 50% - 1px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	$(dragger1.root).bind("start_dragging",inner_before_change.bind(options) );
@@ -4390,21 +4593,21 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options );
 	dragger1.root.style.marginLeft = 0;
-	dragger1.root.style.width = "calc( 33% - 3px )";
+	dragger1.root.style.width = "calc( 33% - 1px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options );
-	dragger2.root.style.width = "calc( 33% - 3px )";
+	dragger2.root.style.width = "calc( 33% - 1px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
-	dragger3.root.style.width = "calc( 33% - 3px )";
+	dragger3.root.style.width = "calc( 33% - 1px )";
 	$(element).find(".wcontent").append(dragger3.root);
 
 	$(dragger1.root).bind("start_dragging", inner_before_change.bind(options) );
@@ -4447,6 +4650,76 @@ Inspector.prototype.addVector3 = function(name,value, options)
 		dragger1.setValue(v[0]);
 		dragger2.setValue(v[1]);
 		dragger3.setValue(v[2]);
+	}
+	return element;
+}
+
+Inspector.prototype.addVector4 = function(name,value, options)
+{
+	options = this.processOptions(options);
+	if(!options.step)
+		options.step = 0.1;
+
+	value = value || [0,0,0];
+	var that = this;
+	this.values[name] = value;
+	
+	var element = this.createWidget(name,"", options);
+
+	options.step = options.step || 0.1;
+	//options.dragger_class = "mini";
+	options.tab_index = this.tab_index;
+	options.full = true;
+	this.tab_index++;
+
+	var draggers = [];
+
+	for(var i = 0; i < 4; i++)
+	{
+		var dragger = new LiteGUI.Dragger(value[i], options );
+		dragger.root.style.marginLeft = 0;
+		dragger.root.style.width = "calc( 25% - 1px )";
+		$(element).find(".wcontent").append(dragger.root);
+		options.tab_index = this.tab_index;
+		this.tab_index++;
+		$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
+		draggers.push(dragger);
+	}
+
+	function inner_before_change(e)
+	{
+		if(this.callback_before) this.callback_before();
+	}
+
+	$(element).find("input").change( function(e) { 
+		//gather all parameters
+		var r = [];
+		var elems = $(element).find("input");
+		for(var i = 0; i < elems.length; i++)
+			r.push( parseFloat( elems[i].value ) );
+
+		that.values[name] = r;
+
+		if(options.callback)
+		{
+			var new_val = options.callback.call(element,r); 
+			if(typeof(new_val) == "object" && new_val.length >= 4)
+			{
+				for(var i = 0; i < elems.length; i++)
+					$(elems[i]).val(new_val[i]);
+				r = new_val;
+			}
+		}
+
+		$(element).trigger("wchange",[r]);
+		if(that.onchange) that.onchange(name,r,element);
+	});
+
+	this.append(element,options);
+
+	element.setValue = function(v) { 
+		for(var i = 0; i < draggers.length; i++)
+			draggers[i].setValue(v[i]);
 	}
 	return element;
 }
@@ -5091,6 +5364,35 @@ Inspector.prototype.addLine = function(name, value, options)
 }
 
 Inspector.prototype.addTree = function(name, value, options)
+{
+	options = this.processOptions(options);
+
+	value = value || "";
+	var element = this.createWidget(name,"<div class='wtree inputfield full'></div>", options);
+	
+	var tree_root = $(element).find(".wtree")[0];
+	if(options.height)
+		tree_root.style.height = typeof(options.height) == "number" ? options.height + "px" : options.height;
+
+	var current = value;
+
+	var tree = element.tree = new LiteGUI.Tree(null,value, options.tree_options);
+	tree.onItemSelected = function(node, data) {
+		if(options.callback)
+			options.callback(node,data);
+	};
+
+	tree_root.appendChild(tree.root);
+
+	element.setValue = function(v) { 
+		tree.updateTree(v);
+	};
+
+	this.append(element,options);
+	return element;
+}
+
+Inspector.prototype.addDataTree = function(name, value, options)
 {
 	options = this.processOptions(options);
 

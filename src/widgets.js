@@ -310,8 +310,9 @@
 		var last_pos = [0,0];
 		function inner_mousedown(e)
 		{
-			document.addEventListener("mousemove",inner_mousemove);
-			document.addEventListener("mouseup",inner_mouseup);
+			var doc = that.root.ownerDocument;
+			doc.addEventListener("mousemove",inner_mousemove);
+			doc.addEventListener("mouseup",inner_mouseup);
 			last_pos[0] = e.pageX;
 			last_pos[1] = e.pageY;
 			e.stopPropagation();
@@ -341,8 +342,9 @@
 
 		function inner_mouseup(e)
 		{
-			document.removeEventListener("mousemove",inner_mousemove);
-			document.removeEventListener("mouseup",inner_mouseup);
+			var doc = that.root.ownerDocument;
+			doc.removeEventListener("mousemove",inner_mousemove);
+			doc.removeEventListener("mouseup",inner_mouseup);
 			that.resize();
 		}
 	}
@@ -366,6 +368,9 @@
 			size = section.root.style.width;
 		else
 			size = section.root.style.height;
+
+		if(size.indexOf("calc") != -1)
+			size = "50%";
 
 		for(var i in this.sections)
 		{
@@ -443,7 +448,7 @@
 		{
 			if (this.dynamic_section == area1)
 			{
-				var size = ($(area2.root).height() + delta) + "px";
+				var size = ($(area2.root).height() - delta) + "px";
 				area1.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
 				area1.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
 				area1.root.style.height = "calc( 100% - " + size + splitinfo + " )";
@@ -500,7 +505,19 @@
 
 	Area.prototype.add = function(v)
 	{
+		if(typeof(v) == "string")
+		{
+			var element = document.createElement("div");
+			element.innerHTML = v;
+			v = element;
+		}
+
 		this.content.appendChild( v.root || v );
+	}
+
+	Area.prototype.query = function(v)
+	{
+		return this.root.querySelector(v);
 	}
 
 	LiteGUI.Area = Area;
@@ -636,8 +653,8 @@
 	function createLitebox(state, on_change)
 	{
 		var element = document.createElement("span");
-		element.className = "listbox listopen";
-		element.innerHTML = "";
+		element.className = "listbox " + (state ? "listopen" : "listclosed");
+		element.innerHTML = state ? "&#9660;" : "&#9658;";
 		element.dataset["value"] = state ? "open" : "closed";
 		element.addEventListener("click", onClick );
 		element.on_change_callback = on_change;
@@ -645,9 +662,9 @@
 		element.setEmpty = function(v)
 		{
 			if(v)
-				$(this).addClass("empty");
+				this.classList.add("empty");
 			else
-				$(this).removeClass("empty");
+				this.classList.remove("empty");
 		}
 
 		element.setValue = function(v)
@@ -658,16 +675,16 @@
 			if(!v)
 			{
 				this.dataset["value"] = "closed";
-				//this.innerHTML = "+";
-				$(this).removeClass("listopen");
-				$(this).addClass("listclosed");
+				this.innerHTML = "&#9658;";
+				this.classList.remove("listopen");
+				this.classList.add("listclosed");
 			}
 			else
 			{
 				this.dataset["value"] = "open";
-				//this.innerHTML = "-";
-				$(this).addClass("listopen");
-				$(this).removeClass("listclosed");
+				this.innerHTML = "&#9660;";
+				this.classList.add("listopen");
+				this.classList.remove("listclosed");
 			}
 
 			if(on_change)

@@ -68,7 +68,9 @@
 		code = beautifyCode(code);
 
 		code_tab.content.innerHTML = "<h2>Code of this example</h2><pre>" + code + "</pre>";
-		tabs.addTab("Example");
+		tabs.addTab("Image", { content:"<img src='http://www.w3.org/html/logo/downloads/HTML5_Badge_512.png'/>"});
+
+		widgets.addButton(null,"Detach Code tab", function() { tabs.detachTab("Code"); });
 
 		main_panel.add(tabs);
 	

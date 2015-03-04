@@ -1,8 +1,7 @@
 var mainarea = null;
 
-
 $(window).bind("load", function() { 
-	//LiteGUI.init({width:1000,height:500}); 
+
 	LiteGUI.init(); 
 
 	var mainmenu = new LiteGUI.Menubar("mainmenubar");
@@ -37,8 +36,7 @@ $(window).bind("load", function() {
 
 	mainarea.getSection(0).split("vertical",[null,"100px"],true);
 	var docked_bottom = new LiteGUI.Panel("bottom_panel", {title:'Docked panel',hide:true});
-	docked_bottom.dockTo( mainarea.getSection(0).getSection(1),"full");
-	docked_bottom.show();
+	mainarea.getSection(0).getSection(1).add( docked_bottom );
 	$(docked_bottom).trigger("closed",function() { LiteGUI.mainarea.getSection(0).merge() });
 	mainarea.resize();
 
@@ -51,7 +49,7 @@ $(window).bind("load", function() {
 	mainmenu.add("edit/undo");
 	mainmenu.add("edit/redo");
 	mainmenu.add("edit/");
-	mainmenu.add("edit/copy", { callback: function(){ trace("FOOOO"); } });
+	mainmenu.add("edit/copy", { callback: function(){ console.log("COPY"); } });
 	mainmenu.add("edit/paste");
 	mainmenu.add("edit/clear");
 		
@@ -82,8 +80,11 @@ function createSidePanel()
 	mainarea.split("horizontal",[null,"240px"],true);
 
 	var docked = new LiteGUI.Panel("right_panel", {title:'Docked panel', close: true});
-	docked.dockTo( mainarea.getSection(1).content,"full");
-	docked.show();
+
+	mainarea.getSection(1).add( docked );
+
+	//docked.dockTo( mainarea.getSection(1).content,"full");
+	//docked.show();
 	$(docked).bind("closed", function() { mainarea.merge(); });
 
 	window.sidepanel = docked;
@@ -102,7 +103,7 @@ function updateSidePanel( root )
 	tabs_widget.addTab("Tree",{selected:true});
 	tabs_widget.addTab("Extra");
 
-	$(tabs_widget.contents["Info"]).append("<strong>Example of code inside tab container</strong>");
+	$(tabs_widget.getTabContent("Info")).append("<strong>Example of code inside tab container</strong>");
 
 	//tree
 	var mytree = { id: "Rootnode", 
@@ -119,9 +120,9 @@ function updateSidePanel( root )
 
 	var litetree = new LiteGUI.Tree("tree",mytree,{allow_rename:true});
 	$(litetree).bind("item_selected", function(e,node) {
-		trace("Node selected: " + node); 
+		console.log("Node selected: " + node); 
 	});
-	$(tabs_widget.contents["Tree"]).append( litetree.root );
+	$(tabs_widget.getTabContent("Tree")).append( litetree.root );
 
 	litetree.insertItem( {id:"FOO"}, "Child2",21 );
 	//litetree.removeItem( "SubChild1" );
@@ -132,7 +133,7 @@ function updateSidePanel( root )
 	//side panel widget
 	var widgets = new LiteGUI.Inspector();
 	widgets.onchange = function(name,value,widget) {
-		//trace("Widget change: " + name + " -> " + value );
+		//console.log("Widget change: " + name + " -> " + value );
 	};
 	$(root.content).append(widgets.root);
 
@@ -140,17 +141,18 @@ function updateSidePanel( root )
 	widgets.addSeparator();
 	widgets.addVector2("vector2",[10,20], {min:0});
 	widgets.addVector3("vector3",[10,20,30], {min:0});
+	widgets.addVector4("vector4",[0.1,0.2,0.3,0.4], {min:0});
 	widgets.addSection("Text stuff");
 	widgets.addString("string","foo");
-	widgets.addStringButton("string button","foo", { callback_button: function(v) { trace("Button: " + v); } });
+	widgets.addStringButton("string button","foo", { callback_button: function(v) { console.log("Button: " + v); } });
 	widgets.addTextarea(null,"a really long silly text", {height: 100});
-	widgets.addCombo("combo","javi",{values:["foo","faa","super largo texto que no cabe entero","javi","nada"], callback: function(name) { trace("Combo selected: " + name); }});
-	widgets.addComboButtons("combobuttons","javi",{values:["foo","faa","javi","nada"], callback: function(name) { trace("Combo button selected: " + name); }});
-	widgets.addTags("tags","pop",{values:["rap","blues","pop","jazz"], callback: function(tags) { trace("Tag added: " + JSON.stringify(tags) ); }});
+	widgets.addCombo("combo","javi",{values:["foo","faa","super largo texto que no cabe entero","javi","nada"], callback: function(name) { console.log("Combo selected: " + name); }});
+	widgets.addComboButtons("combobuttons","javi",{values:["foo","faa","javi","nada"], callback: function(name) { console.log("Combo button selected: " + name); }});
+	widgets.addTags("tags","pop",{values:["rap","blues","pop","jazz"], callback: function(tags) { console.log("Tag added: " + JSON.stringify(tags) ); }});
 	widgets.addSection("Other widgets");
-	widgets.addCheckbox("checkbox",true,{callback: function(value) { trace("Checkbox pressed: " + value); } });
-	widgets.addButton("Serialize","Save",{callback: function(name) { trace("Button pressed: " + name); } });
-	widgets.addButtons("Serialize",["Save","Load","New"],{callback: function(name) { trace("Button pressed: " + name); } });
+	widgets.addCheckbox("checkbox",true,{callback: function(value) { console.log("Checkbox pressed: " + value); } });
+	widgets.addButton("Serialize","Save",{callback: function(name) { console.log("Button pressed: " + name); } });
+	widgets.addButtons("Serialize",["Save","Load","New"],{callback: function(name) { console.log("Button pressed: " + name); } });
 	widgets.addButton(null,"Save");
 	widgets.addSeparator();
 	widgets.addColor("Color",[0,1,0]);

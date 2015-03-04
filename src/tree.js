@@ -40,7 +40,8 @@
 		//if(data.id) root.id = data.id;
 		if(data.id)
 		{
-			root.className += " ltreeitem-" + data.id;
+			var safe_id = data.id.replace(/\s/g,"_");
+			root.className += " ltreeitem-" + safe_id;
 			root.dataset["item_id"] = data.id;
 		}
 		root.data = data;
@@ -54,7 +55,10 @@
 
 		var content = data.content || data.id || "";
 		title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
-		//root.dataset["item"] = data.id || data.content || "";
+
+		if(data.dataset)
+			for(var i in data.dataset)
+				root.dataset[i] = data.dataset[i];
 
 		root.appendChild(title_element);
 		root.title_element = title_element;
@@ -96,8 +100,10 @@
 			$(that.root).removeClass("selected");
 			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
 			title.classList.add("selected");
-			
+						
 			$(that.root).trigger("item_selected", [item.data, item] );
+			if(that.onItemSelected)
+				that.onItemSelected(item.data, item);
 			if(item.callback) 
 				item.callback.call(that,item);
 		}
@@ -148,24 +154,26 @@
 		//starts dragging this element
 		draggable_element.addEventListener("dragstart", function(ev) {
 			//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
-			ev.dataTransfer.setData("node-id", this.parentNode.id);
+			//ev.dataTransfer.setData("node-id", this.parentNode.id);
+			ev.dataTransfer.setData("item_id", this.parentNode.dataset["item_id"]);
 		});
 
 		//something being dragged entered
 		draggable_element.addEventListener("dragenter", function (ev)
 		{
-			//console.log(data.id);
-			title_element.classList.add("dragover");
-			//if(ev.srcElement == this) return;
 			ev.preventDefault();
+			if(data.skipdrag)
+				return false;
+
+			title_element.classList.add("dragover");
 		});
 
 		draggable_element.addEventListener("dragleave", function (ev)
 		{
+			ev.preventDefault();
 			//console.log(data.id);
 			title_element.classList.remove("dragover");
 			//if(ev.srcElement == this) return;
-			ev.preventDefault();
 		});
 
 		//test if allows to drag stuff on top?
@@ -179,15 +187,23 @@
 		{
 			$(title_element).removeClass("dragover");
 			ev.preventDefault();
-			var node_id = ev.dataTransfer.getData("node-id");
+			if(data.skipdrag)
+				return false;
+
+			var item_id = ev.dataTransfer.getData("item_id");
 
 			//var data = ev.dataTransfer.getData("Text");
-			if(node_id != "")
+			if(item_id != "")
 			{
 				try
 				{
-					if( that.moveItem(node_id, this.parentNode.id ) )
-						$(that.root).trigger("item_moved", [ that.getItem(node_id), that.getItem(this.parentNode.id) ] );
+					var parent_id = this.parentNode.dataset["item_id"];
+
+					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+					{
+						if( that.moveItem( item_id, parent_id ) )
+							$(that.root).trigger("item_moved", [ that.getItem( item_id ), that.getItem( parent_id ) ] );
+					}
 				}
 				catch (err)
 				{
@@ -235,10 +251,12 @@
 			list.style.display = "none";
 	}
 
-	Tree.prototype.getItem = function(id)
+	Tree.prototype.getItem = function( id )
 	{
-		var node = this.root.querySelector(".ltreeitem-"+id);
-		if(!node) return null;
+		var safe_id = id.replace(/\s/g,"_");
+		var node = this.root.querySelector(".ltreeitem-"+safe_id);
+		if(!node) 
+			return null;
 		if( !node.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 		return node;

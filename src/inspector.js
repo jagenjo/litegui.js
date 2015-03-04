@@ -338,6 +338,8 @@ Inspector.widget_constructors = {
 	vector2: 'addVector2',
 	vec3: 'addVector3',
 	vector3: 'addVector3',
+	vec4: 'addVector4',
+	vector4: 'addVector4',
 	"enum": 'addCombo',
 	combo: 'addCombo',
 	button: 'addButton',
@@ -345,6 +347,8 @@ Inspector.widget_constructors = {
 	file: 'addFile',
 	line: 'addLine',
 	list: 'addList',
+	tree: 'addTree',
+	datatree: 'addDataTree',
 	separator: 'addSeparator'
 };
 
@@ -505,8 +509,9 @@ Inspector.prototype.addString = function(name,value, options)
 
 	var inputtype = "text";
 	if(options.password) inputtype = "password";
-	
-	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
+	var focus = options.focus ? "autofocus" : "";
+
+	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' "+focus+" class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
 	$(element).find(".wcontent input").change( function(e) { 
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
@@ -514,6 +519,7 @@ Inspector.prototype.addString = function(name,value, options)
 
 	element.setValue = function(v) { $(this).find("input").val(v).change(); };
 	element.getValue = function() { return $(this).find("input").val(); };
+	element.focus = function() { $(this).find("input").focus(); };
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	this.append(element,options);
 	return element;
@@ -542,6 +548,9 @@ Inspector.prototype.addStringButton = function(name,value, options)
 	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
+	element.setValue = function(v) { $(this).find("input").val(v).change(); };
+	element.getValue = function() { return $(this).find("input").val(); };
+	element.focus = function() { $(this).find("input").focus(); };
 	return element;
 }
 
@@ -566,7 +575,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 	this.tab_index++;
 
 	var dragger = new LiteGUI.Dragger(value, options);
-	dragger.root.style.width = "calc( 100% - 3px )";
+	dragger.root.style.width = "calc( 100% - 1px )";
 	$(element).find(".wcontent").append(dragger.root);
 	$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
 	function inner_before_change(e)
@@ -590,6 +599,8 @@ Inspector.prototype.addNumber = function(name, value, options)
 	});
 
 	element.setValue = function(v) { $(this).find("input").val(v).change(); };
+	element.getValue = function() { return $(this).find("input").val(); };
+	element.focus = function() { $(this).find("input").focus(); };
 
 	return element;
 }
@@ -614,14 +625,14 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options);
 	dragger1.root.style.marginLeft = 0;
-	dragger1.root.style.width = "calc( 50% - 3px )";
+	dragger1.root.style.width = "calc( 50% - 1px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
-	dragger2.root.style.width = "calc( 50% - 3px )";
+	dragger2.root.style.width = "calc( 50% - 1px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	$(dragger1.root).bind("start_dragging",inner_before_change.bind(options) );
@@ -687,21 +698,21 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 	var dragger1 = new LiteGUI.Dragger(value[0], options );
 	dragger1.root.style.marginLeft = 0;
-	dragger1.root.style.width = "calc( 33% - 3px )";
+	dragger1.root.style.width = "calc( 33% - 1px )";
 	$(element).find(".wcontent").append(dragger1.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options );
-	dragger2.root.style.width = "calc( 33% - 3px )";
+	dragger2.root.style.width = "calc( 33% - 1px )";
 	$(element).find(".wcontent").append(dragger2.root);
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger3 = new LiteGUI.Dragger(value[2], options );
-	dragger3.root.style.width = "calc( 33% - 3px )";
+	dragger3.root.style.width = "calc( 33% - 1px )";
 	$(element).find(".wcontent").append(dragger3.root);
 
 	$(dragger1.root).bind("start_dragging", inner_before_change.bind(options) );
@@ -744,6 +755,76 @@ Inspector.prototype.addVector3 = function(name,value, options)
 		dragger1.setValue(v[0]);
 		dragger2.setValue(v[1]);
 		dragger3.setValue(v[2]);
+	}
+	return element;
+}
+
+Inspector.prototype.addVector4 = function(name,value, options)
+{
+	options = this.processOptions(options);
+	if(!options.step)
+		options.step = 0.1;
+
+	value = value || [0,0,0];
+	var that = this;
+	this.values[name] = value;
+	
+	var element = this.createWidget(name,"", options);
+
+	options.step = options.step || 0.1;
+	//options.dragger_class = "mini";
+	options.tab_index = this.tab_index;
+	options.full = true;
+	this.tab_index++;
+
+	var draggers = [];
+
+	for(var i = 0; i < 4; i++)
+	{
+		var dragger = new LiteGUI.Dragger(value[i], options );
+		dragger.root.style.marginLeft = 0;
+		dragger.root.style.width = "calc( 25% - 1px )";
+		$(element).find(".wcontent").append(dragger.root);
+		options.tab_index = this.tab_index;
+		this.tab_index++;
+		$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
+		draggers.push(dragger);
+	}
+
+	function inner_before_change(e)
+	{
+		if(this.callback_before) this.callback_before();
+	}
+
+	$(element).find("input").change( function(e) { 
+		//gather all parameters
+		var r = [];
+		var elems = $(element).find("input");
+		for(var i = 0; i < elems.length; i++)
+			r.push( parseFloat( elems[i].value ) );
+
+		that.values[name] = r;
+
+		if(options.callback)
+		{
+			var new_val = options.callback.call(element,r); 
+			if(typeof(new_val) == "object" && new_val.length >= 4)
+			{
+				for(var i = 0; i < elems.length; i++)
+					$(elems[i]).val(new_val[i]);
+				r = new_val;
+			}
+		}
+
+		$(element).trigger("wchange",[r]);
+		if(that.onchange) that.onchange(name,r,element);
+	});
+
+	this.append(element,options);
+
+	element.setValue = function(v) { 
+		for(var i = 0; i < draggers.length; i++)
+			draggers[i].setValue(v[i]);
 	}
 	return element;
 }
@@ -1388,6 +1469,35 @@ Inspector.prototype.addLine = function(name, value, options)
 }
 
 Inspector.prototype.addTree = function(name, value, options)
+{
+	options = this.processOptions(options);
+
+	value = value || "";
+	var element = this.createWidget(name,"<div class='wtree inputfield full'></div>", options);
+	
+	var tree_root = $(element).find(".wtree")[0];
+	if(options.height)
+		tree_root.style.height = typeof(options.height) == "number" ? options.height + "px" : options.height;
+
+	var current = value;
+
+	var tree = element.tree = new LiteGUI.Tree(null,value, options.tree_options);
+	tree.onItemSelected = function(node, data) {
+		if(options.callback)
+			options.callback(node,data);
+	};
+
+	tree_root.appendChild(tree.root);
+
+	element.setValue = function(v) { 
+		tree.updateTree(v);
+	};
+
+	this.append(element,options);
+	return element;
+}
+
+Inspector.prototype.addDataTree = function(name, value, options)
 {
 	options = this.processOptions(options);
 

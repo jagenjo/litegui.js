@@ -11,6 +11,7 @@
 		root.data = this;
 		root.className = "litetabs";
 		this.root = root;
+		this.root.tabs = this;
 
 		this.current_tab = null; //current tab array [name, tab, content]
 
@@ -25,11 +26,11 @@
 		//container of tab elements
 		var list = document.createElement("UL");
 		list.className = "wtabcontainer";
+		list.style.height = LiteGUI.Tabs.tabs_height + "px";
 		this.list = list;
 		this.root.appendChild(this.list);
 
 		this.tabs = {};
-		this.contents = {};
 		this.selected = null;
 
 		this.onchange = options.callback;
@@ -70,8 +71,22 @@
 
 	Tabs.prototype.getTabContent = function(name)
 	{
-		return this.contents[name];
+		var tab = this.tabs[name];
+		if(tab)
+			return tab.content;
 	}
+
+	Tabs.prototype.getTabIndex = function(name)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return -1;
+		for(var i = 0; i < this.list.childNodes.length; i++)
+			if( this.list.childNodes[i] == tab.tab )
+				return i;
+		return -1;
+	}
+
 
 	//add something
 	Tabs.prototype.addTab = function(name,options)
@@ -85,7 +100,13 @@
 		//if(options.selected) element.className += " selected";
 		element.data = name;
 		element.innerHTML = name;
-		this.list.appendChild(element);
+
+		if(options.index && options.index != -1)
+		{
+			this.list.insertBefore(element, this.list.childNodes[options.index]);
+		}
+		else
+			this.list.appendChild(element);
 
 		//the content of the tab
 		var content = document.createElement("div");
@@ -94,6 +115,8 @@
 		content.className = "wtabcontent " + "wtabcontent-" + name.replace(/ /gi,"_") + " " + (options.className || "");
 		content.data = name;
 		content.style.display = "none";
+
+		//adapt height
 		if(options.height)
 		{
 			content.style.overflow = "auto";
@@ -107,6 +130,8 @@
 			else
 				content.style.height = options.height;
 		}
+
+		//add content
 		if(options.content)
 		{
 			if (typeof(options.content) == "string")
@@ -114,48 +139,76 @@
 			else
 				content.appendChild(options.content);
 		}
-
 		this.root.appendChild(content);
-		this.contents[ name ] = content;
 
 		//when clicked
-		element.addEventListener("click", function(e) {
-			if( this.classList.contains("selected") ) 
-				return;
-
-			var tabname = this.data;
-			var tab = null;
-
-			for(var i in that.contents)
-				if( i == tabname )
-				{
-					$(that.contents[i]).show();
-					tab = that.contents[i];
-				}
-				else
-					$(that.contents[i]).hide();
-
-			$(that.list).find("li.wtab").removeClass("selected");
-			this.classList.add("selected");
-			if( that.current_tab && 
-				that.current_tab[0] != tabname && 
-				that.current_tab[2] && 
-				that.current_tab[2].callback_leave)
-					that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
-			that.current_tab = [tabname, tab, options];
-			if(options.callback) options.callback(tabname, tab);
-			$(that).trigger("wchange",[tabname,tab]);
-			if(that.onchange) that.onchange(name,tabname,tab);
-			that.selected = name;
-		});
+		element.addEventListener("click", Tabs.prototype.onTabClicked );
+		element.options = options;
+		element.tabs = this;
 
 		this.list.appendChild(element);
+
+		this.tabs[name] = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
 
 		if (options.selected == true || this.selected == null)
 			this.selectTab(name);
 
-		this.tabs[name] = {tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
 		return this.tabs[name];
+	}
+
+	//this is tab
+	Tabs.prototype.onTabClicked = function()
+	{
+		//skip if already selected
+		if( this.classList.contains("selected") ) 
+			return;
+
+		var options = this.options;
+		var tabs = this.parentNode.parentNode.tabs;
+		if(!tabs)
+			throw("tabs not found");
+		var that = tabs;
+
+		//check if this tab is available
+		if(options.callback_canopen && options.callback_canopen() == false)
+			return;
+
+		var tabname = this.data;
+		var tab_content = null;
+
+		//iterate tab labels
+		for(var i in that.tabs)
+		{
+			var tab_info = that.tabs[i];
+			if( i == tabname )
+			{
+				$(tab_info.content).show();
+				tab_content = tab_info.content;
+			}
+			else
+				$(tab_info.content).hide();
+		}
+
+		$(that.list).find("li.wtab").removeClass("selected");
+		this.classList.add("selected");
+
+		//launch leaving current tab event
+		if( that.current_tab && 
+			that.current_tab[0] != tabname && 
+			that.current_tab[2] && 
+			that.current_tab[2].callback_leave)
+				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
+
+		//change tab
+		that.current_tab = [tabname, tab_content, options];
+
+		//launch callback
+		if(options.callback) 
+			options.callback(tabname, tab_content);
+
+		$(that).trigger("wchange",[tabname,tab_content]);
+		if(that.onchange) that.onchange(name,tabname,tab_content);
+		that.selected = name;
 	}
 
 	Tabs.prototype.selectTab = function(name)
@@ -188,7 +241,6 @@
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
 		delete this.tabs[name];
-		delete this.contents[name];
 	}
 
 	Tabs.prototype.hideTab = function(name)
@@ -200,6 +252,85 @@
 	{
 		this.setTabVisibility(name, true);
 	}
+
+	Tabs.prototype.transferTab = function(name, target_tabs, index)
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		target_tabs.tabs[name] = tab;
+
+		if(index !== undefined)
+			target_tabs.list.insertBefore(tab.tab, target_tabs.list.childNodes[index]);
+		else
+			target_tabs.list.appendChild(tab.tab);
+		target_tabs.root.appendChild(tab.content);
+		delete this.tabs[name];
+
+		var newtab = null;
+		for(var i in this.tabs)
+		{
+			newtab = i;
+			break;
+		}
+
+		if(newtab)
+			this.selectTab(newtab);
+
+		tab.tab.classList.remove("selected");
+		target_tabs.selectTab(name);
+	}
+
+	Tabs.prototype.detachTab = function(name, on_complete, on_close )
+	{
+		var tab = this.tabs[name];
+		if(!tab)
+			return;
+
+		var index = this.getTabIndex( name );
+
+		//create window
+		var w = 800;
+		var h = 600;
+		var tab_window = window.open("","","width="+w+", height="+h+", location=no, status=no, menubar=no, titlebar=no, fullscreen=yes");
+		tab_window.document.write( "<head><title>"+name+"</title>" );
+
+		//transfer style
+		var styles = document.querySelectorAll("link[rel='stylesheet'],style");
+		for(var i = 0; i < styles.length; i++)
+			tab_window.document.write( styles[i].outerHTML );
+		tab_window.document.write( "</head><body></body>" );
+		tab_window.document.close();
+
+		var that = this;
+
+		//transfer content after a while so the window is propertly created
+		setTimeout( function() {
+
+			var newtabs = new LiteGUI.Tabs();
+			tab_window.tabs = newtabs;
+
+			//closing event
+			tab_window.onbeforeunload = function(){
+				newtabs.transferTab(name, that, index);
+				if(on_close)
+					on_close();
+			}
+
+			//move the content there
+			newtabs.list.style.height = "20px";
+			tab_window.document.body.appendChild(newtabs.root);
+			that.transferTab(name, newtabs);
+			newtabs.tabs[name].tab.classList.add("selected");
+
+			if(on_complete)
+				on_complete();
+		},1);
+
+		return tab_window;
+	}
+
 
 	LiteGUI.Tabs = Tabs;
 })();

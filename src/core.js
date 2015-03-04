@@ -84,6 +84,8 @@ var LiteGUI = {
 				$(LiteGUI).trigger("escape");
 
 		});
+
+		window.onbeforeunload = this.onUnload.bind(this);
 	},
 
 
@@ -172,6 +174,12 @@ var LiteGUI = {
 		$(this).trigger("module_registered",module);
 	},
 
+	onUnload: function()
+	{
+		for(var i in this.modules)
+			if (this.modules[i].onUnload)
+				this.modules[i].onUnload();
+	},
 
 	add: function( litegui_element )
 	{
@@ -360,7 +368,7 @@ var LiteGUI = {
 		return xhr;
 	},	
 
-	requireScript: function(url, on_complete, on_progress )
+	requireScript: function(url, on_complete, on_progress, on_error )
 	{
 		if(typeof(url)=="string")
 			url = [url];
@@ -370,6 +378,7 @@ var LiteGUI = {
 		for(var i in url)
 		{
 			var script = document.createElement('script');
+			script.num = i;
 			script.type = 'text/javascript';
 			script.src = url[i];
 			script.async = false;
@@ -378,11 +387,15 @@ var LiteGUI = {
 				if(total)
 				{
 					if(on_progress)
-						on_progress(this.src, size - total - 1);
+						on_progress(this.src, this.num);
 				}
 				else if(on_complete)
 					on_complete();
 			};
+			if(on_error)
+				script.onerror = function(err) { 
+					on_error(err, this.src, this.num );
+				}
 			document.getElementsByTagName('head')[0].appendChild(script);
 		}
 	},
@@ -427,6 +440,36 @@ var LiteGUI = {
 			div.innerHTML = code;
 		div.add = function(v) { this.appendChild( v.root || v); };
 		return div;
+	},
+
+	//used to create a window that retains all the CSS info or the scripts.
+	newWindow: function(title, width, height, options)
+	{
+		options = options || {};
+		var new_window = window.open("","","width="+width+", height="+height+", location=no, status=no, menubar=no, titlebar=no, fullscreen=yes");
+		new_window.document.write( "<html><head><title>"+title+"</title>" );
+
+		//transfer style
+		var styles = document.querySelectorAll("link[rel='stylesheet'],style");
+		for(var i = 0; i < styles.length; i++)
+			new_window.document.write( styles[i].outerHTML );
+
+		//transfer scripts (optional because it can produce some errors)
+		if(options.scripts)
+		{
+			var scripts = document.querySelectorAll("script");
+			for(var i = 0; i < scripts.length; i++)
+			{
+				if(scripts[i].src) //avoid inline scripts, otherwise a cloned website would be created
+					new_window.document.write( scripts[i].outerHTML );
+			}
+		}
+
+
+		var content = options.content || "";
+		new_window.document.write( "</head><body>"+content+"</body></html>" );
+		new_window.document.close();
+		return new_window;
 	},
 
 	//* DIALOGS *******************
@@ -482,16 +525,9 @@ var LiteGUI = {
 		return this.showMessage(content,options);
 	},
 
-	confirm: function(content,options, callback_yes, callback_no)
+	confirm: function(content, callback, options)
 	{
 		options = options || {};
-		if(typeof(options) == "function")
-		{
-			callback_no = callback_yes;
-			callback_yes = options;
-			options = {};
-		}
-
 		options.className = "alert";
 		options.title = "Confirm";
 		options.width = 280;
@@ -499,34 +535,24 @@ var LiteGUI = {
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
 
-		content +="<button class='yes-button' style='width:45%; margin-left: 10px'>Yes</button><button class='no-button' style='width:45%'>No</button>";
+		content +="<button data-value='yes' style='width:45%; margin-left: 10px'>Yes</button><button data-value='no' style='width:45%'>No</button>";
 		options.noclose = true;
 
 		var dialog = this.showMessage(content,options);
 		dialog.content.style.paddingBottom = "10px";
-		$(dialog.content).find(".yes-button").click(function() {
-			if(callback_yes) callback_yes();
-			dialog.close();
-		});
-
-		$(dialog.content).find(".no-button").click(function() {
-			if(callback_no) callback_no();
+		$(dialog.content).find("button").click(function() {
+			var v = this.dataset["value"] == "yes";
+			if(callback) 
+				callback(v);
 			dialog.close();
 		});
 
 		return dialog;
 	},
 
-	prompt: function(content,options, callback_yes, callback_no)
+	prompt: function(content, callback, options )
 	{
 		options = options || {};
-		if(typeof(options) == "function")
-		{
-			callback_no = callback_yes;
-			callback_yes = options;
-			options = {};
-		}
-
 		options.className = "alert";
 		options.title = "Prompt" || options.title;
 		options.width = 280;
@@ -539,20 +565,20 @@ var LiteGUI = {
 		if (options.textarea)
 			textinput = "<textarea class='textfield' style='width:95%'>"+value+"</textarea>";
 
-		content +="<p>"+textinput+"</p><button class='yes-button' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button class='no-button' style='width:45%'>Cancel</button>";
+		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage(content,options);
-		$(dialog.content).find(".yes-button").click(function() {
+		$(dialog.content).find("button").click(function() {
 			var input = $(dialog.content).find(options.textarea ? "textarea" : "input").val();
+			if(this.dataset["value"] == "cancel")
+				input = null;
 
-			if(callback_yes) callback_yes( input );
+			if(callback)
+				callback( input );
 			dialog.close();
 		});
 
-		$(dialog.content).find(".no-button").click(function() {
-			if(callback_no) callback_no();
-			dialog.close();
-		});
+		$(dialog.content).find("input,textarea").focus();
 
 		return dialog;
 	},

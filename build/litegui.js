@@ -1,4 +1,13 @@
 //packer version
+
+/**
+* Core namespace of LiteGUI library, it holds some useful functions
+*
+* @class LiteGUI
+* @constructor
+*/
+
+
 var LiteGUI = {
 	root: null,
 	content: null,
@@ -19,6 +28,11 @@ var LiteGUI = {
 	//registered modules
 	modules: [],
 
+	/**
+	* initializes the lib, must be called
+	* @method init
+	* @param {object} options some options are container, menubar, 
+	*/
 	init: function(options)
 	{
 		options = options || {};
@@ -86,6 +100,7 @@ var LiteGUI = {
 
 		});
 
+		//some modules may need to be unloaded
 		window.onbeforeunload = this.onUnload.bind(this);
 	},
 
@@ -541,7 +556,7 @@ var LiteGUI = {
 
 		var dialog = this.showMessage(content,options);
 		dialog.content.style.paddingBottom = "10px";
-		$(dialog.content).find("button").click(function() {
+		dialog.content.querySelector("button").addEventListener("click", function() {
 			var v = this.dataset["value"] == "yes";
 			if(callback) 
 				callback(v);
@@ -569,7 +584,7 @@ var LiteGUI = {
 		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage(content,options);
-		$(dialog.content).find("button").click(function() {
+		dialog.content.querySelector("button").addEventListener("click", function() {
 			var input = $(dialog.content).find(options.textarea ? "textarea" : "input").val();
 			if(this.dataset["value"] == "cancel")
 				input = null;
@@ -601,10 +616,10 @@ var LiteGUI = {
 		return LiteGUI.getUrlVars()[name];
 	},
 
-	trigger: function(event_name, element)
+	trigger: function(element, event_name, params)
 	{
 		var evt = document.createEvent( 'CustomEvent' );
-		evt.initCustomEvent( event_name, true,true,true );
+		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
 		if(element.dispatchEvent)
 			element.dispatchEvent(evt);
 		else
@@ -666,6 +681,47 @@ var LiteGUI = {
 				container.style.top = y + "px";
 			}
 		}
+	},
+
+	//extracted from LiteScene
+	cloneObject: function(object, target)
+	{
+		var o = target || {};
+		for(var i in object)
+		{
+			if(i[0] == "_" || i.substr(0,6) == "jQuery") //skip vars with _ (they are private)
+				continue;
+
+			var v = object[i];
+			if(v == null)
+				o[i] = null;			
+			else if ( isFunction(v) )
+				continue;
+			else if (typeof(v) == "number" || typeof(v) == "string")
+				o[i] = v;
+			else if( v.constructor == Float32Array ) //typed arrays are ugly when serialized
+				o[i] = Array.apply( [], v ); //clone
+			else if ( isArray(v) )
+			{
+				if( o[i] && o[i].constructor == Float32Array ) //reuse old container
+					o[i].set(v);
+				else
+					o[i] = JSON.parse( JSON.stringify(v) ); //v.slice(0); //not safe using slice because it doesnt clone content, only container
+			}
+			else //slow but safe
+			{
+				try
+				{
+					//prevent circular recursions
+					o[i] = JSON.parse( JSON.stringify(v) );
+				}
+				catch (err)
+				{
+					console.error(err);
+				}
+			}
+		}
+		return o;
 	}
 };
 
@@ -1095,8 +1151,17 @@ function beautifyCode(code, reserved)
 		if(id) element.id = id;
 		this.root = element;
 		this.root.litearea = this; //dbl link
-		element.style.width = options.width || "100%";
-		element.style.height = options.height || "100%";
+
+		var width = options.width || "100%";
+		var height = options.height || "100%";
+
+		if( width < 0 )
+			width = 'calc( 100% - '+Math.abs(width)+'px)';
+		if( height < 0 )
+			height = 'calc( 100% - '+ Math.abs(height)+'px)';
+
+		element.style.width = width;
+		element.style.height = height;
 
 		this.options = options;
 
@@ -2499,29 +2564,50 @@ function beautifyCode(code, reserved)
 	function Tabs(id,options)
 	{
 		options = options || {};
+		this.options = options;
+
+		var mode = this.mode = options.mode || "horizontal";
 
 		var root = document.createElement("DIV");
 		if(id) 
 			root.id = id;
 		root.data = this;
-		root.className = "litetabs";
+		root.className = "litetabs " + mode;
 		this.root = root;
 		this.root.tabs = this;
 
 		this.current_tab = null; //current tab array [name, tab, content]
 
-		if(options.height)
+		if(mode == "horizontal")
 		{
-			if(options.height == "full")
-				this.root.style.height = "100%";
-			else
-				this.root.style.height = options.height;
+			if(options.size)
+			{
+				if(options.size == "full")
+					this.root.style.height = "100%";
+				else
+					this.root.style.height = options.size;
+			}
 		}
+		else if(mode == "vertical")
+		{
+			if(options.size)
+			{
+				if(options.size == "full")
+					this.root.style.width = "100%";
+				else
+					this.root.style.width = options.size;
+			}
+		}
+
 
 		//container of tab elements
 		var list = document.createElement("UL");
 		list.className = "wtabcontainer";
-		list.style.height = LiteGUI.Tabs.tabs_height + "px";
+		if(mode == "vertical")
+			list.style.width = LiteGUI.Tabs.tabs_width + "px";
+		else
+			list.style.height = LiteGUI.Tabs.tabs_height + "px";
+
 		this.list = list;
 		this.root.appendChild(this.list);
 
@@ -2534,7 +2620,8 @@ function beautifyCode(code, reserved)
 			this.appendTo(options.parent);
 	}
 
-	Tabs.tabs_height = "30px";
+	Tabs.tabs_width = 64;
+	Tabs.tabs_height = 26;
 
 	Tabs.prototype.show = function()
 	{
@@ -2594,7 +2681,20 @@ function beautifyCode(code, reserved)
 		element.className = "wtab wtab-" + name.replace(/ /gi,"_");
 		//if(options.selected) element.className += " selected";
 		element.data = name;
-		element.innerHTML = name;
+		element.innerHTML = "<span class='tabtitle'>" + (options.title || name) + "</span>";
+
+		if(options.bigicon)
+			element.innerHTML = "<img class='tabbigicon' src='" + options.bigicon+"'/>" + element.innerHTML;
+		if(options.closable)
+		{
+			element.innerHTML += "<span class='tabclose'>X</span>";
+			element.querySelector("span.tabclose").addEventListener("click", function(e) { 
+				that.removeTab(name);
+				e.preventDefault();
+				e.stopPropagation();
+			},true);
+		}
+		//WARNING: do not modify element.innerHTML or event will be lost
 
 		if(options.index && options.index != -1)
 		{
@@ -2612,18 +2712,37 @@ function beautifyCode(code, reserved)
 		content.style.display = "none";
 
 		//adapt height
-		if(options.height)
+		if(this.mode == "horizontal")
 		{
-			content.style.overflow = "auto";
-			if(options.height == "full")
+			if(options.size)
 			{
-				content.style.height = "calc( 100% - "+LiteGUI.Tabs.tabs_height+" )"; //minus title
-				content.style.height = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_height+" )"; //minus title
-				content.style.height = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_height+" )"; //minus title
-				//content.style.height = "-webkit-calc( 90% )"; //minus title
+				content.style.overflow = "auto";
+				if(options.size == "full")
+				{
+					content.style.height = "calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
+					content.style.height = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
+					content.style.height = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
+					//content.style.height = "-webkit-calc( 90% )"; //minus title
+				}
+				else
+					content.style.height = options.size;
 			}
-			else
-				content.style.height = options.height;
+		}
+		else if(this.mode == "vertical")
+		{
+			if(options.size)
+			{
+				content.style.overflow = "auto";
+				if(options.size == "full")
+				{
+					content.style.width = "calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
+					content.style.width = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
+					content.style.width = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
+					//content.style.height = "-webkit-calc( 90% )"; //minus title
+				}
+				else
+					content.style.width = options.size;
+			}
 		}
 
 		//add content
@@ -2643,12 +2762,15 @@ function beautifyCode(code, reserved)
 
 		this.list.appendChild(element);
 
-		this.tabs[name] = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		var tab_info = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		if(options.onclose)
+			tab_info.onclose = options.onclose;
+		this.tabs[name] = tab_info;
 
 		if (options.selected == true || this.selected == null)
 			this.selectTab(name);
 
-		return this.tabs[name];
+		return tab_info;
 	}
 
 	//this is tab
@@ -2657,6 +2779,9 @@ function beautifyCode(code, reserved)
 		//skip if already selected
 		if( this.classList.contains("selected") ) 
 			return;
+
+		if(!this.parentNode)
+			return; //this could happend if it gets removed while being clicked (not common)
 
 		var options = this.options;
 		var tabs = this.parentNode.parentNode.tabs;
@@ -2677,11 +2802,15 @@ function beautifyCode(code, reserved)
 			var tab_info = that.tabs[i];
 			if( i == tabname )
 			{
+				tab_info.selected = true;
 				$(tab_info.content).show();
 				tab_content = tab_info.content;
 			}
 			else
+			{
+				delete tab_info.selected;
 				$(tab_info.content).hide();
+			}
 		}
 
 		$(that.list).find("li.wtab").removeClass("selected");
@@ -2732,6 +2861,9 @@ function beautifyCode(code, reserved)
 		var tab = this.tabs[name];
 		if(!tab)
 			return;
+
+		if(tab.onclose)
+			tab.onclose(tab);
 
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
@@ -2801,27 +2933,24 @@ function beautifyCode(code, reserved)
 		var that = this;
 
 		//transfer content after a while so the window is propertly created
-		setTimeout( function() {
+		var newtabs = new LiteGUI.Tabs(null, this.options );
+		tab_window.tabs = newtabs;
 
-			var newtabs = new LiteGUI.Tabs();
-			tab_window.tabs = newtabs;
+		//closing event
+		tab_window.onbeforeunload = function(){
+			newtabs.transferTab(name, that, index);
+			if(on_close)
+				on_close();
+		}
 
-			//closing event
-			tab_window.onbeforeunload = function(){
-				newtabs.transferTab(name, that, index);
-				if(on_close)
-					on_close();
-			}
+		//move the content there
+		newtabs.list.style.height = "20px";
+		tab_window.document.body.appendChild(newtabs.root);
+		that.transferTab(name, newtabs);
+		newtabs.tabs[name].tab.classList.add("selected");
 
-			//move the content there
-			newtabs.list.style.height = "20px";
-			tab_window.document.body.appendChild(newtabs.root);
-			that.transferTab(name, newtabs);
-			newtabs.tabs[name].tab.classList.add("selected");
-
-			if(on_complete)
-				on_complete();
-		},1);
+		if(on_complete)
+			on_complete();
 
 		return tab_window;
 	}
@@ -2971,6 +3100,15 @@ function beautifyCode(code, reserved)
 		options = options || {allow_rename: true, drag: true};
 		this.options = options;
 
+		//bg click
+		root.addEventListener("click", function(e){
+			if(e.srcElement != that.root)
+				return;
+
+			if(that.onBackgroundClicked)
+				that.onBackgroundClicked(e,that);
+		});
+
 		var root_item = this.createTreeItem(data,options);
 		root_item.className += " root_item";
 		this.root.appendChild(root_item);
@@ -3019,11 +3157,11 @@ function beautifyCode(code, reserved)
 		root.appendChild(title_element);
 		root.title_element = title_element;
 
-		var incontent = $(root).find(".ltreeitemtitle .incontent");
-		incontent.click(onNodeSelected);
-		incontent.dblclick(onNodeDblClicked);
+		var incontent = root.querySelector(".ltreeitemtitle .incontent");
+		incontent.addEventListener("click",onNodeSelected);
+		incontent.addEventListener("dblclick",onNodeDblClicked);
 		//incontent[0].addEventListener("mousedown", onMouseDown ); //for right click
-		incontent[0].addEventListener("contextmenu", function(e) { 
+		incontent.addEventListener("contextmenu", function(e) { 
 			if(that.onContextMenu) onContextMenu(e);
 			e.preventDefault(); 
 			return false;
@@ -3051,23 +3189,35 @@ function beautifyCode(code, reserved)
 		{
 			var title = this.parentNode;
 			var item = title.parentNode;
-			if(title._editing) return;
 
-			$(that.root).removeClass("selected");
-			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
+			if(title._editing) 
+				return;
+
+			//mark as selected
+			that.markAsSelected(item);
+			/*
+			that.root.classList.remove("selected");
+			var sel = that.root.querySelector(".ltreeitemtitle.selected");
+			if(sel)
+				sel.classList.remove("selected");
 			title.classList.add("selected");
+			*/
 						
-			$(that.root).trigger("item_selected", [item.data, item] );
+			LiteGUI.trigger(that.root, "item_selected", { item: item, data: item.data} );
+
 			if(that.onItemSelected)
 				that.onItemSelected(item.data, item);
 			if(item.callback) 
 				item.callback.call(that,item);
+
+			e.preventDefault();
+			e.stopPropagation();
 		}
 
 		function onNodeDblClicked(e)
 		{
 			var item = this.parentNode;
-			$(that.root).trigger("item_dblclicked", [item.data, item] );
+			LiteGUI.trigger( that.root, "item_dblclicked", item );
 
 			if(!this._editing && that.options.allow_rename)
 			{
@@ -3075,24 +3225,33 @@ function beautifyCode(code, reserved)
 				this._old_name = this.innerHTML;
 				var that2 = this;
 				this.innerHTML = "<input type='text' value='" + this.innerHTML + "' />";
-				var input = $(this).find("input")[0];
+				var input = this.querySelector("input");
+
+				//loose focus
 				$(input).blur(function(e) { 
 					var new_name = e.target.value;
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
-					$(that.root).trigger("item_renamed", [that2._old_name, new_name, item]);
+					LiteGUI.trigger( that.root, "item_renamed", { old_name: that2._old_name, new_name: new_name, item: item, data: item.data } );
 					delete that2._old_name;
 				});
-				$(input).bind("keydown", function(e) {
+
+				//finishes renaming
+				input.addEventListener("keydown", function(e) {
 					if(e.keyCode != 13)
 						return;
 					$(this).blur();
 				});
+
+				//set on focus
 				$(input).focus();
+
 				e.preventDefault();
 			}
 			
+			e.preventDefault();
+			e.stopPropagation();
 		}
 
 		function onContextMenu(e)
@@ -3158,7 +3317,7 @@ function beautifyCode(code, reserved)
 					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
 					{
 						if( that.moveItem( item_id, parent_id ) )
-							$(that.root).trigger("item_moved", [ that.getItem( item_id ), that.getItem( parent_id ) ] );
+							LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
 					}
 				}
 				catch (err)
@@ -3168,7 +3327,7 @@ function beautifyCode(code, reserved)
 			}
 			else
 			{
-				$(that.root).trigger("drop_on_item", [this, ev] );
+				LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
 			}
 		});
 
@@ -3240,21 +3399,51 @@ function beautifyCode(code, reserved)
 	{
 		if(!id)
 		{
-			$(this.root).removeClass("selected");
-			$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
+			//clear selection
+			this.root.classList.remove("selected");
+			var sel = this.root.querySelector(".ltreeitemtitle.selected");
+			if(sel)
+				sel.classList.remove("selected");
+			var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
+			for(var i = 0; i < semiselected.length; i++)
+				semiselected[i].classList.remove("semiselected");
 			return;
 		}
 
 		var node = this.getItem(id);
-		if(!node) return null;
-		if( node.classList.contains("selected") ) return node;
+		if(!node) //not found
+			return null;
 
-		$(this.root).removeClass("selected");
-		$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
-		$(node.title_element).addClass("selected");
+		this.markAsSelected(node);
 		return node;
 	}
 
+	Tree.prototype.markAsSelected = function(node)
+	{
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return;
+
+		//clear old selection
+		this.root.classList.remove("selected");
+		var selected = this.root.querySelector(".ltreeitemtitle.selected");
+		if(selected)
+			selected.classList.remove("selected");
+		var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
+		for(var i = 0; i < semiselected.length; i++)
+			semiselected[i].classList.remove("semiselected");
+
+		//mark as selected
+		node.title_element.classList.add("selected");
+
+		//go up and semiselect
+		var parent = node.parentNode.parentNode; //two elements per level
+		while(parent && parent.classList.contains("ltreeitem"))
+		{
+			parent.title_element.classList.add("semiselected");
+			parent = parent.parentNode.parentNode;
+		}
+	}
 
 	Tree.prototype.getSelectedItem = function()
 	{
@@ -3880,12 +4069,12 @@ function beautifyCode(code, reserved)
 		this.root.style.top = Math.floor(( $(this.root.parentNode).height() - $(this.root).height() ) * 0.5) + "px";
 	}
 
-	Dialog.prototype.adjustSize = function()
+	Dialog.prototype.adjustSize = function( margin )
 	{
+		margin = margin || 0;
 		this.content.style.height = "auto";
 		var width = $(this.content).width();
-		var height = $(this.content).height() + 20;
-
+		var height = $(this.content).height() + 20 + margin;
 		this.setSize(width,height);
 	}
 
@@ -3953,6 +4142,10 @@ Inspector.prototype.appendTo = function(parent, at_front)
 		$(parent).append(this.root);
 }
 
+/**
+* Removes all the widgets inside the inspector
+* @method clear
+*/
 Inspector.prototype.clear = function()
 {
 	purgeElement(this.root, true); //hack, but doesnt seem to work
@@ -3988,10 +4181,18 @@ Inspector.prototype.setup = function(info)
 	}
 }
 
-//given an instance it shows all the attributes
+/**  Given an instance it shows all the attributes
+*
+* @method inspectInstance
+* @param {Object} instance the instance that you want to inspect, attributes will be collected from this object
+* @param {Array} attrs an array with all the names of the properties you want to inspect, 
+*		  if not specified then it calls getAttributes, othewise collect them and tries to guess the type
+* @param {Object} attrs_info_example it overwrites the info about properties found in the object (in case the guessed type is wrong)
+*/
 Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example ) 
 {
-	if(!instance) return;
+	if(!instance)
+		return;
 
 	if( !attrs && instance.getAttributes )
 		attrs = instance.getAttributes();
@@ -4047,18 +4248,23 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_examp
 		}
 	}
 
+	//showAttributes doesnt return anything but just in case...
 	return this.showAttributes( instance, attrs_info );
 
+	//basic cloner
 	function inner_clone(original, target)
 	{
 		target = target || {};
 		for(var j in original)
-			target[j] = original[j]
+			target[j] = original[j];
 		return target;
 	}
 }
 
-//extract all attributes from an instance (properties that are not null or function starting with alphabetic character)
+/**  extract all attributes from an instance (enumerable properties that are not function and a name starting with alphabetic character)
+*
+* @method collectAttributes
+**/
 Inspector.prototype.collectAttributes = function(instance)
 {
 	var attrs = {};
@@ -4114,7 +4320,7 @@ Inspector.assignValue = function(value)
 	var instance = this.instance;
 	var current_value = instance[this.name];
 
-	if(current_value == null || value == null)
+	if(current_value == null || value == null || this.options.type == "enum")
 		instance[this.name] = value;
 	else if(typeof(current_value) == "number")
 		instance[this.name] = parseFloat(value);
@@ -4122,7 +4328,7 @@ Inspector.assignValue = function(value)
 		instance[this.name] = value;
 	else if(value && value.length && current_value && current_value.length)
 	{
-		for(var i = 0; i < current_value.length; ++i)
+		for(var i = 0; i < value.length; ++i)
 			current_value[i] = value[i];
 	}
 	else
@@ -4211,11 +4417,16 @@ Inspector.prototype.createWidget = function(name, content, options)
 Inspector.onWidgetChange = function(element, name, value, options)
 {
 	this.values[name] = value;
-	$(this.current_section).trigger("wchange",value); //used for undo
+	//LiteGUI.trigger( this.current_section, "wchange", value );
+	$(this.current_section).trigger("wchange",value); //used for undo //TODO: REMOVE
+	var r = null;
 	if(options.callback)
-		options.callback.call(element,value);
-	$(element).trigger("wchange",value);
-	if(this.onchange) this.onchange(name,value,element);
+		r = options.callback.call(element,value);
+	//LiteGUI.trigger( element, "wchange", value );
+	$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
+	if(this.onchange) 
+		this.onchange(name,value,element);
+	return r;
 }
 
 Inspector.widget_constructors = {
@@ -4408,7 +4619,9 @@ Inspector.prototype.addString = function(name,value, options)
 
 	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' "+focus+" class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
 	$(element).find(".wcontent input").change( function(e) { 
-		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		if(r !== undefined)
+			$(element).find("input").val(r);
 	});
 	this.tab_index += 1;
 

@@ -1,3 +1,12 @@
+
+/**
+* Core namespace of LiteGUI library, it holds some useful functions
+*
+* @class LiteGUI
+* @constructor
+*/
+
+
 var LiteGUI = {
 	root: null,
 	content: null,
@@ -18,6 +27,11 @@ var LiteGUI = {
 	//registered modules
 	modules: [],
 
+	/**
+	* initializes the lib, must be called
+	* @method init
+	* @param {object} options some options are container, menubar, 
+	*/
 	init: function(options)
 	{
 		options = options || {};
@@ -85,6 +99,7 @@ var LiteGUI = {
 
 		});
 
+		//some modules may need to be unloaded
 		window.onbeforeunload = this.onUnload.bind(this);
 	},
 
@@ -540,7 +555,7 @@ var LiteGUI = {
 
 		var dialog = this.showMessage(content,options);
 		dialog.content.style.paddingBottom = "10px";
-		$(dialog.content).find("button").click(function() {
+		dialog.content.querySelector("button").addEventListener("click", function() {
 			var v = this.dataset["value"] == "yes";
 			if(callback) 
 				callback(v);
@@ -568,7 +583,7 @@ var LiteGUI = {
 		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage(content,options);
-		$(dialog.content).find("button").click(function() {
+		dialog.content.querySelector("button").addEventListener("click", function() {
 			var input = $(dialog.content).find(options.textarea ? "textarea" : "input").val();
 			if(this.dataset["value"] == "cancel")
 				input = null;
@@ -600,10 +615,10 @@ var LiteGUI = {
 		return LiteGUI.getUrlVars()[name];
 	},
 
-	trigger: function(event_name, element)
+	trigger: function(element, event_name, params)
 	{
 		var evt = document.createEvent( 'CustomEvent' );
-		evt.initCustomEvent( event_name, true,true,true );
+		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
 		if(element.dispatchEvent)
 			element.dispatchEvent(evt);
 		else
@@ -665,6 +680,47 @@ var LiteGUI = {
 				container.style.top = y + "px";
 			}
 		}
+	},
+
+	//extracted from LiteScene
+	cloneObject: function(object, target)
+	{
+		var o = target || {};
+		for(var i in object)
+		{
+			if(i[0] == "_" || i.substr(0,6) == "jQuery") //skip vars with _ (they are private)
+				continue;
+
+			var v = object[i];
+			if(v == null)
+				o[i] = null;			
+			else if ( isFunction(v) )
+				continue;
+			else if (typeof(v) == "number" || typeof(v) == "string")
+				o[i] = v;
+			else if( v.constructor == Float32Array ) //typed arrays are ugly when serialized
+				o[i] = Array.apply( [], v ); //clone
+			else if ( isArray(v) )
+			{
+				if( o[i] && o[i].constructor == Float32Array ) //reuse old container
+					o[i].set(v);
+				else
+					o[i] = JSON.parse( JSON.stringify(v) ); //v.slice(0); //not safe using slice because it doesnt clone content, only container
+			}
+			else //slow but safe
+			{
+				try
+				{
+					//prevent circular recursions
+					o[i] = JSON.parse( JSON.stringify(v) );
+				}
+				catch (err)
+				{
+					console.error(err);
+				}
+			}
+		}
+		return o;
 	}
 };
 

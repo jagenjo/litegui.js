@@ -58,6 +58,10 @@ Inspector.prototype.appendTo = function(parent, at_front)
 		$(parent).append(this.root);
 }
 
+/**
+* Removes all the widgets inside the inspector
+* @method clear
+*/
 Inspector.prototype.clear = function()
 {
 	purgeElement(this.root, true); //hack, but doesnt seem to work
@@ -93,10 +97,18 @@ Inspector.prototype.setup = function(info)
 	}
 }
 
-//given an instance it shows all the attributes
+/**  Given an instance it shows all the attributes
+*
+* @method inspectInstance
+* @param {Object} instance the instance that you want to inspect, attributes will be collected from this object
+* @param {Array} attrs an array with all the names of the properties you want to inspect, 
+*		  if not specified then it calls getAttributes, othewise collect them and tries to guess the type
+* @param {Object} attrs_info_example it overwrites the info about properties found in the object (in case the guessed type is wrong)
+*/
 Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example ) 
 {
-	if(!instance) return;
+	if(!instance)
+		return;
 
 	if( !attrs && instance.getAttributes )
 		attrs = instance.getAttributes();
@@ -152,18 +164,23 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_examp
 		}
 	}
 
+	//showAttributes doesnt return anything but just in case...
 	return this.showAttributes( instance, attrs_info );
 
+	//basic cloner
 	function inner_clone(original, target)
 	{
 		target = target || {};
 		for(var j in original)
-			target[j] = original[j]
+			target[j] = original[j];
 		return target;
 	}
 }
 
-//extract all attributes from an instance (properties that are not null or function starting with alphabetic character)
+/**  extract all attributes from an instance (enumerable properties that are not function and a name starting with alphabetic character)
+*
+* @method collectAttributes
+**/
 Inspector.prototype.collectAttributes = function(instance)
 {
 	var attrs = {};
@@ -219,7 +236,7 @@ Inspector.assignValue = function(value)
 	var instance = this.instance;
 	var current_value = instance[this.name];
 
-	if(current_value == null || value == null)
+	if(current_value == null || value == null || this.options.type == "enum")
 		instance[this.name] = value;
 	else if(typeof(current_value) == "number")
 		instance[this.name] = parseFloat(value);
@@ -227,7 +244,7 @@ Inspector.assignValue = function(value)
 		instance[this.name] = value;
 	else if(value && value.length && current_value && current_value.length)
 	{
-		for(var i = 0; i < current_value.length; ++i)
+		for(var i = 0; i < value.length; ++i)
 			current_value[i] = value[i];
 	}
 	else
@@ -316,11 +333,16 @@ Inspector.prototype.createWidget = function(name, content, options)
 Inspector.onWidgetChange = function(element, name, value, options)
 {
 	this.values[name] = value;
-	$(this.current_section).trigger("wchange",value); //used for undo
+	//LiteGUI.trigger( this.current_section, "wchange", value );
+	$(this.current_section).trigger("wchange",value); //used for undo //TODO: REMOVE
+	var r = null;
 	if(options.callback)
-		options.callback.call(element,value);
-	$(element).trigger("wchange",value);
-	if(this.onchange) this.onchange(name,value,element);
+		r = options.callback.call(element,value);
+	//LiteGUI.trigger( element, "wchange", value );
+	$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
+	if(this.onchange) 
+		this.onchange(name,value,element);
+	return r;
 }
 
 Inspector.widget_constructors = {
@@ -513,7 +535,9 @@ Inspector.prototype.addString = function(name,value, options)
 
 	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' "+focus+" class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
 	$(element).find(".wcontent input").change( function(e) { 
-		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		if(r !== undefined)
+			$(element).find("input").val(r);
 	});
 	this.tab_index += 1;
 

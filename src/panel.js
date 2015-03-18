@@ -445,12 +445,12 @@
 		this.root.style.top = Math.floor(( $(this.root.parentNode).height() - $(this.root).height() ) * 0.5) + "px";
 	}
 
-	Dialog.prototype.adjustSize = function()
+	Dialog.prototype.adjustSize = function( margin )
 	{
+		margin = margin || 0;
 		this.content.style.height = "auto";
 		var width = $(this.content).width();
-		var height = $(this.content).height() + 20;
-
+		var height = $(this.content).height() + 20 + margin;
 		this.setSize(width,height);
 	}
 

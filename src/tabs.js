@@ -4,29 +4,50 @@
 	function Tabs(id,options)
 	{
 		options = options || {};
+		this.options = options;
+
+		var mode = this.mode = options.mode || "horizontal";
 
 		var root = document.createElement("DIV");
 		if(id) 
 			root.id = id;
 		root.data = this;
-		root.className = "litetabs";
+		root.className = "litetabs " + mode;
 		this.root = root;
 		this.root.tabs = this;
 
 		this.current_tab = null; //current tab array [name, tab, content]
 
-		if(options.height)
+		if(mode == "horizontal")
 		{
-			if(options.height == "full")
-				this.root.style.height = "100%";
-			else
-				this.root.style.height = options.height;
+			if(options.size)
+			{
+				if(options.size == "full")
+					this.root.style.height = "100%";
+				else
+					this.root.style.height = options.size;
+			}
 		}
+		else if(mode == "vertical")
+		{
+			if(options.size)
+			{
+				if(options.size == "full")
+					this.root.style.width = "100%";
+				else
+					this.root.style.width = options.size;
+			}
+		}
+
 
 		//container of tab elements
 		var list = document.createElement("UL");
 		list.className = "wtabcontainer";
-		list.style.height = LiteGUI.Tabs.tabs_height + "px";
+		if(mode == "vertical")
+			list.style.width = LiteGUI.Tabs.tabs_width + "px";
+		else
+			list.style.height = LiteGUI.Tabs.tabs_height + "px";
+
 		this.list = list;
 		this.root.appendChild(this.list);
 
@@ -39,7 +60,8 @@
 			this.appendTo(options.parent);
 	}
 
-	Tabs.tabs_height = "30px";
+	Tabs.tabs_width = 64;
+	Tabs.tabs_height = 26;
 
 	Tabs.prototype.show = function()
 	{
@@ -99,7 +121,20 @@
 		element.className = "wtab wtab-" + name.replace(/ /gi,"_");
 		//if(options.selected) element.className += " selected";
 		element.data = name;
-		element.innerHTML = name;
+		element.innerHTML = "<span class='tabtitle'>" + (options.title || name) + "</span>";
+
+		if(options.bigicon)
+			element.innerHTML = "<img class='tabbigicon' src='" + options.bigicon+"'/>" + element.innerHTML;
+		if(options.closable)
+		{
+			element.innerHTML += "<span class='tabclose'>X</span>";
+			element.querySelector("span.tabclose").addEventListener("click", function(e) { 
+				that.removeTab(name);
+				e.preventDefault();
+				e.stopPropagation();
+			},true);
+		}
+		//WARNING: do not modify element.innerHTML or event will be lost
 
 		if(options.index && options.index != -1)
 		{
@@ -117,18 +152,37 @@
 		content.style.display = "none";
 
 		//adapt height
-		if(options.height)
+		if(this.mode == "horizontal")
 		{
-			content.style.overflow = "auto";
-			if(options.height == "full")
+			if(options.size)
 			{
-				content.style.height = "calc( 100% - "+LiteGUI.Tabs.tabs_height+" )"; //minus title
-				content.style.height = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_height+" )"; //minus title
-				content.style.height = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_height+" )"; //minus title
-				//content.style.height = "-webkit-calc( 90% )"; //minus title
+				content.style.overflow = "auto";
+				if(options.size == "full")
+				{
+					content.style.height = "calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
+					content.style.height = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
+					content.style.height = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
+					//content.style.height = "-webkit-calc( 90% )"; //minus title
+				}
+				else
+					content.style.height = options.size;
 			}
-			else
-				content.style.height = options.height;
+		}
+		else if(this.mode == "vertical")
+		{
+			if(options.size)
+			{
+				content.style.overflow = "auto";
+				if(options.size == "full")
+				{
+					content.style.width = "calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
+					content.style.width = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
+					content.style.width = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
+					//content.style.height = "-webkit-calc( 90% )"; //minus title
+				}
+				else
+					content.style.width = options.size;
+			}
 		}
 
 		//add content
@@ -148,12 +202,15 @@
 
 		this.list.appendChild(element);
 
-		this.tabs[name] = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		var tab_info = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		if(options.onclose)
+			tab_info.onclose = options.onclose;
+		this.tabs[name] = tab_info;
 
 		if (options.selected == true || this.selected == null)
 			this.selectTab(name);
 
-		return this.tabs[name];
+		return tab_info;
 	}
 
 	//this is tab
@@ -162,6 +219,9 @@
 		//skip if already selected
 		if( this.classList.contains("selected") ) 
 			return;
+
+		if(!this.parentNode)
+			return; //this could happend if it gets removed while being clicked (not common)
 
 		var options = this.options;
 		var tabs = this.parentNode.parentNode.tabs;
@@ -182,11 +242,15 @@
 			var tab_info = that.tabs[i];
 			if( i == tabname )
 			{
+				tab_info.selected = true;
 				$(tab_info.content).show();
 				tab_content = tab_info.content;
 			}
 			else
+			{
+				delete tab_info.selected;
 				$(tab_info.content).hide();
+			}
 		}
 
 		$(that.list).find("li.wtab").removeClass("selected");
@@ -237,6 +301,9 @@
 		var tab = this.tabs[name];
 		if(!tab)
 			return;
+
+		if(tab.onclose)
+			tab.onclose(tab);
 
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
@@ -306,27 +373,24 @@
 		var that = this;
 
 		//transfer content after a while so the window is propertly created
-		setTimeout( function() {
+		var newtabs = new LiteGUI.Tabs(null, this.options );
+		tab_window.tabs = newtabs;
 
-			var newtabs = new LiteGUI.Tabs();
-			tab_window.tabs = newtabs;
+		//closing event
+		tab_window.onbeforeunload = function(){
+			newtabs.transferTab(name, that, index);
+			if(on_close)
+				on_close();
+		}
 
-			//closing event
-			tab_window.onbeforeunload = function(){
-				newtabs.transferTab(name, that, index);
-				if(on_close)
-					on_close();
-			}
+		//move the content there
+		newtabs.list.style.height = "20px";
+		tab_window.document.body.appendChild(newtabs.root);
+		that.transferTab(name, newtabs);
+		newtabs.tabs[name].tab.classList.add("selected");
 
-			//move the content there
-			newtabs.list.style.height = "20px";
-			tab_window.document.body.appendChild(newtabs.root);
-			that.transferTab(name, newtabs);
-			newtabs.tabs[name].tab.classList.add("selected");
-
-			if(on_complete)
-				on_complete();
-		},1);
+		if(on_complete)
+			on_complete();
 
 		return tab_window;
 	}

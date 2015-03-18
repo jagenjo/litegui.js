@@ -15,6 +15,15 @@
 		options = options || {allow_rename: true, drag: true};
 		this.options = options;
 
+		//bg click
+		root.addEventListener("click", function(e){
+			if(e.srcElement != that.root)
+				return;
+
+			if(that.onBackgroundClicked)
+				that.onBackgroundClicked(e,that);
+		});
+
 		var root_item = this.createTreeItem(data,options);
 		root_item.className += " root_item";
 		this.root.appendChild(root_item);
@@ -63,11 +72,11 @@
 		root.appendChild(title_element);
 		root.title_element = title_element;
 
-		var incontent = $(root).find(".ltreeitemtitle .incontent");
-		incontent.click(onNodeSelected);
-		incontent.dblclick(onNodeDblClicked);
+		var incontent = root.querySelector(".ltreeitemtitle .incontent");
+		incontent.addEventListener("click",onNodeSelected);
+		incontent.addEventListener("dblclick",onNodeDblClicked);
 		//incontent[0].addEventListener("mousedown", onMouseDown ); //for right click
-		incontent[0].addEventListener("contextmenu", function(e) { 
+		incontent.addEventListener("contextmenu", function(e) { 
 			if(that.onContextMenu) onContextMenu(e);
 			e.preventDefault(); 
 			return false;
@@ -95,23 +104,35 @@
 		{
 			var title = this.parentNode;
 			var item = title.parentNode;
-			if(title._editing) return;
 
-			$(that.root).removeClass("selected");
-			$(that.root).find(".ltreeitemtitle.selected").removeClass("selected");
+			if(title._editing) 
+				return;
+
+			//mark as selected
+			that.markAsSelected(item);
+			/*
+			that.root.classList.remove("selected");
+			var sel = that.root.querySelector(".ltreeitemtitle.selected");
+			if(sel)
+				sel.classList.remove("selected");
 			title.classList.add("selected");
+			*/
 						
-			$(that.root).trigger("item_selected", [item.data, item] );
+			LiteGUI.trigger(that.root, "item_selected", { item: item, data: item.data} );
+
 			if(that.onItemSelected)
 				that.onItemSelected(item.data, item);
 			if(item.callback) 
 				item.callback.call(that,item);
+
+			e.preventDefault();
+			e.stopPropagation();
 		}
 
 		function onNodeDblClicked(e)
 		{
 			var item = this.parentNode;
-			$(that.root).trigger("item_dblclicked", [item.data, item] );
+			LiteGUI.trigger( that.root, "item_dblclicked", item );
 
 			if(!this._editing && that.options.allow_rename)
 			{
@@ -119,24 +140,33 @@
 				this._old_name = this.innerHTML;
 				var that2 = this;
 				this.innerHTML = "<input type='text' value='" + this.innerHTML + "' />";
-				var input = $(this).find("input")[0];
+				var input = this.querySelector("input");
+
+				//loose focus
 				$(input).blur(function(e) { 
 					var new_name = e.target.value;
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
-					$(that.root).trigger("item_renamed", [that2._old_name, new_name, item]);
+					LiteGUI.trigger( that.root, "item_renamed", { old_name: that2._old_name, new_name: new_name, item: item, data: item.data } );
 					delete that2._old_name;
 				});
-				$(input).bind("keydown", function(e) {
+
+				//finishes renaming
+				input.addEventListener("keydown", function(e) {
 					if(e.keyCode != 13)
 						return;
 					$(this).blur();
 				});
+
+				//set on focus
 				$(input).focus();
+
 				e.preventDefault();
 			}
 			
+			e.preventDefault();
+			e.stopPropagation();
 		}
 
 		function onContextMenu(e)
@@ -202,7 +232,7 @@
 					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
 					{
 						if( that.moveItem( item_id, parent_id ) )
-							$(that.root).trigger("item_moved", [ that.getItem( item_id ), that.getItem( parent_id ) ] );
+							LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
 					}
 				}
 				catch (err)
@@ -212,7 +242,7 @@
 			}
 			else
 			{
-				$(that.root).trigger("drop_on_item", [this, ev] );
+				LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
 			}
 		});
 
@@ -284,21 +314,51 @@
 	{
 		if(!id)
 		{
-			$(this.root).removeClass("selected");
-			$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
+			//clear selection
+			this.root.classList.remove("selected");
+			var sel = this.root.querySelector(".ltreeitemtitle.selected");
+			if(sel)
+				sel.classList.remove("selected");
+			var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
+			for(var i = 0; i < semiselected.length; i++)
+				semiselected[i].classList.remove("semiselected");
 			return;
 		}
 
 		var node = this.getItem(id);
-		if(!node) return null;
-		if( node.classList.contains("selected") ) return node;
+		if(!node) //not found
+			return null;
 
-		$(this.root).removeClass("selected");
-		$(this.root).find(".ltreeitemtitle.selected").removeClass("selected");
-		$(node.title_element).addClass("selected");
+		this.markAsSelected(node);
 		return node;
 	}
 
+	Tree.prototype.markAsSelected = function(node)
+	{
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return;
+
+		//clear old selection
+		this.root.classList.remove("selected");
+		var selected = this.root.querySelector(".ltreeitemtitle.selected");
+		if(selected)
+			selected.classList.remove("selected");
+		var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
+		for(var i = 0; i < semiselected.length; i++)
+			semiselected[i].classList.remove("semiselected");
+
+		//mark as selected
+		node.title_element.classList.add("selected");
+
+		//go up and semiselect
+		var parent = node.parentNode.parentNode; //two elements per level
+		while(parent && parent.classList.contains("ltreeitem"))
+		{
+			parent.title_element.classList.add("semiselected");
+			parent = parent.parentNode.parentNode;
+		}
+	}
 
 	Tree.prototype.getSelectedItem = function()
 	{

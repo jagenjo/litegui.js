@@ -80,8 +80,17 @@
 		if(id) element.id = id;
 		this.root = element;
 		this.root.litearea = this; //dbl link
-		element.style.width = options.width || "100%";
-		element.style.height = options.height || "100%";
+
+		var width = options.width || "100%";
+		var height = options.height || "100%";
+
+		if( width < 0 )
+			width = 'calc( 100% - '+Math.abs(width)+'px)';
+		if( height < 0 )
+			height = 'calc( 100% - '+ Math.abs(height)+'px)';
+
+		element.style.width = width;
+		element.style.height = height;
 
 		this.options = options;
 

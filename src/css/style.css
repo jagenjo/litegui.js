@@ -178,6 +178,10 @@ button.close-button {
 	box-sizing: border-box;	
 }
 
+.litetabs.vertical {
+	height: 100%;
+}
+
 .litetabs ul.wtabcontainer {
 	min-height: 24px;
 	margin: 0;
@@ -192,43 +196,107 @@ button.close-button {
 	box-sizing: border-box;	
 }
 
-.litetabs li.wtab {
-	display: inline-block;
-	min-width: 50px;
-	/*background-color: #666;*/
-	margin-right: 2px;
-	margin-top: 2px;
-	padding: 4px 8px 2px 4px;
-	border-radius: 3px 3px 0 0;
-	color: #AAA;
+.litetabs.vertical > ul.wtabcontainer {
+	vertical-align: top;
+	padding-left: 0;
+	border-bottom: 0;
 	height: 100%;
-	text-align: center;
+	display: inline-block;
+}
 
+.litetabs li.wtab {
+	color: #AAA;
+	text-align: center;
 	user-select: none;
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
 	cursor: pointer;
+	transition: all 0.3s;
+}
+
+.litetabs.horizontal > ul.wtabcontainer > li.wtab {
+	display: inline-block;
+	min-width: 50px;
+	height: 100%;
+	margin-right: 2px;
+	margin-top: 2px;
+	padding: 4px 8px 2px 4px;
+	border-radius: 3px 3px 0 0;
+}
+
+.litetabs.vertical > ul.wtabcontainer > li.wtab {
+	position: relative;
+	display: block;
+	min-height: 64px;
+	margin: 0;
+	margin-bottom: 2px;
+	padding: 0;
+	border: 0;
+	width: 100%;
+	border-radius: 3px 0 0 3px ;
+}
+
+.litetabs.vertical > ul.wtabcontainer > li.wtab .tabbigicon {
+	opacity: 0.5;
 }
 
 .litetabs li.wtab.selected {
 	color: #EEE;
-	background-color: #666;
+	background-color: #777;
 	/*border: 1px solid #888;*/
 	border-bottom: 0;
 	/*box-shadow: 0 -2px 2px rgba(0,0,0,0.5);*/
 }
 
-.litetabs li.wtab:hover {
-	background-color: #888;	
+.litetabs li.wtab:hover:not(.selected) {
+	background-color: #555;	
 	color: #DDD;
+}
+
+.litetabs li.wtab.selected .tabbigicon, .litetabs li.wtab:hover .tabbigicon {
+	opacity: 1;
+}
+
+.litetabs.vertical > ul.wtabcontainer > li.wtab .tabtitle {
+	position: absolute;
+	bottom: 2px;
+	left: 0;
+	width: 100%;
+	text-align: center;
+    overflow: hidden;	
+}
+
+.litetabs ul.wtabcontainer li.wtab .tabclose {
+	margin-left:6px;
+	margin-right:-6px;
+	border-radius: 2px;
+	opacity: 0.5;
+	transition: all 0.3s;
+	padding: 2px;
+}
+
+.litetabs ul.wtabcontainer li.wtab .tabclose:hover {
+	color: white;
+	background-color: #333;
+	opacity: 1;
 }
 
 .litetabs .wtabcontent {
 	position: relative;
 	background-color: #333;	
+	display: inline-block;
+}
+
+.litetabs.horizontal > .wtabcontent {
 	padding-left: 2px;
 	padding-right: 2px;
 }
+
+.litetabs.vertical > .wtabcontent {
+	padding: 0;
+	height: 100%;
+}
+
 
 /** split ****/
 
@@ -284,6 +352,11 @@ li.ltreeitem div.ltreeitemtitle .incontent:hover {
 li.ltreeitem div.ltreeitemtitle.selected .incontent {
 	color: #EC6;
 }
+
+li.ltreeitem div.ltreeitemtitle.semiselected .incontent {
+	color: #A96;
+}
+
 
 li.ltreeitem div.ltreeitemtitle.dragover .incontent {
 	background-color: #EC6;
@@ -442,9 +515,9 @@ ul.file-list li.file-item {
 	position: relative;
 }
 
-ul.file-list li.file-item strong {
+ul.file-list li.file-item .title {
 	display: block;
-	height: 1.2em;
+	height: 20px;
 	padding: 0.1em;
 	overflow: hidden;
 	text-overflow: ellipsis;

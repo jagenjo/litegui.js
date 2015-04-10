@@ -235,6 +235,11 @@ var LiteGUI = {
 		this.setWindowSize();
 	},
 
+	setCursor: function( name )
+	{
+		this.root.style.cursor = name;
+	},
+
 	//UNDO **********************
 	max_undo_steps: 100,
 	min_time_between_undos: 500,
@@ -1623,6 +1628,7 @@ function beautifyCode(code, reserved)
 		for(var i in sections)
 		{
 			var section = document.createElement("div");
+
 			section.className = "split-section split" + i;
 			if(typeof(sections[i]) == "number")
 			{
@@ -1647,6 +1653,10 @@ function beautifyCode(code, reserved)
 					section.style.width = (typeof(sections[i].width) == "Number" ? sections[i].width.toFixed(1) + "%" : sections[i].width);
 			}
 
+			section.add = function(element) {
+				this.appendChild( element.root || element );
+			}
+
 			this.sections.push(section);
 			root.appendChild(section);
 		}
@@ -1657,6 +1667,11 @@ function beautifyCode(code, reserved)
 				options.parent.root.appendChild(root);
 			else
 				options.parent.appendChild(root);
+		}
+
+		this.getSection = function(n)
+		{
+			return this.sections[n];
 		}
 	}
 
@@ -1669,9 +1684,8 @@ function beautifyCode(code, reserved)
 	*
 	* @class ContextualMenu
 	* @constructor
-	* @param {Array} values
+	* @param {Array} values (allows object { title: "Nice text", callback: function ... })
 	*/
-
 	function ContextualMenu(values,options)
 	{
 		options = options || {};
@@ -1682,6 +1696,10 @@ function beautifyCode(code, reserved)
 		root.className = "litecontextualmenu litemenubar-panel";
 		root.style.minWidth = 100;
 		root.style.minHeight = 100;
+		root.style.pointerEvents = "none";
+		setTimeout(function() { root.style.pointerEvents = "auto"; },100); //delay so the mouse up event is not caugh by this element
+
+
 		this.root = root;
 		
 		for(var i in values)
@@ -1689,19 +1707,39 @@ function beautifyCode(code, reserved)
 			var element = document.createElement("div");
 			element.className = "litemenu-entry submenu";
 
-			element.dataset["value"] = values[i];
-			element.innerHTML = values.constructor == Array ? values[i] : i;
+			var name = values.constructor == Array ? values[i] : i;
+			var value = values[i];
+
+			element.innerHTML = value && value.title ? value.title : name;
+			element.value = value;
+
+			if(typeof(value) == "function")
+			{
+				element.dataset["value"] = name;
+				element.onclick_callback = value;
+			}
+			else if(typeof(value) == "object")
+			{
+				if(value.callback)
+					element.addEventListener("click", function(e) { this.value.callback.apply( this, this.value ); });
+			}
+			else
+				element.dataset["value"] = value;
+
 			root.appendChild(element);
+			element.addEventListener("click", inner_onclick);
 		}
 
-		$(root).find(".litemenu-entry").click(function(e) {
-			var value = this.dataset["value"];
+		//option clicked
+		function inner_onclick(e) {
+			var value = this.value;
 			if(options.callback)
-				options.callback.call(that, value );
+				options.callback.call(that, value, options );
 			document.body.removeChild(root);
-		});
+		}
 
-		$(root).mouseleave(function(e) {
+		//if(0)
+		root.addEventListener("mouseleave", function(e) {
 			document.body.removeChild(root);
 		});
 
@@ -1727,6 +1765,57 @@ function beautifyCode(code, reserved)
 	}
 
 	LiteGUI.ContextualMenu = ContextualMenu;
+
+
+	//the tiny box to expand the children of a node
+	function Checkbox( value, on_change)
+	{
+		var that = this;
+
+		var root = this.root = document.createElement("span");
+		root.className = "litecheckbox inputfield";
+		root.dataset["value"] = value;
+
+		var element = this.element =document.createElement("span");
+		element.className = "fixed flag checkbox "+(value ? "on" : "off");
+		root.appendChild( element );
+		
+		root.addEventListener("click", onClick.bind(this) );
+
+		function onClick(e) {
+			this.setValue( this.root.dataset["value"] != "true" );
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		this.setValue = function(v)
+		{
+			if( this.root.dataset["value"] == v.toString())
+				return;
+
+			this.root.dataset["value"] = v;
+			if(v)
+			{
+				this.element.classList.remove("off");
+				this.element.classList.add("on");
+			}
+			else
+			{
+				this.element.classList.remove("on");
+				this.element.classList.add("off");
+			}
+
+			if(on_change)
+				on_change( v );
+		}
+
+		this.getValue = function()
+		{
+			return this.root.dataset["value"] == "true";
+		}
+	}	
+
+	LiteGUI.Checkbox = Checkbox;
 
 
 	//the tiny box to expand the children of a node
@@ -1769,6 +1858,11 @@ function beautifyCode(code, reserved)
 
 			if(on_change)
 				on_change( this.dataset["value"] );
+		}
+
+		element.getValue = function()
+		{
+			return this.dataset["value"];
 		}
 
 		function onClick(e) {
@@ -2674,6 +2768,9 @@ function beautifyCode(code, reserved)
 	Tabs.prototype.addTab = function(name,options)
 	{
 		options = options || {};
+		if(typeof(options) == "function")
+			options = { callback: options };
+
 		var that = this;
 
 		//the tab element
@@ -3086,6 +3183,8 @@ function beautifyCode(code, reserved)
 //enclose in a scope
 (function(){
 
+	//all the tree data is stored in this.tree
+
 	/*********** LiteTree *****************************/
 	function Tree(id, data, options)
 	{
@@ -3109,38 +3208,198 @@ function beautifyCode(code, reserved)
 				that.onBackgroundClicked(e,that);
 		});
 
-		var root_item = this.createTreeItem(data,options);
+		var root_item = this.createAndInsert(data, options, null);
 		root_item.className += " root_item";
-		this.root.appendChild(root_item);
+		//this.root.appendChild(root_item);
 		this.root_item = root_item;
 	}
 
 	Tree.prototype.updateTree = function(data)
 	{
-		if(this.root_item)
-			$(this.root_item).remove();
-		if(!data) return;
-
-		var root_item = this.createTreeItem(data,this.options);
+		this.root.innerHTML = "";
+		var root_item = this.createAndInsert( data, this.options, null);
 		root_item.className += " root_item";
-		this.root.appendChild(root_item);
+		//this.root.appendChild(root_item);
 		this.root_item = root_item;
 	}
 
-	Tree.prototype.createTreeItem = function(data,options)
+	Tree.prototype.insertItem = function(data, parent_id, position, options)
 	{
+		if(!parent_id)
+		{
+			var root = this.root.childNodes[0];
+			if(root)
+				parent_id = root.dataset["item_id"];
+		}
+
+		var element = this.createAndInsert( data, options, parent_id, position );
+
+		if(parent_id)
+			this._updateListBox( this._findElement(parent_id) );
+
+
+		return element;
+	}
+
+	Tree.prototype.createAndInsert = function(data, options, parent_id, element_index )
+	{
+		//find parent
+		var parent_element_index = -1;
+		if(parent_id)
+			parent_element_index = this._findElementIndex( parent_id );
+		else if(parent_id === undefined)
+			parent_element_index = 0; //root
+
+		var parent = null;
+		var child_level = 0;
+
+		//find level
+		if(parent_element_index != -1)
+		{
+			parent = this.root.childNodes[ parent_element_index ];
+			child_level = parseInt( parent.dataset["level"] ) + 1;
+		}
+
+		//create
+		var element = this.createTreeItem( data, options, child_level );
+		element.parent_id = parent_id;
+
+		//insert
+		if(parent_element_index == -1)
+			this.root.appendChild( element );
+		else
+			this._insertInside( element, parent_element_index, element_index );
+
+		//children
+		if(data.children)
+		{
+			for(var i = 0; i < data.children.length; ++i)
+			{
+				this.createAndInsert( data.children[i], options, data.id );
+			}
+		}
+
+		this._updateListBox( element );
+
+		return element;
+	}
+
+	Tree.prototype._insertInside = function(element, parent_index, offset_index )
+	{
+		var parent = this.root.childNodes[ parent_index ];
+		var parent_level = parseInt( parent.dataset["level"] );
+		var child_level = parent_level + 1;
+
+		element.style.paddingLeft = (child_level * 20) + "px"; //inner padding
+		element.dataset["level"] = child_level;
+
+		//under level nodes
+		for( var j = parent_index+1; j < this.root.childNodes.length; ++j )
+		{
+			var new_childNode = this.root.childNodes[j];
+			if( !new_childNode.classList || !new_childNode.classList.contains("ltreeitem") )
+				continue;
+			var current_level = parseInt( new_childNode.dataset["level"] );
+
+			if( current_level == child_level && offset_index)
+			{
+				offset_index--;
+				continue;
+			}
+
+			//last position
+			if( current_level < child_level || (offset_index === 0 && current_level === child_level) )
+			{
+				this.root.insertBefore( element, new_childNode );
+				return;
+			}
+		}
+
+		//ended
+		this.root.appendChild( element );
+	}
+
+	Tree.prototype._findElement = function( id )
+	{
+		for(var i = 0; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+			if( childNode.classList.contains("ltreeitem-" + id) )
+				return childNode;
+		}
+
+		return null;
+	}
+
+	Tree.prototype._findElementIndex = function( id )
+	{
+		for(var i = 0; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+
+			if(typeof(id) === "string")
+			{
+				if(childNode.dataset["item_id"] === id)
+					return i;
+			}
+			else if( childNode === id )
+				return i;
+		}
+
+		return -1;
+	}
+
+	Tree.prototype._findChildElements = function( id )
+	{
+		var parent_index = this._findElementIndex( id );
+		if(parent_index == -1)
+			return;
+
+		var parent = this.root.childNodes[ parent_index ];
+		var parent_level = parseInt( parent.dataset["level"] );
+
+		var result = [];
+
+		for(var i = parent_index + 1; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+
+			var current_level = parseInt( childNode.dataset["level"] );
+			if(current_level <= parent_level)
+				return result;
+
+			result.push( childNode );
+		}
+
+		return result;
+	}
+	
+	Tree.prototype.createTreeItem = function(data, options, level)
+	{
+		options = options || this.options;
+
 		var root = document.createElement("li");
 		root.className = "ltreeitem";
-		//if(data.id) root.id = data.id;
+
+		//ids are not used because they could collide, classes instead
 		if(data.id)
 		{
 			var safe_id = data.id.replace(/\s/g,"_");
 			root.className += " ltreeitem-" + safe_id;
 			root.dataset["item_id"] = data.id;
 		}
+
+		data.DOM = root; //double link
 		root.data = data;
-		data.DOM = root;
-		options = options || this.options;
+
+		if(level !== undefined)
+			root.dataset["level"] = level;
 
 		var title_element = document.createElement("div");
 		title_element.className = "ltreeitemtitle";
@@ -3160,29 +3419,14 @@ function beautifyCode(code, reserved)
 		var incontent = root.querySelector(".ltreeitemtitle .incontent");
 		incontent.addEventListener("click",onNodeSelected);
 		incontent.addEventListener("dblclick",onNodeDblClicked);
-		//incontent[0].addEventListener("mousedown", onMouseDown ); //for right click
 		incontent.addEventListener("contextmenu", function(e) { 
-			if(that.onContextMenu) onContextMenu(e);
+			var title = this.parentNode;
+			var item = title.parentNode;
+			if(that.onContextMenu) 
+				onContextMenu(e, { item: item, data: item.data} );
 			e.preventDefault(); 
 			return false;
 		});
-
-		var list = document.createElement("ul");
-		list.className = "ltreeitemchildren";
-		//list.style.display = "none";
-		root.children_element = list;
-		root.list = list;
-		if(data.children)
-		{
-			for(var i in data.children)
-			{
-				var item = data.children[i];
-				var element = this.createTreeItem(item, options);
-				list.appendChild(element);
-			}
-		}
-		root.appendChild(list);
-		this.updateListBox(root);
 
 		var that = this;
 		function onNodeSelected(e)
@@ -3195,20 +3439,15 @@ function beautifyCode(code, reserved)
 
 			//mark as selected
 			that.markAsSelected(item);
-			/*
-			that.root.classList.remove("selected");
-			var sel = that.root.querySelector(".ltreeitemtitle.selected");
-			if(sel)
-				sel.classList.remove("selected");
-			title.classList.add("selected");
-			*/
-						
+			
 			LiteGUI.trigger(that.root, "item_selected", { item: item, data: item.data} );
 
-			if(that.onItemSelected)
+			var r = false;
+			if(data.callback) 
+				r = data.callback.call(that,item);
+
+			if(!r && that.onItemSelected)
 				that.onItemSelected(item.data, item);
-			if(item.callback) 
-				item.callback.call(that,item);
 
 			e.preventDefault();
 			e.stopPropagation();
@@ -3227,7 +3466,7 @@ function beautifyCode(code, reserved)
 				this.innerHTML = "<input type='text' value='" + this.innerHTML + "' />";
 				var input = this.querySelector("input");
 
-				//loose focus
+				//loose focus when renaming
 				$(input).blur(function(e) { 
 					var new_name = e.target.value;
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
@@ -3254,12 +3493,13 @@ function beautifyCode(code, reserved)
 			e.stopPropagation();
 		}
 
-		function onContextMenu(e)
+		function onContextMenu(e, item_info)
 		{
-			if(e.button != 2) return;
+			if(e.button != 2) //right button
+				return;
 
 			if(that.onContextMenu)
-				return that.onContextMenu(e);
+				return that.onContextMenu(e, item_info);
 		}
 
 		//dragging tree
@@ -3308,27 +3548,28 @@ function beautifyCode(code, reserved)
 			var item_id = ev.dataTransfer.getData("item_id");
 
 			//var data = ev.dataTransfer.getData("Text");
-			if(item_id != "")
-			{
-				try
-				{
-					var parent_id = this.parentNode.dataset["item_id"];
-
-					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
-					{
-						if( that.moveItem( item_id, parent_id ) )
-							LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
-					}
-				}
-				catch (err)
-				{
-					console.error("Error: " + err );
-				}
-			}
-			else
+			if(!item_id)
 			{
 				LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
+				return;
 			}
+
+			//try
+			{
+				var parent_id = this.parentNode.dataset["item_id"];
+
+				if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+				{
+					if( that.moveItem( item_id, parent_id ) )
+						LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+				}
+			}
+			/*
+			catch (err)
+			{
+				console.error("Error: " + err );
+			}
+			*/
 		});
 
 
@@ -3346,28 +3587,38 @@ function beautifyCode(code, reserved)
 			var parent = element.parentNode;
 			if(!name || str.indexOf(name) != -1)
 			{
-				parent.style.display = "block"
+				parent.style.display = null;
 				parent.parentNode.style.paddingLeft = null;
 			}
 			else
 			{
-				parent.style.display = "none"
+				parent.style.display = "none";
 				parent.parentNode.style.paddingLeft = 0;
 			}
 		}
 	}	
 
-	Tree.onClickBox = function(e)
-	{
-		var list = this.children_element;
-		if(list.style.display == "none")
-			list.style.display = "block";
-		else
-			list.style.display = "none";
-	}
-
 	Tree.prototype.getItem = function( id )
 	{
+		if(!id)
+			return null;
+
+		if( id.classList )
+			return id;
+
+		for(var i = 0; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+
+			if(childNode.dataset["item_id"] === id)
+				return childNode;
+		}
+
+		return null;
+
+		/*
 		var safe_id = id.replace(/\s/g,"_");
 		var node = this.root.querySelector(".ltreeitem-"+safe_id);
 		if(!node) 
@@ -3375,23 +3626,30 @@ function beautifyCode(code, reserved)
 		if( !node.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 		return node;
+		*/
 	}
 
 	Tree.prototype.expandItem = function(id)
 	{
 		var item = this.getItem(id);
-		if(!item) return;
+		if(!item)
+			return;
 
-		if(!item.listbox) return;
+		if(!item.listbox)
+			return;
+
 		listbox.setValue(true);
 	}
 
 	Tree.prototype.contractItem = function(id)
 	{
 		var item = this.getItem(id);
-		if(!item) return;
+		if(!item)
+			return;
 
-		if(!item.listbox) return;
+		if(!item.listbox)
+			return;
+
 		listbox.setValue(false);
 	}
 
@@ -3451,77 +3709,45 @@ function beautifyCode(code, reserved)
 		return node;
 	}
 
-	Tree.prototype.insertItem = function(data, id_parent, position, options)
+	Tree.prototype._updateListBox = function( node )
 	{
-		var parent = this.root_item;
-		if(id_parent)
-		{
-			if(typeof(id_parent) == "string")
-				parent = this.getItem( id_parent );
-			else
-				parent = id_parent;
-			if(!parent)
-				return null; //not found
-		}
-		if( !parent.classList.contains("ltreeitem") )
-			throw("this node is not a tree item");
+		if(!node)
+			return;
 
-		var element = this.createTreeItem(data, options);
-		if(position == undefined)
-			parent.list.appendChild( element );
-		else
-		{
-			parent.list.insertBefore(element, parent.list.childNodes[position]);
-		}
-
-		this.updateListBox(parent);
-
-		return element;
-	}
-
-	Tree.prototype.updateListBox = function(node)
-	{
+		var that = this;
 
 		if(!node.listbox)
 		{
 			var pre = node.title_element.querySelector(".precontent");
-			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
+			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
 			box.setEmpty(true);
 			pre.appendChild(box);
 			node.listbox = box;
 		}
 
-		var child_elements = this.getChildren(node);
-		if(!child_elements) return; //null
+		var child_elements = this.getChildren( node.dataset["item_id"] );
+		if(!child_elements)
+			return; //null
 
 		if(child_elements.length)
 			node.listbox.setEmpty(false);
 		else
 			node.listbox.setEmpty(true);
-
-		/*
-		var child_elements = this.getChildren(node);
-		if(!child_elements) return; //null
-
-		if(child_elements.length && !node.listbox)
-		{
-			var pre = node.title_element.querySelector(".precontent");
-			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
-			pre.appendChild(box);
-			node.listbox = box;
-			return;
-		}
-
-		if(!child_elements.length && node.listbox)
-		{
-			node.listbox.parentNode.removeChild(node.listbox);
-			node.listbox = null;
-		}
-		*/
 	}
 
-	Tree.prototype.getChildren = function(id_or_node)
+	Tree.prototype.onClickBox = function(e, node)
 	{
+		var children = this.getChildren( node );
+		var status = node.listbox.getValue();
+
+		for(var i = 0; i < children.length; ++i)
+			children[i].style.display = status == "open" ? null : "none";
+	}
+
+	Tree.prototype.getChildren = function(id)
+	{
+		return this._findChildElements(id);
+		/*
 		var node = id_or_node;
 		if(typeof(id_or_node) == "string")
 			this.getItem(id_or_node);
@@ -3541,10 +3767,17 @@ function beautifyCode(code, reserved)
 		}
 
 		return child_elements;
+		*/
 	}
 
 	Tree.prototype.getParent = function(id_or_node)
 	{
+		var element = this.getItem( id_or_node );
+		if(element)
+			return this.getItem( element.parent_id );
+		return null;
+
+		/*
 		var node = id_or_node;
 		if(typeof(id_or_node) == "string")
 			this.getItem(id_or_node);
@@ -3559,13 +3792,21 @@ function beautifyCode(code, reserved)
 			aux = aux.parentNode;
 		}
 		return null;
+		*/
 	}
 
-	Tree.prototype.moveItem = function(id, id_parent)
+	Tree.prototype.moveItem = function(id, parent_id )
 	{
-		var parent = this.getItem(id_parent);
-		var node = this.getItem(id);
-		var old_parent = this.getParent(node);
+		if(id === parent_id)
+			return;
+
+		var node = this.getItem( id );
+		var parent = this.getItem( parent_id );
+		var parent_index = this._findElementIndex( parent );
+		var parent_level = parseInt( parent.dataset["level"] );
+		var old_parent = this.getParent( node );
+		var old_parent_level = parseInt( old_parent.dataset["level"] );
+		var level_offset = parent_level - old_parent_level;
 
 		if(!parent || !node)
 			return false;
@@ -3573,11 +3814,36 @@ function beautifyCode(code, reserved)
 		if(parent == old_parent)
 			return;
 
-		parent.list.appendChild( node );
-		this.updateListBox(parent);
+		//replace parent info
+		node.parent_id = parent_id;
 
+		//parent.list.appendChild( node );
+		var children = this.getChildren( node );
+		children.unshift(node);
+
+		//remove all
+		for(var i = 0; i < children.length; i++)
+			children[i].parentNode.removeChild( children[i] );
+
+		//update levels
+		for(var i = 0; i < children.length; i++)
+		{
+			var child = children[i];
+			var new_level = parseInt(child.dataset["level"]) + level_offset;
+			child.dataset["level"] = new_level;
+		}
+
+		//reinsert
+		parent_index = this._findElementIndex( parent ); //update parent index
+		for(var i = 0; i < children.length; i++)
+		{
+			var child = children[i];
+			this._insertInside( child, parent_index );
+		}
+		
+		this._updateListBox( parent );
 		if(old_parent)
-			this.updateListBox(old_parent);
+			this._updateListBox( old_parent );
 
 		return true;
 	}
@@ -3591,12 +3857,10 @@ function beautifyCode(code, reserved)
 			return null;
 
 		var parent = this.getParent(node);
-		if(!parent || !parent.list) return;
-
-		parent.list.removeChild( node );
+		this.root.removeChild( node );
 
 		if(parent)
-			this.updateListBox(parent);
+			this._updateListBox(parent);
 	}
 
 	Tree.prototype.updateItem = function(id, data)
@@ -3677,6 +3941,14 @@ function beautifyCode(code, reserved)
 	Dialog.MINIMIZED_WIDTH = 200;
 	Dialog.title_height = "20px";
 
+	Dialog.getDialog = function(id)
+	{
+		var element = document.getElementById(id);		
+		if(!element)
+			return null;
+		return element.dialog;
+	}
+
 	Dialog.prototype._ctor = function(id, options)
 	{
 		this.width = options.width;
@@ -3691,6 +3963,7 @@ function beautifyCode(code, reserved)
 
 		panel.className = "litedialog " + (options.className || "");
 		panel.data = this;
+		panel.dialog = this;
 
 		var code = "";
 		if(options.title)
@@ -3734,7 +4007,7 @@ function beautifyCode(code, reserved)
 
 	Dialog.prototype.add = function( litegui_item )
 	{
-		this.content.appendChild( litegui_item.root );
+		this.content.appendChild( litegui_item.root || litegui_item );
 	}
 
 	Dialog.prototype.makeDialog = function(options)
@@ -3940,21 +4213,6 @@ function beautifyCode(code, reserved)
 	Dialog.prototype.close = function() {
 		$(this.root).remove();
 		$(this).trigger("closed");
-
-		/*
-		var that = this;
-		if(fade_out == true)
-		{
-			$(this.root).hide('fade',null,function() {
-				$(that.root).remove();
-			});
-		}
-		else
-		{
-			$(this.root).remove();
-			return;
-		}
-		*/
 	}
 
 	Dialog.minimized = [];
@@ -4078,6 +4336,10 @@ function beautifyCode(code, reserved)
 		this.setSize(width,height);
 	}
 
+	Dialog.prototype.clear = function()
+	{
+		this.content.innerHTML = "";
+	}
 
 	LiteGUI.Panel = Panel;
 	LiteGUI.Dialog = Dialog;
@@ -4106,6 +4368,8 @@ jQuery.fn.wclick = function(callback) {
 * Inspector allows to create a list of widgets easily
 *
 * @class Inspector
+* @param {string} id
+* @param {Object} options useful options are { width, name_width, full, widgets_per_row }
 * @constructor
 */
 
@@ -4189,7 +4453,7 @@ Inspector.prototype.setup = function(info)
 *		  if not specified then it calls getAttributes, othewise collect them and tries to guess the type
 * @param {Object} attrs_info_example it overwrites the info about properties found in the object (in case the guessed type is wrong)
 */
-Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example ) 
+Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example, attributes_to_skip ) 
 {
 	if(!instance)
 		return;
@@ -4247,6 +4511,10 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_examp
 			}
 		}
 	}
+
+	if(attributes_to_skip)
+		for(var i in attributes_to_skip)
+			delete attrs_info[ attributes_to_skip[i] ];
 
 	//showAttributes doesnt return anything but just in case...
 	return this.showAttributes( instance, attrs_info );
@@ -4515,21 +4783,33 @@ Inspector.prototype.addSection = function(name, options)
 	if(!name) element.className += " notitle";
 	if(options.className)
 		element.className += " " + options.className;
+	if(options.collapsed)
+		element.className += " collapsed";
+
+	if(options.id)
+		element.id = options.id;
+
 	var code = "";
-	if(name) code += "<div class='wsectiontitle'>"+(options.no_minimize ? "" : "<span class='switch-section-button'></span>")+name+"</div>";
+	if(name)
+		code += "<div class='wsectiontitle'>"+(options.no_collapse ? "" : "<span class='switch-section-button'></span>")+name+"</div>";
 	code += "<div class='wsectioncontent'></div>";
 	element.innerHTML = code;
 	this.root.appendChild(element);
 
 	if(name)
-		$(element).find(".wsectiontitle").click(function(e) {
-			if(e.target.localName == "button") return;
-			$(element).toggleClass("minimized");
-			$(element).find(".wsectioncontent").toggle();
+		element.querySelector(".wsectiontitle").addEventListener("click",function(e) {
+			if(e.target.localName == "button") 
+				return;
+			element.classList.toggle("collapsed");
+			var seccont = element.querySelector(".wsectioncontent");
+			seccont.style.display = seccont.style.display === "none" ? "" : "none";
 		});
 
+	if(options.collapsed)
+		element.querySelector(".wsectioncontent").style.display = "none";
+
 	this.current_section = element;
-	this.current_section_content = $(element).find(".wsectioncontent")[0];
+	this.current_section_content = element.querySelector(".wsectioncontent");
 	this.content = this.current_section_content; //shortcut
 	if(options.widgets_per_row)
 		this.widgets_per_row = options.widgets_per_row;
@@ -4556,10 +4836,11 @@ Inspector.prototype.beginGroup = function(name, options)
 	element.appendChild(content);
 
 	var collapsed = options.collapsed || false;
-	$(element).find(".wgroupheader").click(function() { 
-		$(element).find(".wgroupcontent").toggle();
+	element.querySelector(".wgroupheader").addEventListener("click", function() { 
+		var style = element.querySelector(".wgroupcontent").style;
+		style.display = style.display === "none" ? "" : "none";
 		collapsed = !collapsed;
-		$(element).find(".wgrouptoggle").html(collapsed ? "+" : "-");
+		element.querySelector(".wgrouptoggle").innerHTML = (collapsed ? "+" : "-");
 	});
 
 	this.append(element, options);
@@ -4614,19 +4895,22 @@ Inspector.prototype.addString = function(name,value, options)
 	this.values[name] = value;
 
 	var inputtype = "text";
-	if(options.password) inputtype = "password";
+	if(options.password) 
+		inputtype = "password";
 	var focus = options.focus ? "autofocus" : "";
 
 	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' "+focus+" class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
-	$(element).find(".wcontent input").change( function(e) { 
-		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+	var input = element.querySelector(".wcontent input");
+
+	input.addEventListener("change", function(e) { 
+		var r = Inspector.onWidgetChange.call(that, element, name, e.target.value, options);
 		if(r !== undefined)
-			$(element).find("input").val(r);
+			this.value = r;
 	});
 	this.tab_index += 1;
 
-	element.setValue = function(v) { $(this).find("input").val(v).change(); };
-	element.getValue = function() { return $(this).find("input").val(); };
+	element.setValue = function(v) { input.value = v; LiteGUI.trigger(input, "change" ); };
+	element.getValue = function() { return input.value; };
 	element.focus = function() { $(this).find("input").focus(); };
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	this.append(element,options);
@@ -4642,22 +4926,23 @@ Inspector.prototype.addStringButton = function(name,value, options)
 	this.values[name] = value;
 	
 	var element = this.createWidget(name,"<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
-
-	$(element).find(".wcontent input").change( function(e) { 
+	var input = element.querySelector(".wcontent input");
+	input.addEventListener("change", function(e) { 
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
 	
-	$(element).find(".wcontent button").click( function(e) { 
+	var button = element.querySelector(".wcontent button");
+	button.addEventListener("click", function(e) { 
 		if(options.callback_button)
-			options.callback_button.call(element, $(element).find(".wcontent input").val() );
+			options.callback_button.call(element, input.value );
 	});
 
 	this.tab_index += 1;
 	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
-	element.setValue = function(v) { $(this).find("input").val(v).change(); };
-	element.getValue = function() { return $(this).find("input").val(); };
+	element.setValue = function(v) { input.value = v; LiteGUI.trigger(input, "change" ); };
+	element.getValue = function() { return input.value; };
 	element.focus = function() { $(this).find("input").focus(); };
 	return element;
 }
@@ -5108,9 +5393,13 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
+
+	var label_on = options.label_on || options.label || "on";
+	var label_off = options.label_off || options.label || "off";
+	var label = (value ? label_on : label_off);
 	
 	//var element = this.createWidget(name,"<span class='inputfield'><span class='fixed flag'>"+(value ? "on" : "off")+"</span><span tabIndex='"+this.tab_index+"'class='checkbox "+(value?"on":"")+"'></span></span>", options );
-	var element = this.createWidget(name,"<span class='inputfield'><span tabIndex='"+this.tab_index+"' class='fixed flag checkbox "+(value ? "on" : "off")+"'>"+(value ? "on" : "off")+"</span></span>", options );
+	var element = this.createWidget(name,"<span class='inputfield'><span tabIndex='"+this.tab_index+"' class='fixed flag checkbox "+(value ? "on" : "off")+"'>"+label+"</span></span>", options );
 	this.tab_index++;
 
 	$(element).find(".wcontent .checkbox").keypress( function(e) { 
@@ -5121,7 +5410,7 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 	$(element).click( function() {
 		var v = !this.data;
 		this.data = v;
-		$(element).find("span.flag").html(v ? "on" : "off");
+		$(element).find("span.flag").html(v ? label_on : label_off);
 		if(v)
 			$(element).find("span.checkbox").addClass("on");
 		else
@@ -5268,7 +5557,7 @@ Inspector.prototype.addTags = function(name, value, options)
 		tag.className = "wtag";
 		tag.innerHTML = tagname+"<span class='close'>X</span>";
 
-		$(tag).find(".close").click(function(e) {
+		tag.querySelector(".close").addEventListener("click", function(e) {
 			var tagname = $(this).parent()[0].data;
 			delete element.tags[tagname];
 			$(this).parent().remove();
@@ -5276,7 +5565,7 @@ Inspector.prototype.addTags = function(name, value, options)
 			Inspector.onWidgetChange.call(that,element,name,element.tags, options);
 		});
 
-		$(element).find(".wtagscontainer").append(tag);
+		element.querySelector(".wtagscontainer").appendChild(tag);
 
 		that.values[name] = element.tags;
 		if(options.callback) options.callback.call(element,element.tags); 
@@ -5406,7 +5695,8 @@ Inspector.prototype.addList = function(name, values, options)
 		return r;
 	}
 
-	if(options.height) $(element).scroll(0);
+	if(options.height) 
+		$(element).scroll(0);
 	return element;
 }
 
@@ -5470,7 +5760,7 @@ Inspector.prototype.addColor = function(name,value,options)
 	var that = this;
 	this.values[name] = value;
 	
-	var code = "<input tabIndex='"+this.tab_index+"' id='colorpicker-"+name+"' class='color' value='"+value+"' "+(options.disabled?"disabled":"")+"/>";
+	var code = "<input tabIndex='"+this.tab_index+"' id='colorpicker-"+name+"' class='color' value='"+(value[0]+","+value[1]+","+value[2])+"' "+(options.disabled?"disabled":"")+"/>";
 	this.tab_index++;
 
 	if(options.show_rgb)
@@ -5486,7 +5776,8 @@ Inspector.prototype.addColor = function(name,value,options)
 	myColor.pickerInsetColor = "#222";
 	myColor.rgb_intensity = 1.0;
 
-	if(options.disabled) myColor.pickerOnfocus = false; //this doesnt work
+	if(options.disabled) 
+		myColor.pickerOnfocus = false; //this doesnt work
 
 	if(typeof(value) != "string" && value.length && value.length > 2)
 	{
@@ -5496,8 +5787,10 @@ Inspector.prototype.addColor = function(name,value,options)
 	}
 
 	//update values in rgb format
-	$(input_element).change( function(e) { 
-		$(element).find(".rgb-color").html( Inspector.parseColor(myColor.rgb) );
+	input_element.addEventListener("change", function(e) { 
+		var rgbelement = element.querySelector(".rgb-color");
+		if(rgbelement)
+			rgbelement.innerHTML = LiteGUI.Inspector.parseColor(myColor.rgb);
 	});
 
 	myColor.onImmediateChange = function() 
@@ -5638,6 +5931,15 @@ Inspector.prototype.addDataTree = function(name, value, options)
 	return element;
 }
 
+Inspector.prototype.scrollTo = function( id )
+{
+	var element = this.root.querySelector("#" + id );
+	if(!element)
+		return;
+	var top = this.root.offsetTop;
+	var delta = element.offsetTop - top;
+	this.root.parentNode.parentNode.scrollTop = delta;
+}
 
 /*
 Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)

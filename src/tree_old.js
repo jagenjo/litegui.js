@@ -1,8 +1,6 @@
 //enclose in a scope
 (function(){
 
-	//all the tree data is stored in this.tree
-
 	/*********** LiteTree *****************************/
 	function Tree(id, data, options)
 	{
@@ -26,198 +24,38 @@
 				that.onBackgroundClicked(e,that);
 		});
 
-		var root_item = this.createAndInsert(data, options, null);
+		var root_item = this.createTreeItem(data,options);
 		root_item.className += " root_item";
-		//this.root.appendChild(root_item);
+		this.root.appendChild(root_item);
 		this.root_item = root_item;
 	}
 
 	Tree.prototype.updateTree = function(data)
 	{
-		this.root.innerHTML = "";
-		var root_item = this.createAndInsert( data, this.options, null);
+		if(this.root_item)
+			$(this.root_item).remove();
+		if(!data) return;
+
+		var root_item = this.createTreeItem(data,this.options);
 		root_item.className += " root_item";
-		//this.root.appendChild(root_item);
+		this.root.appendChild(root_item);
 		this.root_item = root_item;
 	}
 
-	Tree.prototype.insertItem = function(data, parent_id, position, options)
+	Tree.prototype.createTreeItem = function(data,options)
 	{
-		if(!parent_id)
-		{
-			var root = this.root.childNodes[0];
-			if(root)
-				parent_id = root.dataset["item_id"];
-		}
-
-		var element = this.createAndInsert( data, options, parent_id, position );
-
-		if(parent_id)
-			this._updateListBox( this._findElement(parent_id) );
-
-
-		return element;
-	}
-
-	Tree.prototype.createAndInsert = function(data, options, parent_id, element_index )
-	{
-		//find parent
-		var parent_element_index = -1;
-		if(parent_id)
-			parent_element_index = this._findElementIndex( parent_id );
-		else if(parent_id === undefined)
-			parent_element_index = 0; //root
-
-		var parent = null;
-		var child_level = 0;
-
-		//find level
-		if(parent_element_index != -1)
-		{
-			parent = this.root.childNodes[ parent_element_index ];
-			child_level = parseInt( parent.dataset["level"] ) + 1;
-		}
-
-		//create
-		var element = this.createTreeItem( data, options, child_level );
-		element.parent_id = parent_id;
-
-		//insert
-		if(parent_element_index == -1)
-			this.root.appendChild( element );
-		else
-			this._insertInside( element, parent_element_index, element_index );
-
-		//children
-		if(data.children)
-		{
-			for(var i = 0; i < data.children.length; ++i)
-			{
-				this.createAndInsert( data.children[i], options, data.id );
-			}
-		}
-
-		this._updateListBox( element );
-
-		return element;
-	}
-
-	Tree.prototype._insertInside = function(element, parent_index, offset_index )
-	{
-		var parent = this.root.childNodes[ parent_index ];
-		var parent_level = parseInt( parent.dataset["level"] );
-		var child_level = parent_level + 1;
-
-		element.style.paddingLeft = (child_level * 20) + "px"; //inner padding
-		element.dataset["level"] = child_level;
-
-		//under level nodes
-		for( var j = parent_index+1; j < this.root.childNodes.length; ++j )
-		{
-			var new_childNode = this.root.childNodes[j];
-			if( !new_childNode.classList || !new_childNode.classList.contains("ltreeitem") )
-				continue;
-			var current_level = parseInt( new_childNode.dataset["level"] );
-
-			if( current_level == child_level && offset_index)
-			{
-				offset_index--;
-				continue;
-			}
-
-			//last position
-			if( current_level < child_level || (offset_index === 0 && current_level === child_level) )
-			{
-				this.root.insertBefore( element, new_childNode );
-				return;
-			}
-		}
-
-		//ended
-		this.root.appendChild( element );
-	}
-
-	Tree.prototype._findElement = function( id )
-	{
-		for(var i = 0; i < this.root.childNodes.length; ++i)
-		{
-			var childNode = this.root.childNodes[i];
-			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
-				continue;
-			if( childNode.classList.contains("ltreeitem-" + id) )
-				return childNode;
-		}
-
-		return null;
-	}
-
-	Tree.prototype._findElementIndex = function( id )
-	{
-		for(var i = 0; i < this.root.childNodes.length; ++i)
-		{
-			var childNode = this.root.childNodes[i];
-			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
-				continue;
-
-			if(typeof(id) === "string")
-			{
-				if(childNode.dataset["item_id"] === id)
-					return i;
-			}
-			else if( childNode === id )
-				return i;
-		}
-
-		return -1;
-	}
-
-	Tree.prototype._findChildElements = function( id )
-	{
-		var parent_index = this._findElementIndex( id );
-		if(parent_index == -1)
-			return;
-
-		var parent = this.root.childNodes[ parent_index ];
-		var parent_level = parseInt( parent.dataset["level"] );
-
-		var result = [];
-
-		for(var i = parent_index + 1; i < this.root.childNodes.length; ++i)
-		{
-			var childNode = this.root.childNodes[i];
-			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
-				continue;
-
-			var current_level = parseInt( childNode.dataset["level"] );
-			if(current_level <= parent_level)
-				return result;
-
-			result.push( childNode );
-		}
-
-		return result;
-	}
-	
-	Tree.prototype.createTreeItem = function(data, options, level)
-	{
-		options = options || this.options;
-
 		var root = document.createElement("li");
 		root.className = "ltreeitem";
-
-		//ids are not used because they could collide, classes instead
+		//if(data.id) root.id = data.id;
 		if(data.id)
 		{
 			var safe_id = data.id.replace(/\s/g,"_");
 			root.className += " ltreeitem-" + safe_id;
 			root.dataset["item_id"] = data.id;
 		}
-
-		data.DOM = root; //double link
 		root.data = data;
-
-		if(level !== undefined)
-			root.dataset["level"] = level;
+		data.DOM = root;
+		options = options || this.options;
 
 		var title_element = document.createElement("div");
 		title_element.className = "ltreeitemtitle";
@@ -237,6 +75,7 @@
 		var incontent = root.querySelector(".ltreeitemtitle .incontent");
 		incontent.addEventListener("click",onNodeSelected);
 		incontent.addEventListener("dblclick",onNodeDblClicked);
+		//incontent[0].addEventListener("mousedown", onMouseDown ); //for right click
 		incontent.addEventListener("contextmenu", function(e) { 
 			var title = this.parentNode;
 			var item = title.parentNode;
@@ -245,6 +84,23 @@
 			e.preventDefault(); 
 			return false;
 		});
+
+		var list = document.createElement("ul");
+		list.className = "ltreeitemchildren";
+		//list.style.display = "none";
+		root.children_element = list;
+		root.list = list;
+		if(data.children)
+		{
+			for(var i in data.children)
+			{
+				var item = data.children[i];
+				var element = this.createTreeItem(item, options);
+				list.appendChild(element);
+			}
+		}
+		root.appendChild(list);
+		this.updateListBox(root);
 
 		var that = this;
 		function onNodeSelected(e)
@@ -284,7 +140,7 @@
 				this.innerHTML = "<input type='text' value='" + this.innerHTML + "' />";
 				var input = this.querySelector("input");
 
-				//loose focus when renaming
+				//loose focus
 				$(input).blur(function(e) { 
 					var new_name = e.target.value;
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
@@ -366,28 +222,27 @@
 			var item_id = ev.dataTransfer.getData("item_id");
 
 			//var data = ev.dataTransfer.getData("Text");
-			if(!item_id)
+			if(item_id != "")
 			{
-				LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
-				return;
-			}
-
-			//try
-			{
-				var parent_id = this.parentNode.dataset["item_id"];
-
-				if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+				try
 				{
-					if( that.moveItem( item_id, parent_id ) )
-						LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+					var parent_id = this.parentNode.dataset["item_id"];
+
+					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+					{
+						if( that.moveItem( item_id, parent_id ) )
+							LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+					}
+				}
+				catch (err)
+				{
+					console.error("Error: " + err );
 				}
 			}
-			/*
-			catch (err)
+			else
 			{
-				console.error("Error: " + err );
+				LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
 			}
-			*/
 		});
 
 
@@ -405,38 +260,28 @@
 			var parent = element.parentNode;
 			if(!name || str.indexOf(name) != -1)
 			{
-				parent.style.display = null;
+				parent.style.display = "block"
 				parent.parentNode.style.paddingLeft = null;
 			}
 			else
 			{
-				parent.style.display = "none";
+				parent.style.display = "none"
 				parent.parentNode.style.paddingLeft = 0;
 			}
 		}
 	}	
 
+	Tree.onClickBox = function(e)
+	{
+		var list = this.children_element;
+		if(list.style.display == "none")
+			list.style.display = "block";
+		else
+			list.style.display = "none";
+	}
+
 	Tree.prototype.getItem = function( id )
 	{
-		if(!id)
-			return null;
-
-		if( id.classList )
-			return id;
-
-		for(var i = 0; i < this.root.childNodes.length; ++i)
-		{
-			var childNode = this.root.childNodes[i];
-			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
-				continue;
-
-			if(childNode.dataset["item_id"] === id)
-				return childNode;
-		}
-
-		return null;
-
-		/*
 		var safe_id = id.replace(/\s/g,"_");
 		var node = this.root.querySelector(".ltreeitem-"+safe_id);
 		if(!node) 
@@ -444,30 +289,23 @@
 		if( !node.classList.contains("ltreeitem") )
 			throw("this node is not a tree item");
 		return node;
-		*/
 	}
 
 	Tree.prototype.expandItem = function(id)
 	{
 		var item = this.getItem(id);
-		if(!item)
-			return;
+		if(!item) return;
 
-		if(!item.listbox)
-			return;
-
+		if(!item.listbox) return;
 		listbox.setValue(true);
 	}
 
 	Tree.prototype.contractItem = function(id)
 	{
 		var item = this.getItem(id);
-		if(!item)
-			return;
+		if(!item) return;
 
-		if(!item.listbox)
-			return;
-
+		if(!item.listbox) return;
 		listbox.setValue(false);
 	}
 
@@ -527,45 +365,77 @@
 		return node;
 	}
 
-	Tree.prototype._updateListBox = function( node )
+	Tree.prototype.insertItem = function(data, id_parent, position, options)
 	{
-		if(!node)
-			return;
+		var parent = this.root_item;
+		if(id_parent)
+		{
+			if(typeof(id_parent) == "string")
+				parent = this.getItem( id_parent );
+			else
+				parent = id_parent;
+			if(!parent)
+				return null; //not found
+		}
+		if( !parent.classList.contains("ltreeitem") )
+			throw("this node is not a tree item");
 
-		var that = this;
+		var element = this.createTreeItem(data, options);
+		if(position == undefined)
+			parent.list.appendChild( element );
+		else
+		{
+			parent.list.insertBefore(element, parent.list.childNodes[position]);
+		}
+
+		this.updateListBox(parent);
+
+		return element;
+	}
+
+	Tree.prototype.updateListBox = function(node)
+	{
 
 		if(!node.listbox)
 		{
 			var pre = node.title_element.querySelector(".precontent");
-			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
+			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
 			box.setEmpty(true);
 			pre.appendChild(box);
 			node.listbox = box;
 		}
 
-		var child_elements = this.getChildren( node.dataset["item_id"] );
-		if(!child_elements)
-			return; //null
+		var child_elements = this.getChildren(node);
+		if(!child_elements) return; //null
 
 		if(child_elements.length)
 			node.listbox.setEmpty(false);
 		else
 			node.listbox.setEmpty(true);
-	}
 
-	Tree.prototype.onClickBox = function(e, node)
-	{
-		var children = this.getChildren( node );
-		var status = node.listbox.getValue();
-
-		for(var i = 0; i < children.length; ++i)
-			children[i].style.display = status == "open" ? null : "none";
-	}
-
-	Tree.prototype.getChildren = function(id)
-	{
-		return this._findChildElements(id);
 		/*
+		var child_elements = this.getChildren(node);
+		if(!child_elements) return; //null
+
+		if(child_elements.length && !node.listbox)
+		{
+			var pre = node.title_element.querySelector(".precontent");
+			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
+			pre.appendChild(box);
+			node.listbox = box;
+			return;
+		}
+
+		if(!child_elements.length && node.listbox)
+		{
+			node.listbox.parentNode.removeChild(node.listbox);
+			node.listbox = null;
+		}
+		*/
+	}
+
+	Tree.prototype.getChildren = function(id_or_node)
+	{
 		var node = id_or_node;
 		if(typeof(id_or_node) == "string")
 			this.getItem(id_or_node);
@@ -585,17 +455,10 @@
 		}
 
 		return child_elements;
-		*/
 	}
 
 	Tree.prototype.getParent = function(id_or_node)
 	{
-		var element = this.getItem( id_or_node );
-		if(element)
-			return this.getItem( element.parent_id );
-		return null;
-
-		/*
 		var node = id_or_node;
 		if(typeof(id_or_node) == "string")
 			this.getItem(id_or_node);
@@ -610,21 +473,13 @@
 			aux = aux.parentNode;
 		}
 		return null;
-		*/
 	}
 
-	Tree.prototype.moveItem = function(id, parent_id )
+	Tree.prototype.moveItem = function(id, id_parent)
 	{
-		if(id === parent_id)
-			return;
-
-		var node = this.getItem( id );
-		var parent = this.getItem( parent_id );
-		var parent_index = this._findElementIndex( parent );
-		var parent_level = parseInt( parent.dataset["level"] );
-		var old_parent = this.getParent( node );
-		var old_parent_level = parseInt( old_parent.dataset["level"] );
-		var level_offset = parent_level - old_parent_level;
+		var parent = this.getItem(id_parent);
+		var node = this.getItem(id);
+		var old_parent = this.getParent(node);
 
 		if(!parent || !node)
 			return false;
@@ -632,36 +487,11 @@
 		if(parent == old_parent)
 			return;
 
-		//replace parent info
-		node.parent_id = parent_id;
+		parent.list.appendChild( node );
+		this.updateListBox(parent);
 
-		//parent.list.appendChild( node );
-		var children = this.getChildren( node );
-		children.unshift(node);
-
-		//remove all
-		for(var i = 0; i < children.length; i++)
-			children[i].parentNode.removeChild( children[i] );
-
-		//update levels
-		for(var i = 0; i < children.length; i++)
-		{
-			var child = children[i];
-			var new_level = parseInt(child.dataset["level"]) + level_offset;
-			child.dataset["level"] = new_level;
-		}
-
-		//reinsert
-		parent_index = this._findElementIndex( parent ); //update parent index
-		for(var i = 0; i < children.length; i++)
-		{
-			var child = children[i];
-			this._insertInside( child, parent_index );
-		}
-		
-		this._updateListBox( parent );
 		if(old_parent)
-			this._updateListBox( old_parent );
+			this.updateListBox(old_parent);
 
 		return true;
 	}
@@ -675,10 +505,12 @@
 			return null;
 
 		var parent = this.getParent(node);
-		this.root.removeChild( node );
+		if(!parent || !parent.list) return;
+
+		parent.list.removeChild( node );
 
 		if(parent)
-			this._updateListBox(parent);
+			this.updateListBox(parent);
 	}
 
 	Tree.prototype.updateItem = function(id, data)

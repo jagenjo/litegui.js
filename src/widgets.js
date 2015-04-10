@@ -552,6 +552,7 @@
 		for(var i in sections)
 		{
 			var section = document.createElement("div");
+
 			section.className = "split-section split" + i;
 			if(typeof(sections[i]) == "number")
 			{
@@ -576,6 +577,10 @@
 					section.style.width = (typeof(sections[i].width) == "Number" ? sections[i].width.toFixed(1) + "%" : sections[i].width);
 			}
 
+			section.add = function(element) {
+				this.appendChild( element.root || element );
+			}
+
 			this.sections.push(section);
 			root.appendChild(section);
 		}
@@ -586,6 +591,11 @@
 				options.parent.root.appendChild(root);
 			else
 				options.parent.appendChild(root);
+		}
+
+		this.getSection = function(n)
+		{
+			return this.sections[n];
 		}
 	}
 
@@ -598,9 +608,8 @@
 	*
 	* @class ContextualMenu
 	* @constructor
-	* @param {Array} values
+	* @param {Array} values (allows object { title: "Nice text", callback: function ... })
 	*/
-
 	function ContextualMenu(values,options)
 	{
 		options = options || {};
@@ -611,6 +620,10 @@
 		root.className = "litecontextualmenu litemenubar-panel";
 		root.style.minWidth = 100;
 		root.style.minHeight = 100;
+		root.style.pointerEvents = "none";
+		setTimeout(function() { root.style.pointerEvents = "auto"; },100); //delay so the mouse up event is not caugh by this element
+
+
 		this.root = root;
 		
 		for(var i in values)
@@ -618,19 +631,39 @@
 			var element = document.createElement("div");
 			element.className = "litemenu-entry submenu";
 
-			element.dataset["value"] = values[i];
-			element.innerHTML = values.constructor == Array ? values[i] : i;
+			var name = values.constructor == Array ? values[i] : i;
+			var value = values[i];
+
+			element.innerHTML = value && value.title ? value.title : name;
+			element.value = value;
+
+			if(typeof(value) == "function")
+			{
+				element.dataset["value"] = name;
+				element.onclick_callback = value;
+			}
+			else if(typeof(value) == "object")
+			{
+				if(value.callback)
+					element.addEventListener("click", function(e) { this.value.callback.apply( this, this.value ); });
+			}
+			else
+				element.dataset["value"] = value;
+
 			root.appendChild(element);
+			element.addEventListener("click", inner_onclick);
 		}
 
-		$(root).find(".litemenu-entry").click(function(e) {
-			var value = this.dataset["value"];
+		//option clicked
+		function inner_onclick(e) {
+			var value = this.value;
 			if(options.callback)
-				options.callback.call(that, value );
+				options.callback.call(that, value, options );
 			document.body.removeChild(root);
-		});
+		}
 
-		$(root).mouseleave(function(e) {
+		//if(0)
+		root.addEventListener("mouseleave", function(e) {
 			document.body.removeChild(root);
 		});
 
@@ -656,6 +689,57 @@
 	}
 
 	LiteGUI.ContextualMenu = ContextualMenu;
+
+
+	//the tiny box to expand the children of a node
+	function Checkbox( value, on_change)
+	{
+		var that = this;
+
+		var root = this.root = document.createElement("span");
+		root.className = "litecheckbox inputfield";
+		root.dataset["value"] = value;
+
+		var element = this.element =document.createElement("span");
+		element.className = "fixed flag checkbox "+(value ? "on" : "off");
+		root.appendChild( element );
+		
+		root.addEventListener("click", onClick.bind(this) );
+
+		function onClick(e) {
+			this.setValue( this.root.dataset["value"] != "true" );
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		this.setValue = function(v)
+		{
+			if( this.root.dataset["value"] == v.toString())
+				return;
+
+			this.root.dataset["value"] = v;
+			if(v)
+			{
+				this.element.classList.remove("off");
+				this.element.classList.add("on");
+			}
+			else
+			{
+				this.element.classList.remove("on");
+				this.element.classList.add("off");
+			}
+
+			if(on_change)
+				on_change( v );
+		}
+
+		this.getValue = function()
+		{
+			return this.root.dataset["value"] == "true";
+		}
+	}	
+
+	LiteGUI.Checkbox = Checkbox;
 
 
 	//the tiny box to expand the children of a node
@@ -698,6 +782,11 @@
 
 			if(on_change)
 				on_change( this.dataset["value"] );
+		}
+
+		element.getValue = function()
+		{
+			return this.dataset["value"];
 		}
 
 		function onClick(e) {

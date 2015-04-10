@@ -53,6 +53,14 @@
 	Dialog.MINIMIZED_WIDTH = 200;
 	Dialog.title_height = "20px";
 
+	Dialog.getDialog = function(id)
+	{
+		var element = document.getElementById(id);		
+		if(!element)
+			return null;
+		return element.dialog;
+	}
+
 	Dialog.prototype._ctor = function(id, options)
 	{
 		this.width = options.width;
@@ -67,6 +75,7 @@
 
 		panel.className = "litedialog " + (options.className || "");
 		panel.data = this;
+		panel.dialog = this;
 
 		var code = "";
 		if(options.title)
@@ -110,7 +119,7 @@
 
 	Dialog.prototype.add = function( litegui_item )
 	{
-		this.content.appendChild( litegui_item.root );
+		this.content.appendChild( litegui_item.root || litegui_item );
 	}
 
 	Dialog.prototype.makeDialog = function(options)
@@ -316,21 +325,6 @@
 	Dialog.prototype.close = function() {
 		$(this.root).remove();
 		$(this).trigger("closed");
-
-		/*
-		var that = this;
-		if(fade_out == true)
-		{
-			$(this.root).hide('fade',null,function() {
-				$(that.root).remove();
-			});
-		}
-		else
-		{
-			$(this.root).remove();
-			return;
-		}
-		*/
 	}
 
 	Dialog.minimized = [];
@@ -454,6 +448,10 @@
 		this.setSize(width,height);
 	}
 
+	Dialog.prototype.clear = function()
+	{
+		this.content.innerHTML = "";
+	}
 
 	LiteGUI.Panel = Panel;
 	LiteGUI.Dialog = Dialog;

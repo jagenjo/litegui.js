@@ -234,6 +234,11 @@ var LiteGUI = {
 		this.setWindowSize();
 	},
 
+	setCursor: function( name )
+	{
+		this.root.style.cursor = name;
+	},
+
 	//UNDO **********************
 	max_undo_steps: 100,
 	min_time_between_undos: 500,

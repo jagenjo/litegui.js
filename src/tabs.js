@@ -114,6 +114,9 @@
 	Tabs.prototype.addTab = function(name,options)
 	{
 		options = options || {};
+		if(typeof(options) == "function")
+			options = { callback: options };
+
 		var that = this;
 
 		//the tab element

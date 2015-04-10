@@ -316,14 +316,24 @@ button.close-button {
 }
 
 /**** LiteTree ***/
+
 li.ltreeitem {
 	list-style-type: none;
 	cursor: pointer;
-	background: url("../imgs/tree_lines_16x16.png") no-repeat scroll 5px -8px transparent;
+	/*background: url("../imgs/tree_lines_16x16.png") no-repeat scroll 5px -8px transparent;*/
 	padding-left: 20px;
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
 	user-select: none;
+}
+
+li.ltreeitem:nth-child(even)
+{
+	background-color: rgba(0,0,0,0.1);
+}
+
+li.ltreeitem:hover {
+	background-color: #444;
 }
 
 /*
@@ -592,6 +602,7 @@ ul.file-list li.file-item span.info {
 	min-width: 100px;
 	color: #AAF;
 	padding: 2px;
+	padding-right: 6px;
 }
 
 input {

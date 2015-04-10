@@ -62,9 +62,12 @@
 	position: relative;
 	z-index: auto;
 	background-color: #555;
+
+	/*
     background-image: linear-gradient(right , #555, #444);
     background-image: -moz-linear-gradient(right , #555, #444);
     background-image: -webkit-linear-gradient(right , #555, #444);
+	*/
 
 	-moz-box-sizing: border-box;	
 	-webkit-box-sizing: border-box;	
@@ -78,18 +81,18 @@
 }
 
 .inspector .wsectioncontent {
-	padding: 4px 0;
+	padding: 4px 4px;
 	background-color: #3A3A3A;
 }
 
 .inspector .wtitle {
 	margin-top: 6px;
-	background-color: #555;
-	color: #AAA;
+	background-color: #444;
+	color: #888;
 }
 
 .inspector .wtitle:first-child {
-	margin-top: 0;
+	/*margin-top: 0;*/
 }
 
 .inspector .wtitle .help {
@@ -126,25 +129,27 @@
 }
 
 .inspector .wsection {
-	padding: 4px 2px;
-	margin-bottom: 6px;
+	/*padding: 4px 2px;*/
+	margin-bottom: 4px;
 }
 
 .inspector .wsection.selected {
 	outline: 1px solid rgba(255,255,255,0.5);
 }
 
-.inspector .wsection.minimized {
+.inspector .wsection.collapsed {
 	margin-bottom: 0;
 	padding-bottom: 0;
 }
 
 .inspector .wsectiontitle {
 	position: relative;
-	border-top: 1px solid #777;
+	/*border-top: 1px solid #777;*/
+	margin-top: 4px;
+	box-shadow: 0 -1px 1px rgba(0,0,0,0.5);
 }
 
-.inspector .wsection.minimized .wsectiontitle {
+.inspector .wsection.collapsed .wsectiontitle {
 	border-bottom: 1px solid #222;
 }
 
@@ -165,7 +170,7 @@
 	*/
 }
 
-.inspector .wsection.minimized .switch-section-button {
+.inspector .wsection.collapsed .switch-section-button {
 
 	margin: 0 0 0 2px;
 	border-left: 6px solid #333;

@@ -95,78 +95,6 @@ input[type="range"]::-moz-slider-thumb {
 /**/
 
 
-/*
-
-.ui-slider .ui-slider-handle {
-    width: 0.3em;
-    height: 1.0em;
-    position: absolute;
-    background: -moz-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
-    background: -webkit-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
-    background: linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
-    border: 0 none !important;
-    box-shadow: 0 1px 0 #5B5957 inset, 0 -1px 0 black, 0 1px 0 black, -1px 0 0 black, 1px 0 0 black, 0 1px 1px #111111 !important;
-
-	box-sizing:border-box;
-	-moz-box-sizing:border-box; 
-	-webkit-box-sizing:border-box; 
-	cursor: e-resize !important;
-}
-
-.ui-slider .ui-slider-range {
-    background-position: 0 0;
-    border: 0 none;
-    display: block;
-    font-size: 0.7em;
-    position: absolute;
-    z-index: 1;
-	margin-right: 10px !important;
-}
-*/
-
-/*
-.ui-slider {
-    position: relative;
-    text-align: left;
-    background-color: black;
-    border-color: black #333333 #333333 black;
-    border-style: solid;
-    border-width: 1px;
-    height: 0;
-    margin: 8px 0 0;
-    vertical-align: top;
-}
-.ui-slider .ui-slider-handle {
-    cursor: default;
-    height: 1.2em;
-    position: absolute;
-    width: 1.2em;
-    z-index: 2; 
-    background: -moz-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
-    background: -webkit-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
-    background: linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent !important;
-    border: 0 none !important;
-    border-radius: 7px 7px 7px 7px !important;
-    box-shadow: 0 1px 0 #5B5957 inset, 0 -1px 0 black, 0 1px 0 black, -1px 0 0 black, 1px 0 0 black, 0 1px 1px #111111 !important;
-    cursor: default !important;
-    height: 12px !important;
-    margin: -6px !important;
-    position: absolute !important;
-    top: 0 !important;
-    width: 12px !important;
-}
-
-.ui-slider .ui-slider-range {
-    background-position: 0 0;
-    border: 0 none;
-    display: block;
-    font-size: 0.7em;
-    position: absolute;
-    z-index: 1;
-}
-*/
-
-
 .slider {
     /*calc( width: 100% - 30px );*/
 }
@@ -210,4 +138,41 @@ input[type="range"]::-moz-slider-thumb {
 
 .searchbox:hover {
     opacity: 1;
+}
+
+
+.litecheckbox {
+
+	width: 1em;
+	height: 1em;
+	display: inline-block;
+	vertical-align: top;
+	background-color: black;
+	border: 0;
+	border-radius: 2px;
+	margin: 0 4px;
+	margin-top: 2px;
+	text-align: center;
+
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+
+	cursor: pointer;
+}
+
+.litecheckbox .on {
+	background-color: #5AF;
+	color: black;
+}
+
+.litecheckbox .flag {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 2px solid black;
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	cursor: pointer;
 }

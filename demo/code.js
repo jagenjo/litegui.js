@@ -122,12 +122,12 @@ function updateSidePanel( root )
 	$(litetree).bind("item_selected", function(e,node) {
 		console.log("Node selected: " + node); 
 	});
-	$(tabs_widget.getTabContent("Tree")).append( litetree.root );
+	tabs_widget.getTabContent("Tree").appendChild( litetree.root );
 
-	litetree.insertItem( {id:"FOO"}, "Child2",21 );
+	litetree.insertItem( {id:"FOO"}, "Child2",2 );
 	//litetree.removeItem( "SubChild1" );
 	//litetree.moveItem( "FOO", "Child3" );
-	litetree.insertItem( {id:"MAX"}, "Rootnode",0 );
+	litetree.insertItem( {id:"MAX"}, "Child1" );
 	$(root.content).append(tabs_widget.root);
 
 	//side panel widget

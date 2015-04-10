@@ -22,6 +22,8 @@ jQuery.fn.wclick = function(callback) {
 * Inspector allows to create a list of widgets easily
 *
 * @class Inspector
+* @param {string} id
+* @param {Object} options useful options are { width, name_width, full, widgets_per_row }
 * @constructor
 */
 
@@ -105,7 +107,7 @@ Inspector.prototype.setup = function(info)
 *		  if not specified then it calls getAttributes, othewise collect them and tries to guess the type
 * @param {Object} attrs_info_example it overwrites the info about properties found in the object (in case the guessed type is wrong)
 */
-Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example ) 
+Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_example, attributes_to_skip ) 
 {
 	if(!instance)
 		return;
@@ -163,6 +165,10 @@ Inspector.prototype.inspectInstance = function(instance, attrs, attrs_info_examp
 			}
 		}
 	}
+
+	if(attributes_to_skip)
+		for(var i in attributes_to_skip)
+			delete attrs_info[ attributes_to_skip[i] ];
 
 	//showAttributes doesnt return anything but just in case...
 	return this.showAttributes( instance, attrs_info );
@@ -431,21 +437,33 @@ Inspector.prototype.addSection = function(name, options)
 	if(!name) element.className += " notitle";
 	if(options.className)
 		element.className += " " + options.className;
+	if(options.collapsed)
+		element.className += " collapsed";
+
+	if(options.id)
+		element.id = options.id;
+
 	var code = "";
-	if(name) code += "<div class='wsectiontitle'>"+(options.no_minimize ? "" : "<span class='switch-section-button'></span>")+name+"</div>";
+	if(name)
+		code += "<div class='wsectiontitle'>"+(options.no_collapse ? "" : "<span class='switch-section-button'></span>")+name+"</div>";
 	code += "<div class='wsectioncontent'></div>";
 	element.innerHTML = code;
 	this.root.appendChild(element);
 
 	if(name)
-		$(element).find(".wsectiontitle").click(function(e) {
-			if(e.target.localName == "button") return;
-			$(element).toggleClass("minimized");
-			$(element).find(".wsectioncontent").toggle();
+		element.querySelector(".wsectiontitle").addEventListener("click",function(e) {
+			if(e.target.localName == "button") 
+				return;
+			element.classList.toggle("collapsed");
+			var seccont = element.querySelector(".wsectioncontent");
+			seccont.style.display = seccont.style.display === "none" ? "" : "none";
 		});
 
+	if(options.collapsed)
+		element.querySelector(".wsectioncontent").style.display = "none";
+
 	this.current_section = element;
-	this.current_section_content = $(element).find(".wsectioncontent")[0];
+	this.current_section_content = element.querySelector(".wsectioncontent");
 	this.content = this.current_section_content; //shortcut
 	if(options.widgets_per_row)
 		this.widgets_per_row = options.widgets_per_row;
@@ -472,10 +490,11 @@ Inspector.prototype.beginGroup = function(name, options)
 	element.appendChild(content);
 
 	var collapsed = options.collapsed || false;
-	$(element).find(".wgroupheader").click(function() { 
-		$(element).find(".wgroupcontent").toggle();
+	element.querySelector(".wgroupheader").addEventListener("click", function() { 
+		var style = element.querySelector(".wgroupcontent").style;
+		style.display = style.display === "none" ? "" : "none";
 		collapsed = !collapsed;
-		$(element).find(".wgrouptoggle").html(collapsed ? "+" : "-");
+		element.querySelector(".wgrouptoggle").innerHTML = (collapsed ? "+" : "-");
 	});
 
 	this.append(element, options);
@@ -530,19 +549,22 @@ Inspector.prototype.addString = function(name,value, options)
 	this.values[name] = value;
 
 	var inputtype = "text";
-	if(options.password) inputtype = "password";
+	if(options.password) 
+		inputtype = "password";
 	var focus = options.focus ? "autofocus" : "";
 
 	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' "+focus+" class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
-	$(element).find(".wcontent input").change( function(e) { 
-		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+	var input = element.querySelector(".wcontent input");
+
+	input.addEventListener("change", function(e) { 
+		var r = Inspector.onWidgetChange.call(that, element, name, e.target.value, options);
 		if(r !== undefined)
-			$(element).find("input").val(r);
+			this.value = r;
 	});
 	this.tab_index += 1;
 
-	element.setValue = function(v) { $(this).find("input").val(v).change(); };
-	element.getValue = function() { return $(this).find("input").val(); };
+	element.setValue = function(v) { input.value = v; LiteGUI.trigger(input, "change" ); };
+	element.getValue = function() { return input.value; };
 	element.focus = function() { $(this).find("input").focus(); };
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	this.append(element,options);
@@ -558,22 +580,23 @@ Inspector.prototype.addStringButton = function(name,value, options)
 	this.values[name] = value;
 	
 	var element = this.createWidget(name,"<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
-
-	$(element).find(".wcontent input").change( function(e) { 
+	var input = element.querySelector(".wcontent input");
+	input.addEventListener("change", function(e) { 
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
 	
-	$(element).find(".wcontent button").click( function(e) { 
+	var button = element.querySelector(".wcontent button");
+	button.addEventListener("click", function(e) { 
 		if(options.callback_button)
-			options.callback_button.call(element, $(element).find(".wcontent input").val() );
+			options.callback_button.call(element, input.value );
 	});
 
 	this.tab_index += 1;
 	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
-	element.setValue = function(v) { $(this).find("input").val(v).change(); };
-	element.getValue = function() { return $(this).find("input").val(); };
+	element.setValue = function(v) { input.value = v; LiteGUI.trigger(input, "change" ); };
+	element.getValue = function() { return input.value; };
 	element.focus = function() { $(this).find("input").focus(); };
 	return element;
 }
@@ -1024,9 +1047,13 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
+
+	var label_on = options.label_on || options.label || "on";
+	var label_off = options.label_off || options.label || "off";
+	var label = (value ? label_on : label_off);
 	
 	//var element = this.createWidget(name,"<span class='inputfield'><span class='fixed flag'>"+(value ? "on" : "off")+"</span><span tabIndex='"+this.tab_index+"'class='checkbox "+(value?"on":"")+"'></span></span>", options );
-	var element = this.createWidget(name,"<span class='inputfield'><span tabIndex='"+this.tab_index+"' class='fixed flag checkbox "+(value ? "on" : "off")+"'>"+(value ? "on" : "off")+"</span></span>", options );
+	var element = this.createWidget(name,"<span class='inputfield'><span tabIndex='"+this.tab_index+"' class='fixed flag checkbox "+(value ? "on" : "off")+"'>"+label+"</span></span>", options );
 	this.tab_index++;
 
 	$(element).find(".wcontent .checkbox").keypress( function(e) { 
@@ -1037,7 +1064,7 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 	$(element).click( function() {
 		var v = !this.data;
 		this.data = v;
-		$(element).find("span.flag").html(v ? "on" : "off");
+		$(element).find("span.flag").html(v ? label_on : label_off);
 		if(v)
 			$(element).find("span.checkbox").addClass("on");
 		else
@@ -1184,7 +1211,7 @@ Inspector.prototype.addTags = function(name, value, options)
 		tag.className = "wtag";
 		tag.innerHTML = tagname+"<span class='close'>X</span>";
 
-		$(tag).find(".close").click(function(e) {
+		tag.querySelector(".close").addEventListener("click", function(e) {
 			var tagname = $(this).parent()[0].data;
 			delete element.tags[tagname];
 			$(this).parent().remove();
@@ -1192,7 +1219,7 @@ Inspector.prototype.addTags = function(name, value, options)
 			Inspector.onWidgetChange.call(that,element,name,element.tags, options);
 		});
 
-		$(element).find(".wtagscontainer").append(tag);
+		element.querySelector(".wtagscontainer").appendChild(tag);
 
 		that.values[name] = element.tags;
 		if(options.callback) options.callback.call(element,element.tags); 
@@ -1322,7 +1349,8 @@ Inspector.prototype.addList = function(name, values, options)
 		return r;
 	}
 
-	if(options.height) $(element).scroll(0);
+	if(options.height) 
+		$(element).scroll(0);
 	return element;
 }
 
@@ -1386,7 +1414,7 @@ Inspector.prototype.addColor = function(name,value,options)
 	var that = this;
 	this.values[name] = value;
 	
-	var code = "<input tabIndex='"+this.tab_index+"' id='colorpicker-"+name+"' class='color' value='"+value+"' "+(options.disabled?"disabled":"")+"/>";
+	var code = "<input tabIndex='"+this.tab_index+"' id='colorpicker-"+name+"' class='color' value='"+(value[0]+","+value[1]+","+value[2])+"' "+(options.disabled?"disabled":"")+"/>";
 	this.tab_index++;
 
 	if(options.show_rgb)
@@ -1402,7 +1430,8 @@ Inspector.prototype.addColor = function(name,value,options)
 	myColor.pickerInsetColor = "#222";
 	myColor.rgb_intensity = 1.0;
 
-	if(options.disabled) myColor.pickerOnfocus = false; //this doesnt work
+	if(options.disabled) 
+		myColor.pickerOnfocus = false; //this doesnt work
 
 	if(typeof(value) != "string" && value.length && value.length > 2)
 	{
@@ -1412,8 +1441,10 @@ Inspector.prototype.addColor = function(name,value,options)
 	}
 
 	//update values in rgb format
-	$(input_element).change( function(e) { 
-		$(element).find(".rgb-color").html( Inspector.parseColor(myColor.rgb) );
+	input_element.addEventListener("change", function(e) { 
+		var rgbelement = element.querySelector(".rgb-color");
+		if(rgbelement)
+			rgbelement.innerHTML = LiteGUI.Inspector.parseColor(myColor.rgb);
 	});
 
 	myColor.onImmediateChange = function() 
@@ -1554,6 +1585,15 @@ Inspector.prototype.addDataTree = function(name, value, options)
 	return element;
 }
 
+Inspector.prototype.scrollTo = function( id )
+{
+	var element = this.root.querySelector("#" + id );
+	if(!element)
+		return;
+	var top = this.root.offsetTop;
+	var delta = element.offsetTop - top;
+	this.root.parentNode.parentNode.scrollTop = delta;
+}
 
 /*
 Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)

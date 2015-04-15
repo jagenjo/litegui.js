@@ -118,6 +118,8 @@
 			});
 	}
 
+	Area.splitbar_size = 4;
+
 	/* get container of the section */
 	Area.prototype.getSection = function(num)
 	{
@@ -201,9 +203,13 @@
 		var dynamic_section = null;
 		if(editable)
 		{
-			splitinfo = " - 5px";
+			splitinfo = " - " + (Area.splitbar_size + 2) +"px"; //2 px margin ¿?
 			splitbar = document.createElement("div");
 			splitbar.className = "litesplitbar " + direction;
+			if(direction == "vertical")
+				splitbar.style.height = Area.splitbar_size + "px";
+			else
+				splitbar.style.width = Area.splitbar_size + "px";
 			this.splitbar = splitbar;
 			splitbar.addEventListener("mousedown", inner_mousedown);
 		}
@@ -431,7 +437,7 @@
 
 		var area1 = this.sections[0];
 		var area2 = this.sections[1];
-		var splitinfo = " - 2px";
+		var splitinfo = " - "+ Area.splitbar_size +"px";
 
 		if(this.direction == "horizontal")
 		{
@@ -478,7 +484,7 @@
 	{
 		var element = this.sections[1];
 
-		var splitinfo = " - 2px";
+		var splitinfo = " - "+Area.splitbar_size+"px";
 		element.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
 		element.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
 		element.root.style.width = "calc( 100% - " + size + splitinfo + " )";

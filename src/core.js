@@ -598,7 +598,8 @@ var LiteGUI = {
 			dialog.close();
 		});
 
-		$(dialog.content).find("input,textarea").focus();
+		var elem = dialog.content.querySelector("input,textarea");
+		elem.focus();
 
 		return dialog;
 	},
@@ -618,6 +619,11 @@ var LiteGUI = {
 
 	getUrlVar: function(name) {
 		return LiteGUI.getUrlVars()[name];
+	},
+
+	focus: function( element )
+	{
+		element.focus();
 	},
 
 	trigger: function(element, event_name, params)

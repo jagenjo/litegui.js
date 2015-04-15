@@ -599,7 +599,8 @@ var LiteGUI = {
 			dialog.close();
 		});
 
-		$(dialog.content).find("input,textarea").focus();
+		var elem = dialog.content.querySelector("input,textarea");
+		elem.focus();
 
 		return dialog;
 	},
@@ -619,6 +620,11 @@ var LiteGUI = {
 
 	getUrlVar: function(name) {
 		return LiteGUI.getUrlVars()[name];
+	},
+
+	focus: function( element )
+	{
+		element.focus();
 	},
 
 	trigger: function(element, event_name, params)
@@ -1194,6 +1200,8 @@ function beautifyCode(code, reserved)
 			});
 	}
 
+	Area.splitbar_size = 4;
+
 	/* get container of the section */
 	Area.prototype.getSection = function(num)
 	{
@@ -1277,9 +1285,13 @@ function beautifyCode(code, reserved)
 		var dynamic_section = null;
 		if(editable)
 		{
-			splitinfo = " - 5px";
+			splitinfo = " - " + (Area.splitbar_size + 2) +"px"; //2 px margin ¿?
 			splitbar = document.createElement("div");
 			splitbar.className = "litesplitbar " + direction;
+			if(direction == "vertical")
+				splitbar.style.height = Area.splitbar_size + "px";
+			else
+				splitbar.style.width = Area.splitbar_size + "px";
 			this.splitbar = splitbar;
 			splitbar.addEventListener("mousedown", inner_mousedown);
 		}
@@ -1507,7 +1519,7 @@ function beautifyCode(code, reserved)
 
 		var area1 = this.sections[0];
 		var area2 = this.sections[1];
-		var splitinfo = " - 2px";
+		var splitinfo = " - "+ Area.splitbar_size +"px";
 
 		if(this.direction == "horizontal")
 		{
@@ -1554,7 +1566,7 @@ function beautifyCode(code, reserved)
 	{
 		var element = this.sections[1];
 
-		var splitinfo = " - 2px";
+		var splitinfo = " - "+Area.splitbar_size+"px";
 		element.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
 		element.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
 		element.root.style.width = "calc( 100% - " + size + splitinfo + " )";
@@ -3214,6 +3226,8 @@ function beautifyCode(code, reserved)
 		this.root_item = root_item;
 	}
 
+	Tree.PADDING = 20;
+
 	Tree.prototype.updateTree = function(data)
 	{
 		this.root.innerHTML = "";
@@ -3290,7 +3304,7 @@ function beautifyCode(code, reserved)
 		var parent_level = parseInt( parent.dataset["level"] );
 		var child_level = parent_level + 1;
 
-		element.style.paddingLeft = (child_level * 20) + "px"; //inner padding
+		element.style.paddingLeft = (child_level * Tree.PADDING) + "px"; //inner padding
 		element.dataset["level"] = child_level;
 
 		//under level nodes
@@ -3582,13 +3596,16 @@ function beautifyCode(code, reserved)
 		for(var i = 0; i < all.length; i++)
 		{
 			var element = all[i];
-			if(!element) continue;
+			if(!element)
+				continue;
+
 			var str = element.innerHTML;
 			var parent = element.parentNode;
+
 			if(!name || str.indexOf(name) != -1)
 			{
 				parent.style.display = null;
-				parent.parentNode.style.paddingLeft = null;
+				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.PADDING) + "px";
 			}
 			else
 			{
@@ -4682,18 +4699,25 @@ Inspector.prototype.createWidget = function(name, content, options)
 	return element;
 }
 
-Inspector.onWidgetChange = function(element, name, value, options)
+//calls callback, triggers wchange, calls onchange in Inspector
+Inspector.onWidgetChange = function(element, name, value, options, expand_value )
 {
 	this.values[name] = value;
 	//LiteGUI.trigger( this.current_section, "wchange", value );
 	$(this.current_section).trigger("wchange",value); //used for undo //TODO: REMOVE
 	var r = null;
 	if(options.callback)
-		r = options.callback.call(element,value);
+	{
+		if(expand_value)
+			r = options.callback.apply( element, value );
+		else
+			r = options.callback.call( element, value );
+	}
+
 	//LiteGUI.trigger( element, "wchange", value );
 	$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
 	if(this.onchange) 
-		this.onchange(name,value,element);
+		this.onchange(name, value, element);
 	return r;
 }
 
@@ -4902,11 +4926,12 @@ Inspector.prototype.addString = function(name,value, options)
 	var element = this.createWidget(name,"<span class='inputfield full "+(options.disabled?"disabled":"")+"'><input type='"+inputtype+"' tabIndex='"+this.tab_index+"' "+focus+" class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span>", options);
 	var input = element.querySelector(".wcontent input");
 
-	input.addEventListener("change", function(e) { 
+	input.addEventListener( options.immediate ? "keyup" : "change", function(e) { 
 		var r = Inspector.onWidgetChange.call(that, element, name, e.target.value, options);
 		if(r !== undefined)
 			this.value = r;
 	});
+
 	this.tab_index += 1;
 
 	element.setValue = function(v) { input.value = v; LiteGUI.trigger(input, "change" ); };
@@ -5234,7 +5259,7 @@ Inspector.prototype.addTextarea = function(name,value, options)
 	var element = this.createWidget(name,"<span class='inputfield textarea "+(options.disabled?"disabled":"")+"'><textarea tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+">"+value+"</textarea></span>", options);
 	this.tab_index++;
 
-	$(element).find(".wcontent textarea").on( options.inmediate ? "keyup" : "change", function(e) { 
+	element.querySelector(".wcontent textarea").addEventListener( options.immediate ? "keyup" : "change", function(e) { 
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
 
@@ -5262,15 +5287,16 @@ Inspector.prototype.addInfo = function(name,value, options)
 		element.innerHTML = "<span class='winfo'>"+value+"</span>";
 	}
 
-	element.setValue = function(v) { $(this).find(".winfo").html(v); };
+	var info = element.querySelector(".winfo");
+
+	element.setValue = function(v) { info.innerHTML = v; };
 
 	if(options.height)
 	{
-		var content = $(element).find("span.info_content")[0];
+		var content = element.querySelector("span.info_content");
 		content.style.height = typeof(options.height) == "string" ? options.height : options.height + "px";
 		content.style.overflow = "auto";
 	}
-
 
 	this.append(element,options);
 	return element;
@@ -5836,12 +5862,23 @@ Inspector.prototype.addFile = function(name, value, options)
 	this.values[name] = value;
 	
 	var element = this.createWidget(name,"<span class='inputfield full whidden'><span class='filename'>"+value+"</span><input type='file' size='100' class='file' value='"+value+"'/></span>", options);
-	$(element).find(".wcontent input").change( function(e) { 
-		if(options.callback) options.callback.call(element,e.target.value);
+	var input = element.querySelector(".wcontent input");
+	input.addEventListener("change", function(e) { 
+		if(!e.target.files.length)
+		{
+			$(element).find(".filename").html("");
+			Inspector.onWidgetChange.call(that, element, name, null, options);
+			return;
+		}
+
+		var url = null;
+		if( options.generate_url )
+			url = URL.createObjectURL( e.target.files[0] );
+		var data = { url: url, filename: e.target.value, file: e.target.files[0], files: e.target.files };
 		$(element).find(".filename").html( e.target.value );
-		$(element).trigger("wchange",[e.target.files]);
-		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		Inspector.onWidgetChange.call(that, element, name, data, options);
 	});
+
 	this.append(element,options);
 	return element;
 }

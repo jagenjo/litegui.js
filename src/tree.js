@@ -32,6 +32,8 @@
 		this.root_item = root_item;
 	}
 
+	Tree.PADDING = 20;
+
 	Tree.prototype.updateTree = function(data)
 	{
 		this.root.innerHTML = "";
@@ -108,7 +110,7 @@
 		var parent_level = parseInt( parent.dataset["level"] );
 		var child_level = parent_level + 1;
 
-		element.style.paddingLeft = (child_level * 20) + "px"; //inner padding
+		element.style.paddingLeft = (child_level * Tree.PADDING) + "px"; //inner padding
 		element.dataset["level"] = child_level;
 
 		//under level nodes
@@ -400,13 +402,16 @@
 		for(var i = 0; i < all.length; i++)
 		{
 			var element = all[i];
-			if(!element) continue;
+			if(!element)
+				continue;
+
 			var str = element.innerHTML;
 			var parent = element.parentNode;
+
 			if(!name || str.indexOf(name) != -1)
 			{
 				parent.style.display = null;
-				parent.parentNode.style.paddingLeft = null;
+				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.PADDING) + "px";
 			}
 			else
 			{

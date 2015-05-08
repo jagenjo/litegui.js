@@ -665,12 +665,14 @@
 			var value = this.value;
 			if(options.callback)
 				options.callback.call(that, value, options );
-			document.body.removeChild(root);
+			if(root.parentNode)
+				root.parentNode.removeChild( root );
 		}
 
 		//if(0)
 		root.addEventListener("mouseleave", function(e) {
-			document.body.removeChild(root);
+			if(this.parentNode)
+				this.parentNode.removeChild( this );
 		});
 
 		//insert before checking position
@@ -799,6 +801,8 @@
 			console.log("CLICK");
 			var box = e.target;
 			box.setValue( this.dataset["value"] == "open" ? false : true );
+			if(this.stopPropagation)
+				e.stopPropagation();
 		}
 
 		return element;

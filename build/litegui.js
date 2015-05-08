@@ -1747,12 +1747,14 @@ function beautifyCode(code, reserved)
 			var value = this.value;
 			if(options.callback)
 				options.callback.call(that, value, options );
-			document.body.removeChild(root);
+			if(root.parentNode)
+				root.parentNode.removeChild( root );
 		}
 
 		//if(0)
 		root.addEventListener("mouseleave", function(e) {
-			document.body.removeChild(root);
+			if(this.parentNode)
+				this.parentNode.removeChild( this );
 		});
 
 		//insert before checking position
@@ -1881,6 +1883,8 @@ function beautifyCode(code, reserved)
 			console.log("CLICK");
 			var box = e.target;
 			box.setValue( this.dataset["value"] == "open" ? false : true );
+			if(this.stopPropagation)
+				e.stopPropagation();
 		}
 
 		return element;
@@ -2682,7 +2686,7 @@ function beautifyCode(code, reserved)
 		this.root = root;
 		this.root.tabs = this;
 
-		this.current_tab = null; //current tab array [name, tab, content]
+		this.current_tab = null; //current tab array [id, tab, content]
 
 		if(mode == "horizontal")
 		{
@@ -2741,7 +2745,22 @@ function beautifyCode(code, reserved)
 
 	Tabs.prototype.getCurrentTab = function()
 	{
-		return this.current_tab;
+		if(!this.current_tab)
+			return null;
+		return this.tabs[ this.current_tab[0] ];
+	}
+
+	Tabs.prototype.getCurrentTabId = function()
+	{
+		return this.current_tab[0];
+	}
+
+	//used to know from which tab we come
+	Tabs.prototype.getPreviousTab = function()
+	{
+		if(!this.previous_tab)
+			return null;
+		return this.tabs[ this.previous_tab[0] ];
 	}
 
 	Tabs.prototype.appendTo = function(parent,at_front)
@@ -2752,21 +2771,21 @@ function beautifyCode(code, reserved)
 			$(parent).append(this.root);
 	}
 
-	Tabs.prototype.getTab = function(name)
+	Tabs.prototype.getTab = function(id)
 	{
-		return this.tabs[name];
+		return this.tabs[id];
 	}
 
-	Tabs.prototype.getTabContent = function(name)
+	Tabs.prototype.getTabContent = function(id)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(tab)
 			return tab.content;
 	}
 
-	Tabs.prototype.getTabIndex = function(name)
+	Tabs.prototype.getTabIndex = function(id)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return -1;
 		for(var i = 0; i < this.list.childNodes.length; i++)
@@ -2776,8 +2795,8 @@ function beautifyCode(code, reserved)
 	}
 
 
-	//add something
-	Tabs.prototype.addTab = function(name,options)
+	//create a new tab, where name is a unique identifier
+	Tabs.prototype.addTab = function( id, options, skip_event )
 	{
 		options = options || {};
 		if(typeof(options) == "function")
@@ -2787,10 +2806,11 @@ function beautifyCode(code, reserved)
 
 		//the tab element
 		var element = document.createElement("LI");
-		element.className = "wtab wtab-" + name.replace(/ /gi,"_");
+		var safe_id = id.replace(/ /gi,"_");
+		element.className = "wtab wtab-" + safe_id;
 		//if(options.selected) element.className += " selected";
-		element.data = name;
-		element.innerHTML = "<span class='tabtitle'>" + (options.title || name) + "</span>";
+		element.dataset["id"] = id;
+		element.innerHTML = "<span class='tabtitle'>" + (options.title || id) + "</span>";
 
 		if(options.bigicon)
 			element.innerHTML = "<img class='tabbigicon' src='" + options.bigicon+"'/>" + element.innerHTML;
@@ -2798,7 +2818,7 @@ function beautifyCode(code, reserved)
 		{
 			element.innerHTML += "<span class='tabclose'>X</span>";
 			element.querySelector("span.tabclose").addEventListener("click", function(e) { 
-				that.removeTab(name);
+				that.removeTab(id);
 				e.preventDefault();
 				e.stopPropagation();
 			},true);
@@ -2816,8 +2836,9 @@ function beautifyCode(code, reserved)
 		var content = document.createElement("div");
 		if(options.id)
 			content.id = options.id;
-		content.className = "wtabcontent " + "wtabcontent-" + name.replace(/ /gi,"_") + " " + (options.className || "");
-		content.data = name;
+
+		content.className = "wtabcontent " + "wtabcontent-" + safe_id + " " + (options.className || "");
+		content.dataset["id"] = id;
 		content.style.display = "none";
 
 		//adapt height
@@ -2871,19 +2892,19 @@ function beautifyCode(code, reserved)
 
 		this.list.appendChild(element);
 
-		var tab_info = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		var tab_info = {id: id, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
 		if(options.onclose)
 			tab_info.onclose = options.onclose;
-		this.tabs[name] = tab_info;
+		this.tabs[id] = tab_info;
 
-		if (options.selected == true || this.selected == null)
-			this.selectTab(name);
+		if ( options.selected == true || this.selected == null )
+			this.selectTab( id, options.skip_callbacks );
 
 		return tab_info;
 	}
 
 	//this is tab
-	Tabs.prototype.onTabClicked = function()
+	Tabs.prototype.onTabClicked = function(e)
 	{
 		//skip if already selected
 		if( this.classList.contains("selected") ) 
@@ -2902,23 +2923,23 @@ function beautifyCode(code, reserved)
 		if(options.callback_canopen && options.callback_canopen() == false)
 			return;
 
-		var tabname = this.data;
+		var tab_id = this.dataset["id"];
 		var tab_content = null;
 
 		//iterate tab labels
 		for(var i in that.tabs)
 		{
 			var tab_info = that.tabs[i];
-			if( i == tabname )
+			if( i == tab_id )
 			{
 				tab_info.selected = true;
-				$(tab_info.content).show();
+				tab_info.content.style.display = null;
 				tab_content = tab_info.content;
 			}
 			else
 			{
 				delete tab_info.selected;
-				$(tab_info.content).hide();
+				tab_info.content.style.display = "none";
 			}
 		}
 
@@ -2927,47 +2948,60 @@ function beautifyCode(code, reserved)
 
 		//launch leaving current tab event
 		if( that.current_tab && 
-			that.current_tab[0] != tabname && 
+			that.current_tab[0] != tab_id && 
 			that.current_tab[2] && 
 			that.current_tab[2].callback_leave)
 				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
 
 		//change tab
-		that.current_tab = [tabname, tab_content, options];
+		that.previous_tab = that.current_tab;
+		that.current_tab = [tab_id, tab_content, options];
 
-		//launch callback
-		if(options.callback) 
-			options.callback(tabname, tab_content);
+		if(e) //user clicked
+		{
+			//launch callback
+			if(options.callback) 
+				options.callback(tab_id, tab_content);
 
-		$(that).trigger("wchange",[tabname,tab_content]);
-		if(that.onchange) that.onchange(name,tabname,tab_content);
-		that.selected = name;
+			$(that).trigger("wchange",[tab_id, tab_content]);
+			if(that.onchange)
+				that.onchange( tab_id, tab_content );
+		}
+
+		//change afterwards in case the user wants to know the previous one
+		that.selected = tab_id;
 	}
 
-	Tabs.prototype.selectTab = function(name)
+	Tabs.prototype.selectTab = function( id, skip_events )
 	{
+		if(!id)
+			return;
+
+		if(typeof(id) != "string")
+			id = id.id; //in case id is the object referencing the tab
+
 		var tabs = this.list.querySelectorAll("li.wtab");
 		for(var i = 0; i < tabs.length; i++)
-			if( name == tabs[i].data)
+			if( id == tabs[i].dataset["id"] )
 			{
-				$(tabs[i]).click();
+				this.onTabClicked.call( tabs[i], !skip_events );
 				break;
 			}
 	}
 
-	Tabs.prototype.setTabVisibility = function(name, v)
+	Tabs.prototype.setTabVisibility = function(id, v)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
-		tab.tab.style.display = v ? "none" : "inline-block";
-		tab.content.style.display = v ? "none" : "inline-block";
+		tab.tab.style.display = v ? "none" : null;
+		tab.content.style.display = v ? "none" : null;
 	}
 
-	Tabs.prototype.removeTab = function(name)
+	Tabs.prototype.removeTab = function(id)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
@@ -2976,33 +3010,50 @@ function beautifyCode(code, reserved)
 
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
-		delete this.tabs[name];
+		delete this.tabs[id];
 	}
 
-	Tabs.prototype.hideTab = function(name)
+	Tabs.prototype.removeAllTabs = function()
 	{
-		this.setTabVisibility(name, false);
+		var tabs = [];
+		for(var i in this.tabs)
+			tabs.push( this.tabs[i] );
+
+		for(var i in tabs)
+		{
+			var tab = tabs[i];
+			tab.tab.parentNode.removeChild( tab.tab );
+			tab.content.parentNode.removeChild( tab.content );
+			delete this.tabs[ tab.id ];
+		}
+
+		this.tabs = {};
 	}
 
-	Tabs.prototype.showTab = function(name)
+	Tabs.prototype.hideTab = function(id)
 	{
-		this.setTabVisibility(name, true);
+		this.setTabVisibility(id, false);
 	}
 
-	Tabs.prototype.transferTab = function(name, target_tabs, index)
+	Tabs.prototype.showTab = function(id)
 	{
-		var tab = this.tabs[name];
+		this.setTabVisibility(id, true);
+	}
+
+	Tabs.prototype.transferTab = function(id, target_tabs, index)
+	{
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
-		target_tabs.tabs[name] = tab;
+		target_tabs.tabs[id] = tab;
 
 		if(index !== undefined)
 			target_tabs.list.insertBefore(tab.tab, target_tabs.list.childNodes[index]);
 		else
 			target_tabs.list.appendChild(tab.tab);
 		target_tabs.root.appendChild(tab.content);
-		delete this.tabs[name];
+		delete this.tabs[id];
 
 		var newtab = null;
 		for(var i in this.tabs)
@@ -3015,22 +3066,22 @@ function beautifyCode(code, reserved)
 			this.selectTab(newtab);
 
 		tab.tab.classList.remove("selected");
-		target_tabs.selectTab(name);
+		target_tabs.selectTab(id);
 	}
 
-	Tabs.prototype.detachTab = function(name, on_complete, on_close )
+	Tabs.prototype.detachTab = function(id, on_complete, on_close )
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
-		var index = this.getTabIndex( name );
+		var index = this.getTabIndex( id );
 
 		//create window
 		var w = 800;
 		var h = 600;
 		var tab_window = window.open("","","width="+w+", height="+h+", location=no, status=no, menubar=no, titlebar=no, fullscreen=yes");
-		tab_window.document.write( "<head><title>"+name+"</title>" );
+		tab_window.document.write( "<head><title>"+id+"</title>" );
 
 		//transfer style
 		var styles = document.querySelectorAll("link[rel='stylesheet'],style");
@@ -3047,7 +3098,7 @@ function beautifyCode(code, reserved)
 
 		//closing event
 		tab_window.onbeforeunload = function(){
-			newtabs.transferTab(name, that, index);
+			newtabs.transferTab( id, that, index);
 			if(on_close)
 				on_close();
 		}
@@ -3055,8 +3106,8 @@ function beautifyCode(code, reserved)
 		//move the content there
 		newtabs.list.style.height = "20px";
 		tab_window.document.body.appendChild(newtabs.root);
-		that.transferTab(name, newtabs);
-		newtabs.tabs[name].tab.classList.add("selected");
+		that.transferTab(id, newtabs);
+		newtabs.tabs[id].tab.classList.add("selected");
 
 		if(on_complete)
 			on_complete();
@@ -3208,7 +3259,7 @@ function beautifyCode(code, reserved)
 		root.className = "litetree";
 		this.tree = data;
 		var that = this;
-		options = options || {allow_rename: true, drag: true};
+		options = options || {allow_rename: true, drag: true, allow_multiselection: false};
 		this.options = options;
 
 		//bg click
@@ -3430,10 +3481,11 @@ function beautifyCode(code, reserved)
 		root.appendChild(title_element);
 		root.title_element = title_element;
 
-		var incontent = root.querySelector(".ltreeitemtitle .incontent");
-		incontent.addEventListener("click",onNodeSelected);
-		incontent.addEventListener("dblclick",onNodeDblClicked);
-		incontent.addEventListener("contextmenu", function(e) { 
+		//var row = root.querySelector(".ltreeitemtitle .incontent");
+		var row = root;
+		row.addEventListener("click",onNodeSelected);
+		row.addEventListener("dblclick",onNodeDblClicked);
+		row.addEventListener("contextmenu", function(e) { 
 			var title = this.parentNode;
 			var item = title.parentNode;
 			if(that.onContextMenu) 
@@ -3445,40 +3497,67 @@ function beautifyCode(code, reserved)
 		var that = this;
 		function onNodeSelected(e)
 		{
-			var title = this.parentNode;
-			var item = title.parentNode;
+			e.preventDefault();
+			e.stopPropagation();
+
+			//var title = this.parentNode;
+			//var item = title.parentNode;
+			var node = this;
+			var title = node.title_element;
 
 			if(title._editing) 
 				return;
 
-			//mark as selected
-			that.markAsSelected(item);
-			
-			LiteGUI.trigger(that.root, "item_selected", { item: item, data: item.data} );
+			if(e.shiftKey && that.options.allow_multiselection)
+			{
+				//check if selected
+				if( that.isNodeSelected( node ) )
+				{
+					node.title_element.classList.remove("selected");
+					LiteGUI.trigger(that.root, "item_remove_from_selection", { item: node, data: node.data} );
+					return;
+				}
 
-			var r = false;
-			if(data.callback) 
-				r = data.callback.call(that,item);
+				//mark as selected
+				that.markAsSelected( node, true );
 
-			if(!r && that.onItemSelected)
-				that.onItemSelected(item.data, item);
+				LiteGUI.trigger(that.root, "item_add_to_selection", { item: node, data: node.data} );
+				var r = false;
+				if(data.callback) 
+					r = data.callback.call(that,node);
 
-			e.preventDefault();
-			e.stopPropagation();
+				if(!r && that.onItemAddToSelection)
+					that.onItemAddToSelection(node.data, node);
+			}
+			else
+			{
+				//mark as selected
+				that.markAsSelected( node );
+
+				LiteGUI.trigger(that.root, "item_selected", { item: node, data: node.data} );
+				var r = false;
+				if(data.callback) 
+					r = data.callback.call(that,node);
+
+				if(!r && that.onItemSelected)
+					that.onItemSelected(node.data, node);
+			}
 		}
 
 		function onNodeDblClicked(e)
 		{
-			var item = this.parentNode;
-			LiteGUI.trigger( that.root, "item_dblclicked", item );
+			var node = this; //this.parentNode;
+			var title = node.title_element.querySelector(".incontent");
 
-			if(!this._editing && that.options.allow_rename)
+			LiteGUI.trigger( that.root, "item_dblclicked", node );
+
+			if(!title._editing && that.options.allow_rename)
 			{
-				this._editing = true;
-				this._old_name = this.innerHTML;
-				var that2 = this;
-				this.innerHTML = "<input type='text' value='" + this.innerHTML + "' />";
-				var input = this.querySelector("input");
+				title._editing = true;
+				title._old_name = title.innerHTML;
+				var that2 = title;
+				title.innerHTML = "<input type='text' value='" + title.innerHTML + "' />";
+				var input = title.querySelector("input");
 
 				//loose focus when renaming
 				$(input).blur(function(e) { 
@@ -3486,7 +3565,7 @@ function beautifyCode(code, reserved)
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
-					LiteGUI.trigger( that.root, "item_renamed", { old_name: that2._old_name, new_name: new_name, item: item, data: item.data } );
+					LiteGUI.trigger( that.root, "item_renamed", { old_name: that2._old_name, new_name: new_name, item: node, data: node.data } );
 					delete that2._old_name;
 				});
 
@@ -3670,18 +3749,12 @@ function beautifyCode(code, reserved)
 		listbox.setValue(false);
 	}
 
-	Tree.prototype.setSelectedItem = function(id)
+	Tree.prototype.setSelectedItem = function( id )
 	{
 		if(!id)
 		{
 			//clear selection
-			this.root.classList.remove("selected");
-			var sel = this.root.querySelector(".ltreeitemtitle.selected");
-			if(sel)
-				sel.classList.remove("selected");
-			var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
-			for(var i = 0; i < semiselected.length; i++)
-				semiselected[i].classList.remove("semiselected");
+			this.unmarkAllAsSelected();
 			return;
 		}
 
@@ -3693,98 +3766,55 @@ function beautifyCode(code, reserved)
 		return node;
 	}
 
-	Tree.prototype.markAsSelected = function(node)
+	Tree.prototype.addItemToSelection = function( id )
 	{
-		//already selected
-		if( node.classList.contains("selected") ) 
+		if(!id)
 			return;
 
-		//clear old selection
-		this.root.classList.remove("selected");
-		var selected = this.root.querySelector(".ltreeitemtitle.selected");
-		if(selected)
-			selected.classList.remove("selected");
-		var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
-		for(var i = 0; i < semiselected.length; i++)
-			semiselected[i].classList.remove("semiselected");
+		var node = this.getItem(id);
+		if(!node) //not found
+			return null;
 
-		//mark as selected
-		node.title_element.classList.add("selected");
+		this.markAsSelected(node, true);
+		return node;
+	}
 
-		//go up and semiselect
-		var parent = node.parentNode.parentNode; //two elements per level
-		while(parent && parent.classList.contains("ltreeitem"))
-		{
-			parent.title_element.classList.add("semiselected");
-			parent = parent.parentNode.parentNode;
-		}
+	Tree.prototype.removeItemFromSelection = function( id )
+	{
+		if(!id)
+			return;
+		var node = this.getItem(id);
+		if(!node) //not found
+			return null;
+		node.title_element.classList.remove("selected");
 	}
 
 	Tree.prototype.getSelectedItem = function()
 	{
-		var node = this.root.querySelector(".ltreeitemtitle.selected");
-		return node;
+		return this.root.querySelector(".ltreeitemtitle.selected");
 	}
 
-	Tree.prototype._updateListBox = function( node )
+	Tree.prototype.getSelectedItems = function()
 	{
+		return this.root.querySelectorAll(".ltreeitemtitle.selected");
+	}
+
+	Tree.prototype.getItemNode = function(id)
+	{
+		return this.root.querySelector(".ltreeitemtitle.selected");
+	}
+
+	Tree.prototype.isItemSelected = function(id)
+	{
+		var node = this.getItemNode(id);
 		if(!node)
-			return;
-
-		var that = this;
-
-		if(!node.listbox)
-		{
-			var pre = node.title_element.querySelector(".precontent");
-			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
-			box.setEmpty(true);
-			pre.appendChild(box);
-			node.listbox = box;
-		}
-
-		var child_elements = this.getChildren( node.dataset["item_id"] );
-		if(!child_elements)
-			return; //null
-
-		if(child_elements.length)
-			node.listbox.setEmpty(false);
-		else
-			node.listbox.setEmpty(true);
-	}
-
-	Tree.prototype.onClickBox = function(e, node)
-	{
-		var children = this.getChildren( node );
-		var status = node.listbox.getValue();
-
-		for(var i = 0; i < children.length; ++i)
-			children[i].style.display = status == "open" ? null : "none";
+			return false;
+		return this.isNodeSelected(node);
 	}
 
 	Tree.prototype.getChildren = function(id)
 	{
 		return this._findChildElements(id);
-		/*
-		var node = id_or_node;
-		if(typeof(id_or_node) == "string")
-			this.getItem(id_or_node);
-
-		if(!node)
-			return null;
-		if(!node.list) //this is not a itemTree
-			return null;
-
-		var childs = node.list.childNodes;
-		var child_elements = [];
-		for(var i in childs)
-		{
-			var c = childs[i];
-			if(c.localName == "li" && c.classList.contains("ltreeitem"))
-				child_elements.push(c);
-		}
-
-		return child_elements;
-		*/
 	}
 
 	Tree.prototype.getParent = function(id_or_node)
@@ -3793,23 +3823,6 @@ function beautifyCode(code, reserved)
 		if(element)
 			return this.getItem( element.parent_id );
 		return null;
-
-		/*
-		var node = id_or_node;
-		if(typeof(id_or_node) == "string")
-			this.getItem(id_or_node);
-		if(!node)
-			return null;
-
-		var aux = node.parentNode;
-		while(aux)
-		{
-			if( aux.classList.contains("ltreeitem") )
-				return aux;
-			aux = aux.parentNode;
-		}
-		return null;
-		*/
 	}
 
 	Tree.prototype.moveItem = function(id, parent_id )
@@ -3900,6 +3913,90 @@ function beautifyCode(code, reserved)
 	{
 		$(keep_root ? this.root_item : this.root).find(".ltreeitem").remove();
 	}
+
+
+	//private ********************************
+
+	Tree.prototype.unmarkAllAsSelected = function()
+	{
+		this.root.classList.remove("selected");
+		var selected_array = this.root.querySelectorAll(".ltreeitemtitle.selected");
+		if(selected_array)
+		{
+			for(var i = 0; i < selected_array.length; i++)
+				selected_array[i].classList.remove("selected");
+		}
+		var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
+		for(var i = 0; i < semiselected.length; i++)
+			semiselected[i].classList.remove("semiselected");
+	}
+
+	Tree.prototype.isNodeSelected = function( node )
+	{
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return true;
+		return false;
+	}
+
+	Tree.prototype.markAsSelected = function( node, add_to_existing_selection)
+	{
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return;
+
+		//clear old selection
+		if(!add_to_existing_selection)
+			this.unmarkAllAsSelected();
+
+		//mark as selected
+		node.title_element.classList.add("selected");
+
+		//go up and semiselect
+		var parent = node.parentNode.parentNode; //two elements per level
+		while(parent && parent.classList.contains("ltreeitem"))
+		{
+			parent.title_element.classList.add("semiselected");
+			parent = parent.parentNode.parentNode;
+		}
+	}
+
+	Tree.prototype._updateListBox = function( node )
+	{
+		if(!node)
+			return;
+
+		var that = this;
+
+		if(!node.listbox)
+		{
+			var pre = node.title_element.querySelector(".precontent");
+			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
+			box.stopPropagation = true;
+			box.setEmpty(true);
+			pre.appendChild(box);
+			node.listbox = box;
+		}
+
+		var child_elements = this.getChildren( node.dataset["item_id"] );
+		if(!child_elements)
+			return; //null
+
+		if(child_elements.length)
+			node.listbox.setEmpty(false);
+		else
+			node.listbox.setEmpty(true);
+	}
+
+	Tree.prototype.onClickBox = function(e, node)
+	{
+		var children = this.getChildren( node );
+		var status = node.listbox.getValue();
+
+		for(var i = 0; i < children.length; ++i)
+			children[i].style.display = status == "open" ? null : "none";
+	}
+
 
 	LiteGUI.Tree = Tree;
 })();
@@ -4357,6 +4454,37 @@ function beautifyCode(code, reserved)
 	{
 		this.content.innerHTML = "";
 	}
+
+	Dialog.showAll = function()
+	{
+		var dialogs = document.body.querySelectorAll("litedialog");
+		for(var i = 0; i < dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.show();
+		}
+	}
+
+	Dialog.hideAll = function()
+	{
+		var dialogs = document.body.querySelectorAll("litedialog");
+		for(var i = 0; i < dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.hide();
+		}
+	}
+
+	Dialog.closeAll = function()
+	{
+		var dialogs = document.body.querySelectorAll("litedialog");
+		for(var i = 0; i < dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.close();
+		}
+	}
+
 
 	LiteGUI.Panel = Panel;
 	LiteGUI.Dialog = Dialog;

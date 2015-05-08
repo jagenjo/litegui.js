@@ -16,7 +16,7 @@
 		this.root = root;
 		this.root.tabs = this;
 
-		this.current_tab = null; //current tab array [name, tab, content]
+		this.current_tab = null; //current tab array [id, tab, content]
 
 		if(mode == "horizontal")
 		{
@@ -75,7 +75,22 @@
 
 	Tabs.prototype.getCurrentTab = function()
 	{
-		return this.current_tab;
+		if(!this.current_tab)
+			return null;
+		return this.tabs[ this.current_tab[0] ];
+	}
+
+	Tabs.prototype.getCurrentTabId = function()
+	{
+		return this.current_tab[0];
+	}
+
+	//used to know from which tab we come
+	Tabs.prototype.getPreviousTab = function()
+	{
+		if(!this.previous_tab)
+			return null;
+		return this.tabs[ this.previous_tab[0] ];
 	}
 
 	Tabs.prototype.appendTo = function(parent,at_front)
@@ -86,21 +101,21 @@
 			$(parent).append(this.root);
 	}
 
-	Tabs.prototype.getTab = function(name)
+	Tabs.prototype.getTab = function(id)
 	{
-		return this.tabs[name];
+		return this.tabs[id];
 	}
 
-	Tabs.prototype.getTabContent = function(name)
+	Tabs.prototype.getTabContent = function(id)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(tab)
 			return tab.content;
 	}
 
-	Tabs.prototype.getTabIndex = function(name)
+	Tabs.prototype.getTabIndex = function(id)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return -1;
 		for(var i = 0; i < this.list.childNodes.length; i++)
@@ -110,8 +125,8 @@
 	}
 
 
-	//add something
-	Tabs.prototype.addTab = function(name,options)
+	//create a new tab, where name is a unique identifier
+	Tabs.prototype.addTab = function( id, options, skip_event )
 	{
 		options = options || {};
 		if(typeof(options) == "function")
@@ -121,10 +136,11 @@
 
 		//the tab element
 		var element = document.createElement("LI");
-		element.className = "wtab wtab-" + name.replace(/ /gi,"_");
+		var safe_id = id.replace(/ /gi,"_");
+		element.className = "wtab wtab-" + safe_id;
 		//if(options.selected) element.className += " selected";
-		element.data = name;
-		element.innerHTML = "<span class='tabtitle'>" + (options.title || name) + "</span>";
+		element.dataset["id"] = id;
+		element.innerHTML = "<span class='tabtitle'>" + (options.title || id) + "</span>";
 
 		if(options.bigicon)
 			element.innerHTML = "<img class='tabbigicon' src='" + options.bigicon+"'/>" + element.innerHTML;
@@ -132,7 +148,7 @@
 		{
 			element.innerHTML += "<span class='tabclose'>X</span>";
 			element.querySelector("span.tabclose").addEventListener("click", function(e) { 
-				that.removeTab(name);
+				that.removeTab(id);
 				e.preventDefault();
 				e.stopPropagation();
 			},true);
@@ -150,8 +166,9 @@
 		var content = document.createElement("div");
 		if(options.id)
 			content.id = options.id;
-		content.className = "wtabcontent " + "wtabcontent-" + name.replace(/ /gi,"_") + " " + (options.className || "");
-		content.data = name;
+
+		content.className = "wtabcontent " + "wtabcontent-" + safe_id + " " + (options.className || "");
+		content.dataset["id"] = id;
 		content.style.display = "none";
 
 		//adapt height
@@ -205,19 +222,19 @@
 
 		this.list.appendChild(element);
 
-		var tab_info = {name: name, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		var tab_info = {id: id, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
 		if(options.onclose)
 			tab_info.onclose = options.onclose;
-		this.tabs[name] = tab_info;
+		this.tabs[id] = tab_info;
 
-		if (options.selected == true || this.selected == null)
-			this.selectTab(name);
+		if ( options.selected == true || this.selected == null )
+			this.selectTab( id, options.skip_callbacks );
 
 		return tab_info;
 	}
 
 	//this is tab
-	Tabs.prototype.onTabClicked = function()
+	Tabs.prototype.onTabClicked = function(e)
 	{
 		//skip if already selected
 		if( this.classList.contains("selected") ) 
@@ -236,23 +253,23 @@
 		if(options.callback_canopen && options.callback_canopen() == false)
 			return;
 
-		var tabname = this.data;
+		var tab_id = this.dataset["id"];
 		var tab_content = null;
 
 		//iterate tab labels
 		for(var i in that.tabs)
 		{
 			var tab_info = that.tabs[i];
-			if( i == tabname )
+			if( i == tab_id )
 			{
 				tab_info.selected = true;
-				$(tab_info.content).show();
+				tab_info.content.style.display = null;
 				tab_content = tab_info.content;
 			}
 			else
 			{
 				delete tab_info.selected;
-				$(tab_info.content).hide();
+				tab_info.content.style.display = "none";
 			}
 		}
 
@@ -261,47 +278,60 @@
 
 		//launch leaving current tab event
 		if( that.current_tab && 
-			that.current_tab[0] != tabname && 
+			that.current_tab[0] != tab_id && 
 			that.current_tab[2] && 
 			that.current_tab[2].callback_leave)
 				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
 
 		//change tab
-		that.current_tab = [tabname, tab_content, options];
+		that.previous_tab = that.current_tab;
+		that.current_tab = [tab_id, tab_content, options];
 
-		//launch callback
-		if(options.callback) 
-			options.callback(tabname, tab_content);
+		if(e) //user clicked
+		{
+			//launch callback
+			if(options.callback) 
+				options.callback(tab_id, tab_content);
 
-		$(that).trigger("wchange",[tabname,tab_content]);
-		if(that.onchange) that.onchange(name,tabname,tab_content);
-		that.selected = name;
+			$(that).trigger("wchange",[tab_id, tab_content]);
+			if(that.onchange)
+				that.onchange( tab_id, tab_content );
+		}
+
+		//change afterwards in case the user wants to know the previous one
+		that.selected = tab_id;
 	}
 
-	Tabs.prototype.selectTab = function(name)
+	Tabs.prototype.selectTab = function( id, skip_events )
 	{
+		if(!id)
+			return;
+
+		if(typeof(id) != "string")
+			id = id.id; //in case id is the object referencing the tab
+
 		var tabs = this.list.querySelectorAll("li.wtab");
 		for(var i = 0; i < tabs.length; i++)
-			if( name == tabs[i].data)
+			if( id == tabs[i].dataset["id"] )
 			{
-				$(tabs[i]).click();
+				this.onTabClicked.call( tabs[i], !skip_events );
 				break;
 			}
 	}
 
-	Tabs.prototype.setTabVisibility = function(name, v)
+	Tabs.prototype.setTabVisibility = function(id, v)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
-		tab.tab.style.display = v ? "none" : "inline-block";
-		tab.content.style.display = v ? "none" : "inline-block";
+		tab.tab.style.display = v ? "none" : null;
+		tab.content.style.display = v ? "none" : null;
 	}
 
-	Tabs.prototype.removeTab = function(name)
+	Tabs.prototype.removeTab = function(id)
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
@@ -310,33 +340,50 @@
 
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
-		delete this.tabs[name];
+		delete this.tabs[id];
 	}
 
-	Tabs.prototype.hideTab = function(name)
+	Tabs.prototype.removeAllTabs = function()
 	{
-		this.setTabVisibility(name, false);
+		var tabs = [];
+		for(var i in this.tabs)
+			tabs.push( this.tabs[i] );
+
+		for(var i in tabs)
+		{
+			var tab = tabs[i];
+			tab.tab.parentNode.removeChild( tab.tab );
+			tab.content.parentNode.removeChild( tab.content );
+			delete this.tabs[ tab.id ];
+		}
+
+		this.tabs = {};
 	}
 
-	Tabs.prototype.showTab = function(name)
+	Tabs.prototype.hideTab = function(id)
 	{
-		this.setTabVisibility(name, true);
+		this.setTabVisibility(id, false);
 	}
 
-	Tabs.prototype.transferTab = function(name, target_tabs, index)
+	Tabs.prototype.showTab = function(id)
 	{
-		var tab = this.tabs[name];
+		this.setTabVisibility(id, true);
+	}
+
+	Tabs.prototype.transferTab = function(id, target_tabs, index)
+	{
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
-		target_tabs.tabs[name] = tab;
+		target_tabs.tabs[id] = tab;
 
 		if(index !== undefined)
 			target_tabs.list.insertBefore(tab.tab, target_tabs.list.childNodes[index]);
 		else
 			target_tabs.list.appendChild(tab.tab);
 		target_tabs.root.appendChild(tab.content);
-		delete this.tabs[name];
+		delete this.tabs[id];
 
 		var newtab = null;
 		for(var i in this.tabs)
@@ -349,22 +396,22 @@
 			this.selectTab(newtab);
 
 		tab.tab.classList.remove("selected");
-		target_tabs.selectTab(name);
+		target_tabs.selectTab(id);
 	}
 
-	Tabs.prototype.detachTab = function(name, on_complete, on_close )
+	Tabs.prototype.detachTab = function(id, on_complete, on_close )
 	{
-		var tab = this.tabs[name];
+		var tab = this.tabs[id];
 		if(!tab)
 			return;
 
-		var index = this.getTabIndex( name );
+		var index = this.getTabIndex( id );
 
 		//create window
 		var w = 800;
 		var h = 600;
 		var tab_window = window.open("","","width="+w+", height="+h+", location=no, status=no, menubar=no, titlebar=no, fullscreen=yes");
-		tab_window.document.write( "<head><title>"+name+"</title>" );
+		tab_window.document.write( "<head><title>"+id+"</title>" );
 
 		//transfer style
 		var styles = document.querySelectorAll("link[rel='stylesheet'],style");
@@ -381,7 +428,7 @@
 
 		//closing event
 		tab_window.onbeforeunload = function(){
-			newtabs.transferTab(name, that, index);
+			newtabs.transferTab( id, that, index);
 			if(on_close)
 				on_close();
 		}
@@ -389,8 +436,8 @@
 		//move the content there
 		newtabs.list.style.height = "20px";
 		tab_window.document.body.appendChild(newtabs.root);
-		that.transferTab(name, newtabs);
-		newtabs.tabs[name].tab.classList.add("selected");
+		that.transferTab(id, newtabs);
+		newtabs.tabs[id].tab.classList.add("selected");
 
 		if(on_complete)
 			on_complete();

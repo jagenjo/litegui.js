@@ -453,6 +453,37 @@
 		this.content.innerHTML = "";
 	}
 
+	Dialog.showAll = function()
+	{
+		var dialogs = document.body.querySelectorAll("litedialog");
+		for(var i = 0; i < dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.show();
+		}
+	}
+
+	Dialog.hideAll = function()
+	{
+		var dialogs = document.body.querySelectorAll("litedialog");
+		for(var i = 0; i < dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.hide();
+		}
+	}
+
+	Dialog.closeAll = function()
+	{
+		var dialogs = document.body.querySelectorAll("litedialog");
+		for(var i = 0; i < dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.close();
+		}
+	}
+
+
 	LiteGUI.Panel = Panel;
 	LiteGUI.Dialog = Dialog;
 })();

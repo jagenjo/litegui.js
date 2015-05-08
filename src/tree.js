@@ -14,7 +14,7 @@
 		root.className = "litetree";
 		this.tree = data;
 		var that = this;
-		options = options || {allow_rename: true, drag: true};
+		options = options || {allow_rename: true, drag: true, allow_multiselection: false};
 		this.options = options;
 
 		//bg click
@@ -236,10 +236,11 @@
 		root.appendChild(title_element);
 		root.title_element = title_element;
 
-		var incontent = root.querySelector(".ltreeitemtitle .incontent");
-		incontent.addEventListener("click",onNodeSelected);
-		incontent.addEventListener("dblclick",onNodeDblClicked);
-		incontent.addEventListener("contextmenu", function(e) { 
+		//var row = root.querySelector(".ltreeitemtitle .incontent");
+		var row = root;
+		row.addEventListener("click",onNodeSelected);
+		row.addEventListener("dblclick",onNodeDblClicked);
+		row.addEventListener("contextmenu", function(e) { 
 			var title = this.parentNode;
 			var item = title.parentNode;
 			if(that.onContextMenu) 
@@ -251,40 +252,67 @@
 		var that = this;
 		function onNodeSelected(e)
 		{
-			var title = this.parentNode;
-			var item = title.parentNode;
+			e.preventDefault();
+			e.stopPropagation();
+
+			//var title = this.parentNode;
+			//var item = title.parentNode;
+			var node = this;
+			var title = node.title_element;
 
 			if(title._editing) 
 				return;
 
-			//mark as selected
-			that.markAsSelected(item);
-			
-			LiteGUI.trigger(that.root, "item_selected", { item: item, data: item.data} );
+			if(e.shiftKey && that.options.allow_multiselection)
+			{
+				//check if selected
+				if( that.isNodeSelected( node ) )
+				{
+					node.title_element.classList.remove("selected");
+					LiteGUI.trigger(that.root, "item_remove_from_selection", { item: node, data: node.data} );
+					return;
+				}
 
-			var r = false;
-			if(data.callback) 
-				r = data.callback.call(that,item);
+				//mark as selected
+				that.markAsSelected( node, true );
 
-			if(!r && that.onItemSelected)
-				that.onItemSelected(item.data, item);
+				LiteGUI.trigger(that.root, "item_add_to_selection", { item: node, data: node.data} );
+				var r = false;
+				if(data.callback) 
+					r = data.callback.call(that,node);
 
-			e.preventDefault();
-			e.stopPropagation();
+				if(!r && that.onItemAddToSelection)
+					that.onItemAddToSelection(node.data, node);
+			}
+			else
+			{
+				//mark as selected
+				that.markAsSelected( node );
+
+				LiteGUI.trigger(that.root, "item_selected", { item: node, data: node.data} );
+				var r = false;
+				if(data.callback) 
+					r = data.callback.call(that,node);
+
+				if(!r && that.onItemSelected)
+					that.onItemSelected(node.data, node);
+			}
 		}
 
 		function onNodeDblClicked(e)
 		{
-			var item = this.parentNode;
-			LiteGUI.trigger( that.root, "item_dblclicked", item );
+			var node = this; //this.parentNode;
+			var title = node.title_element.querySelector(".incontent");
 
-			if(!this._editing && that.options.allow_rename)
+			LiteGUI.trigger( that.root, "item_dblclicked", node );
+
+			if(!title._editing && that.options.allow_rename)
 			{
-				this._editing = true;
-				this._old_name = this.innerHTML;
-				var that2 = this;
-				this.innerHTML = "<input type='text' value='" + this.innerHTML + "' />";
-				var input = this.querySelector("input");
+				title._editing = true;
+				title._old_name = title.innerHTML;
+				var that2 = title;
+				title.innerHTML = "<input type='text' value='" + title.innerHTML + "' />";
+				var input = title.querySelector("input");
 
 				//loose focus when renaming
 				$(input).blur(function(e) { 
@@ -292,7 +320,7 @@
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
 					delete that2._editing;
-					LiteGUI.trigger( that.root, "item_renamed", { old_name: that2._old_name, new_name: new_name, item: item, data: item.data } );
+					LiteGUI.trigger( that.root, "item_renamed", { old_name: that2._old_name, new_name: new_name, item: node, data: node.data } );
 					delete that2._old_name;
 				});
 
@@ -476,18 +504,12 @@
 		listbox.setValue(false);
 	}
 
-	Tree.prototype.setSelectedItem = function(id)
+	Tree.prototype.setSelectedItem = function( id )
 	{
 		if(!id)
 		{
 			//clear selection
-			this.root.classList.remove("selected");
-			var sel = this.root.querySelector(".ltreeitemtitle.selected");
-			if(sel)
-				sel.classList.remove("selected");
-			var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
-			for(var i = 0; i < semiselected.length; i++)
-				semiselected[i].classList.remove("semiselected");
+			this.unmarkAllAsSelected();
 			return;
 		}
 
@@ -499,98 +521,55 @@
 		return node;
 	}
 
-	Tree.prototype.markAsSelected = function(node)
+	Tree.prototype.addItemToSelection = function( id )
 	{
-		//already selected
-		if( node.classList.contains("selected") ) 
+		if(!id)
 			return;
 
-		//clear old selection
-		this.root.classList.remove("selected");
-		var selected = this.root.querySelector(".ltreeitemtitle.selected");
-		if(selected)
-			selected.classList.remove("selected");
-		var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
-		for(var i = 0; i < semiselected.length; i++)
-			semiselected[i].classList.remove("semiselected");
+		var node = this.getItem(id);
+		if(!node) //not found
+			return null;
 
-		//mark as selected
-		node.title_element.classList.add("selected");
+		this.markAsSelected(node, true);
+		return node;
+	}
 
-		//go up and semiselect
-		var parent = node.parentNode.parentNode; //two elements per level
-		while(parent && parent.classList.contains("ltreeitem"))
-		{
-			parent.title_element.classList.add("semiselected");
-			parent = parent.parentNode.parentNode;
-		}
+	Tree.prototype.removeItemFromSelection = function( id )
+	{
+		if(!id)
+			return;
+		var node = this.getItem(id);
+		if(!node) //not found
+			return null;
+		node.title_element.classList.remove("selected");
 	}
 
 	Tree.prototype.getSelectedItem = function()
 	{
-		var node = this.root.querySelector(".ltreeitemtitle.selected");
-		return node;
+		return this.root.querySelector(".ltreeitemtitle.selected");
 	}
 
-	Tree.prototype._updateListBox = function( node )
+	Tree.prototype.getSelectedItems = function()
 	{
+		return this.root.querySelectorAll(".ltreeitemtitle.selected");
+	}
+
+	Tree.prototype.getItemNode = function(id)
+	{
+		return this.root.querySelector(".ltreeitemtitle.selected");
+	}
+
+	Tree.prototype.isItemSelected = function(id)
+	{
+		var node = this.getItemNode(id);
 		if(!node)
-			return;
-
-		var that = this;
-
-		if(!node.listbox)
-		{
-			var pre = node.title_element.querySelector(".precontent");
-			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
-			box.setEmpty(true);
-			pre.appendChild(box);
-			node.listbox = box;
-		}
-
-		var child_elements = this.getChildren( node.dataset["item_id"] );
-		if(!child_elements)
-			return; //null
-
-		if(child_elements.length)
-			node.listbox.setEmpty(false);
-		else
-			node.listbox.setEmpty(true);
-	}
-
-	Tree.prototype.onClickBox = function(e, node)
-	{
-		var children = this.getChildren( node );
-		var status = node.listbox.getValue();
-
-		for(var i = 0; i < children.length; ++i)
-			children[i].style.display = status == "open" ? null : "none";
+			return false;
+		return this.isNodeSelected(node);
 	}
 
 	Tree.prototype.getChildren = function(id)
 	{
 		return this._findChildElements(id);
-		/*
-		var node = id_or_node;
-		if(typeof(id_or_node) == "string")
-			this.getItem(id_or_node);
-
-		if(!node)
-			return null;
-		if(!node.list) //this is not a itemTree
-			return null;
-
-		var childs = node.list.childNodes;
-		var child_elements = [];
-		for(var i in childs)
-		{
-			var c = childs[i];
-			if(c.localName == "li" && c.classList.contains("ltreeitem"))
-				child_elements.push(c);
-		}
-
-		return child_elements;
-		*/
 	}
 
 	Tree.prototype.getParent = function(id_or_node)
@@ -599,23 +578,6 @@
 		if(element)
 			return this.getItem( element.parent_id );
 		return null;
-
-		/*
-		var node = id_or_node;
-		if(typeof(id_or_node) == "string")
-			this.getItem(id_or_node);
-		if(!node)
-			return null;
-
-		var aux = node.parentNode;
-		while(aux)
-		{
-			if( aux.classList.contains("ltreeitem") )
-				return aux;
-			aux = aux.parentNode;
-		}
-		return null;
-		*/
 	}
 
 	Tree.prototype.moveItem = function(id, parent_id )
@@ -706,6 +668,90 @@
 	{
 		$(keep_root ? this.root_item : this.root).find(".ltreeitem").remove();
 	}
+
+
+	//private ********************************
+
+	Tree.prototype.unmarkAllAsSelected = function()
+	{
+		this.root.classList.remove("selected");
+		var selected_array = this.root.querySelectorAll(".ltreeitemtitle.selected");
+		if(selected_array)
+		{
+			for(var i = 0; i < selected_array.length; i++)
+				selected_array[i].classList.remove("selected");
+		}
+		var semiselected = this.root.querySelectorAll(".ltreeitemtitle.semiselected");
+		for(var i = 0; i < semiselected.length; i++)
+			semiselected[i].classList.remove("semiselected");
+	}
+
+	Tree.prototype.isNodeSelected = function( node )
+	{
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return true;
+		return false;
+	}
+
+	Tree.prototype.markAsSelected = function( node, add_to_existing_selection)
+	{
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return;
+
+		//clear old selection
+		if(!add_to_existing_selection)
+			this.unmarkAllAsSelected();
+
+		//mark as selected
+		node.title_element.classList.add("selected");
+
+		//go up and semiselect
+		var parent = node.parentNode.parentNode; //two elements per level
+		while(parent && parent.classList.contains("ltreeitem"))
+		{
+			parent.title_element.classList.add("semiselected");
+			parent = parent.parentNode.parentNode;
+		}
+	}
+
+	Tree.prototype._updateListBox = function( node )
+	{
+		if(!node)
+			return;
+
+		var that = this;
+
+		if(!node.listbox)
+		{
+			var pre = node.title_element.querySelector(".precontent");
+			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
+			box.stopPropagation = true;
+			box.setEmpty(true);
+			pre.appendChild(box);
+			node.listbox = box;
+		}
+
+		var child_elements = this.getChildren( node.dataset["item_id"] );
+		if(!child_elements)
+			return; //null
+
+		if(child_elements.length)
+			node.listbox.setEmpty(false);
+		else
+			node.listbox.setEmpty(true);
+	}
+
+	Tree.prototype.onClickBox = function(e, node)
+	{
+		var children = this.getChildren( node );
+		var status = node.listbox.getValue();
+
+		for(var i = 0; i < children.length; ++i)
+			children[i].style.display = status == "open" ? null : "none";
+	}
+
 
 	LiteGUI.Tree = Tree;
 })();

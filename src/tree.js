@@ -1,7 +1,12 @@
 //enclose in a scope
 (function(){
 
-	//all the tree data is stored in this.tree
+/**
+* To create interactive trees (useful for folders or hierarchies)
+*
+* @class Tree
+* @constructor
+*/
 
 	/*********** LiteTree *****************************/
 	function Tree(id, data, options)
@@ -26,14 +31,32 @@
 				that.onBackgroundClicked(e,that);
 		});
 
+		//bg click right mouse
+		root.addEventListener("contextmenu", function(e) { 
+			if(e.button != 2) //right button
+				return false;
+
+			if(that.onContextMenu) 
+				that.onContextMenu(e);
+			e.preventDefault(); 
+			return false;
+		});
+
+
 		var root_item = this.createAndInsert(data, options, null);
 		root_item.className += " root_item";
 		//this.root.appendChild(root_item);
 		this.root_item = root_item;
 	}
 
-	Tree.PADDING = 20;
+	Tree.INDENT = 20;
 
+
+	/**
+	* update tree with new data (old data will be thrown away)
+	* @method updateTree
+	* @param {object} data
+	*/
 	Tree.prototype.updateTree = function(data)
 	{
 		this.root.innerHTML = "";
@@ -43,6 +66,15 @@
 		this.root_item = root_item;
 	}
 
+	/**
+	* update tree with new data (old data will be thrown away)
+	* @method insertItem
+	* @param {object} data
+	* @param {string} parent_id
+	* @param {number} position index in case you want to add it before the last position
+	* @param {object} options
+	* @return {DIVElement}
+	*/
 	Tree.prototype.insertItem = function(data, parent_id, position, options)
 	{
 		if(!parent_id)
@@ -101,16 +133,22 @@
 
 		this._updateListBox( element );
 
+		if(options.selected)
+			this.markAsSelected( element, true );
+
 		return element;
 	}
 
-	Tree.prototype._insertInside = function(element, parent_index, offset_index )
+	Tree.prototype._insertInside = function(element, parent_index, offset_index, level )
 	{
 		var parent = this.root.childNodes[ parent_index ];
 		var parent_level = parseInt( parent.dataset["level"] );
-		var child_level = parent_level + 1;
+		var child_level = level !== undefined ? level : parent_level + 1;
 
-		element.style.paddingLeft = (child_level * Tree.PADDING) + "px"; //inner padding
+		var indent = element.querySelector(".indentblock");
+		if(indent)
+			indent.style.paddingLeft = (child_level * Tree.INDENT ) + "px"; //inner padding
+		
 		element.dataset["level"] = child_level;
 
 		//under level nodes
@@ -173,7 +211,26 @@
 		return -1;
 	}
 
-	Tree.prototype._findChildElements = function( id )
+	Tree.prototype._findElementLastChildIndex = function( start_index )
+	{
+		var level = parseInt( this.root.childNodes[ start_index ].dataset["level"] );
+
+		for(var i = start_index+1; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+
+			var current_level = parseInt( childNode.dataset["level"] );
+			if( current_level == level )
+				return i;
+		}
+
+		return -1;
+	}
+
+	//returns child elements (you can control levels)
+	Tree.prototype._findChildElements = function( id, only_direct )
 	{
 		var parent_index = this._findElementIndex( id );
 		if(parent_index == -1)
@@ -191,6 +248,8 @@
 				continue;
 
 			var current_level = parseInt( childNode.dataset["level"] );
+			if(only_direct && current_level > (parent_level + 1) )
+				continue;
 			if(current_level <= parent_level)
 				return result;
 
@@ -206,6 +265,7 @@
 
 		var root = document.createElement("li");
 		root.className = "ltreeitem";
+		var that = this;
 
 		//ids are not used because they could collide, classes instead
 		if(data.id)
@@ -226,8 +286,14 @@
 		if(data.className)
 			title_element.className += " " + data.className;
 
+		title_element.innerHTML = "<span class='precontent'></span><span class='indentblock'></span><span class='collapsebox'></span><span class='incontent'></span><span class='postcontent'></span>";
+
+
 		var content = data.content || data.id || "";
-		title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
+		title_element.querySelector(".incontent").innerHTML = content;
+
+		if(data.precontent)
+			title_element.querySelector(".precontent").innerHTML = data.precontent;
 
 		if(data.dataset)
 			for(var i in data.dataset)
@@ -238,18 +304,22 @@
 
 		//var row = root.querySelector(".ltreeitemtitle .incontent");
 		var row = root;
-		row.addEventListener("click",onNodeSelected);
-		row.addEventListener("dblclick",onNodeDblClicked);
+		row.addEventListener("click", onNodeSelected );
+		row.addEventListener("dblclick",onNodeDblClicked );
 		row.addEventListener("contextmenu", function(e) { 
-			var title = this.parentNode;
-			var item = title.parentNode;
-			if(that.onContextMenu) 
-				onContextMenu(e, { item: item, data: item.data} );
+			var item = this;
 			e.preventDefault(); 
+			e.stopPropagation();
+
+			if(e.button != 2) //right button
+				return;
+
+			if(that.onItemContextMenu)
+				return that.onItemContextMenu(e, { item: item, data: item.data} );
+
 			return false;
 		});
 
-		var that = this;
 		function onNodeSelected(e)
 		{
 			e.preventDefault();
@@ -289,6 +359,7 @@
 				//mark as selected
 				that.markAsSelected( node );
 
+				that._skip_scroll = true; //avoid scrolling while user clicks something
 				LiteGUI.trigger(that.root, "item_selected", { item: node, data: node.data} );
 				var r = false;
 				if(data.callback) 
@@ -296,6 +367,7 @@
 
 				if(!r && that.onItemSelected)
 					that.onItemSelected(node.data, node);
+				that._skip_scroll = false;
 			}
 		}
 
@@ -339,15 +411,6 @@
 			
 			e.preventDefault();
 			e.stopPropagation();
-		}
-
-		function onContextMenu(e, item_info)
-		{
-			if(e.button != 2) //right button
-				return;
-
-			if(that.onContextMenu)
-				return that.onContextMenu(e, item_info);
 		}
 
 		//dragging tree
@@ -420,12 +483,42 @@
 			*/
 		});
 
-
 		return root;
 	}
 
 	Tree.prototype.filterByName = function(name)
 	{
+		for(var i = 0; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+
+			var content = childNode.querySelector(".incontent");
+			if(!content)
+				continue;
+
+			var str = content.innerHTML.toLowerCase();
+
+			if(!name || str.indexOf( name.toLowerCase() ) != -1)
+			{
+				childNode.style.display = null;
+				var indent = childNode.querySelector(".indentblock");
+				if(indent)
+				{
+					if(name)
+						indent.style.paddingLeft = 0;
+					else
+						indent.style.paddingLeft = paddingLeft = (parseInt(childNode.dataset["level"]) * Tree.INDENT) + "px";
+				}
+			}
+			else
+			{
+				childNode.style.display = "none";
+			}
+		}
+
+		/*
 		var all = this.root.querySelectorAll(".ltreeitemtitle .incontent");
 		for(var i = 0; i < all.length; i++)
 		{
@@ -439,7 +532,7 @@
 			if(!name || str.indexOf(name) != -1)
 			{
 				parent.style.display = null;
-				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.PADDING) + "px";
+				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.INDENT) + "px";
 			}
 			else
 			{
@@ -447,8 +540,15 @@
 				parent.parentNode.style.paddingLeft = 0;
 			}
 		}
+		*/
 	}	
 
+	/**
+	* get the item with that id, returns the HTML element
+	* @method getItem
+	* @param {string} id
+	* @return {Object}
+	*/
 	Tree.prototype.getItem = function( id )
 	{
 		if(!id)
@@ -480,6 +580,11 @@
 		*/
 	}
 
+	/**
+	* in case an item is collapsed, it expands it to show children
+	* @method expandItem
+	* @param {string} id
+	*/
 	Tree.prototype.expandItem = function(id)
 	{
 		var item = this.getItem(id);
@@ -492,7 +597,12 @@
 		listbox.setValue(true);
 	}
 
-	Tree.prototype.contractItem = function(id)
+	/**
+	* in case an item is expanded, it collapses it to hide children
+	* @method collapseItem
+	* @param {string} id
+	*/
+	Tree.prototype.collapseItem = function(id)
 	{
 		var item = this.getItem(id);
 		if(!item)
@@ -504,7 +614,61 @@
 		listbox.setValue(false);
 	}
 
-	Tree.prototype.setSelectedItem = function( id )
+
+	/**
+	* Tells you if the item its out of the view due to the scrolling
+	* @method isInsideArea
+	* @param {string} id
+	*/
+	Tree.prototype.isInsideArea = function( id )
+	{
+		var item = id.constructor === String ? this.getItem(id) : id;
+		if(!item)
+			return false;
+
+		var rects = this.root.getClientRects();
+		if(!rects.length)
+			return false;
+		var r = rects[0];
+		var h = r.height;
+		var y = item.offsetTop;
+
+		if( this.root.scrollTop < y && y < (this.root.scrollTop + h) )
+			return true;
+		return false;
+	}
+
+	/**
+	* Scrolls to center this item
+	* @method scrollToItem
+	* @param {string} id
+	*/
+	Tree.prototype.scrollToItem = function(id)
+	{
+		var item = id.constructor === String ? this.getItem(id) : id;
+		if(!item)
+			return;
+
+		var rects = this.root.getClientRects();
+		if(!rects.length)
+			return false;
+		var r = rects[0];
+		var h = r.height;
+		var x = parseInt( item.dataset["level"] ) * Tree.INDENT + 50;
+
+		this.root.scrollTop = item.offsetTop - (h * 0.5)|0;
+		if( r.width * 0.75 < x )
+			this.root.scrollLeft = x;
+		else
+			this.root.scrollLeft = 0;
+	}
+
+	/**
+	* mark item as selected
+	* @method setSelectedItem
+	* @param {string} id
+	*/
+	Tree.prototype.setSelectedItem = function( id, scroll )
 	{
 		if(!id)
 		{
@@ -517,10 +681,22 @@
 		if(!node) //not found
 			return null;
 
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return;
+
 		this.markAsSelected(node);
+		if( scroll && !this._skip_scroll )
+			this.scrollToItem(node);
+
 		return node;
 	}
 
+	/**
+	* adds item to selection (multiple selection)
+	* @method addItemToSelection
+	* @param {string} id
+	*/
 	Tree.prototype.addItemToSelection = function( id )
 	{
 		if(!id)
@@ -534,6 +710,11 @@
 		return node;
 	}
 
+	/**
+	* remove item from selection (multiple selection)
+	* @method removeItemFromSelection
+	* @param {string} id
+	*/
 	Tree.prototype.removeItemFromSelection = function( id )
 	{
 		if(!id)
@@ -544,34 +725,58 @@
 		node.title_element.classList.remove("selected");
 	}
 
+	/**
+	* returns the first selected item (its HTML element)
+	* @method getSelectedItem
+	* @return {HTML}
+	*/
 	Tree.prototype.getSelectedItem = function()
 	{
 		return this.root.querySelector(".ltreeitemtitle.selected");
 	}
 
+	/**
+	* returns an array with the selected items (its HTML elements)
+	* @method getSelectedItems
+	* @return {HTML}
+	*/
 	Tree.prototype.getSelectedItems = function()
 	{
 		return this.root.querySelectorAll(".ltreeitemtitle.selected");
 	}
 
-	Tree.prototype.getItemNode = function(id)
-	{
-		return this.root.querySelector(".ltreeitemtitle.selected");
-	}
-
+	/**
+	* returns if an item is selected
+	* @method isItemSelected
+	* @param {string} id
+	* @return {bool}
+	*/
 	Tree.prototype.isItemSelected = function(id)
 	{
-		var node = this.getItemNode(id);
+		var node = this.getItem( id );
 		if(!node)
 			return false;
 		return this.isNodeSelected(node);
 	}
 
-	Tree.prototype.getChildren = function(id)
+	/**
+	* returns the children of an item
+	* @method getChildren
+	* @param {string} id
+	* @param {bool} [only_direct=false] to get only direct children
+	* @return {Array}
+	*/
+	Tree.prototype.getChildren = function(id, only_direct )
 	{
-		return this._findChildElements(id);
+		return this._findChildElements( id, only_direct );
 	}
 
+	/**
+	* returns the parent of a item
+	* @method getParent
+	* @param {string} id
+	* @return {HTML}
+	*/
 	Tree.prototype.getParent = function(id_or_node)
 	{
 		var element = this.getItem( id_or_node );
@@ -580,6 +785,13 @@
 		return null;
 	}
 
+	/**
+	* move item with id to be child of parent_id
+	* @method moveItem
+	* @param {string} id
+	* @param {string} parent_id
+	* @return {bool}
+	*/
 	Tree.prototype.moveItem = function(id, parent_id )
 	{
 		if(id === parent_id)
@@ -602,11 +814,11 @@
 		//replace parent info
 		node.parent_id = parent_id;
 
-		//parent.list.appendChild( node );
+		//get all children and subchildren
 		var children = this.getChildren( node );
-		children.unshift(node);
+		children.unshift(node); //add the node at the beginning
 
-		//remove all
+		//remove all children
 		for(var i = 0; i < children.length; i++)
 			children[i].parentNode.removeChild( children[i] );
 
@@ -620,10 +832,13 @@
 
 		//reinsert
 		parent_index = this._findElementIndex( parent ); //update parent index
+		var last_index = this._findElementLastChildIndex( parent_index );
+		if(last_index == -1)
+			last_index = 0;
 		for(var i = 0; i < children.length; i++)
 		{
 			var child = children[i];
-			this._insertInside( child, parent_index );
+			this._insertInside( child, last_index + i - 1, 0, parseInt( child.dataset["level"] ) );
 		}
 		
 		this._updateListBox( parent );
@@ -633,25 +848,39 @@
 		return true;
 	}
 
+	/**
+	* remove item with given id
+	* @method removeItem
+	* @param {string} id
+	* @return {bool}
+	*/
 	Tree.prototype.removeItem = function(id_or_node)
 	{
 		var node = id_or_node;
 		if(typeof(id_or_node) == "string")
 			node = this.getItem(id_or_node);
 		if(!node)
-			return null;
+			return false;
 
 		var parent = this.getParent(node);
 		this.root.removeChild( node );
 
 		if(parent)
 			this._updateListBox(parent);
+		return true;
 	}
 
+	/**
+	* update a given item with new data
+	* @method updateItem
+	* @param {string} id
+	* @param {object} data
+	*/
 	Tree.prototype.updateItem = function(id, data)
 	{
 		var node = this.getItem(id);
-		if(!node) return;
+		if(!node)
+			return;
 
 		node.data = data;
 		if(data.id)
@@ -664,11 +893,33 @@
 		}
 	}
 
+	/**
+	* clears all the items
+	* @method clear
+	* @param {bool} keep_root if you want to keep the root item
+	*/
 	Tree.prototype.clear = function(keep_root)
 	{
-		$(keep_root ? this.root_item : this.root).find(".ltreeitem").remove();
+		if(!keep_root)
+		{
+			this.root.innerHTML = "";
+			return;
+		}
+
+		var items = this.root.querySelectorAll(".ltreeitem");
+		for(var i = 1; i < items.length; i++)
+		{
+			var item = items[i];
+			this.root.removeChild( item );
+		}
 	}
 
+
+	Tree.prototype.getNodeByIndex = function(index)
+	{
+		var items = this.root.querySelectorAll(".ltreeitem");
+		return items[index];
+	}
 
 	//private ********************************
 
@@ -694,7 +945,7 @@
 		return false;
 	}
 
-	Tree.prototype.markAsSelected = function( node, add_to_existing_selection)
+	Tree.prototype.markAsSelected = function( node, add_to_existing_selection )
 	{
 		//already selected
 		if( node.classList.contains("selected") ) 
@@ -725,7 +976,7 @@
 
 		if(!node.listbox)
 		{
-			var pre = node.title_element.querySelector(".precontent");
+			var pre = node.title_element.querySelector(".collapsebox");
 			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
 			box.stopPropagation = true;
 			box.setEmpty(true);
@@ -751,7 +1002,6 @@
 		for(var i = 0; i < children.length; ++i)
 			children[i].style.display = status == "open" ? null : "none";
 	}
-
 
 	LiteGUI.Tree = Tree;
 })();

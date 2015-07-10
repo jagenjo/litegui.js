@@ -454,13 +454,18 @@ var LiteGUI = {
 
 	newDiv: function(id, code)
 	{
-		var div = document.createElement("div");
-		div.id = id;
-		div.root = div;
-		if(code !== undefined)
-			div.innerHTML = code;
-		div.add = function(v) { this.appendChild( v.root || v); };
-		return div;
+		return this.createElement("div",id,code);
+	},
+
+	createElement: function(tag, id, content)
+	{
+		var elem = document.createElement( tag );
+		elem.id = id;
+		elem.root = elem;
+		if(content !== undefined)
+			elem.innerHTML = content;
+		elem.add = function(v) { this.appendChild( v.root || v ); };
+		return elem;
 	},
 
 	//used to create a window that retains all the CSS info or the scripts.
@@ -1146,550 +1151,6 @@ function beautifyCode(code, reserved)
 
 	LiteGUI.SearchBox = SearchBox;
 
-	/****************** AREA **************/
-	/**
-	* Areas can be split several times horizontally or vertically to fit different colums or rows
-	*
-	* @class Area
-	* @constructor
-	*/
-	function Area(id, options)
-	{
-		options = options || {};
-		/* the root element containing all sections */
-		var element = document.createElement("div");
-		element.className = "litearea";
-		if(id) element.id = id;
-		this.root = element;
-		this.root.litearea = this; //dbl link
-
-		var width = options.width || "100%";
-		var height = options.height || "100%";
-
-		if( width < 0 )
-			width = 'calc( 100% - '+Math.abs(width)+'px)';
-		if( height < 0 )
-			height = 'calc( 100% - '+ Math.abs(height)+'px)';
-
-		element.style.width = width;
-		element.style.height = height;
-
-		this.options = options;
-
-		var that = this;
-		window.addEventListener("resize",function(e) { that.resize(e); });
-		//$(this).bind("resize",function(e) { that.resize(e); });
-
-		this._computed_size = [ $(this.root).width(), $(this.root).height() ];
-
-		var content = document.createElement("div");
-		if(options.content_id)
-			content.id = options.content_id;
-		content.className = "liteareacontent";
-		content.style.width = "100%";
-		content.style.height = "100%";
-		this.root.appendChild(content);
-		this.content = content;
-
-		this.split_direction = "none";
-		this.sections = [];
-
-		if(options.autoresize)
-			$(LiteGUI).bind("resized", function() { 
-				that.resize(); 
-			});
-	}
-
-	Area.splitbar_size = 4;
-
-	/* get container of the section */
-	Area.prototype.getSection = function(num)
-	{
-		num = num || 0;
-		if(this.sections.length > num)
-			return this.sections[num];
-		return null;
-	}
-
-	Area.prototype.resize = function(e)
-	{
-		var computed_size = [ $(this.root).width(), $(this.root).height() ];
-		if( e && this._computed_size && computed_size[0] == this._computed_size[0] && computed_size[1] == this._computed_size[1])
-			return;
-
-		this.sendResizeEvent(e);
-	}
-
-	Area.prototype.adjustHeight = function()
-	{
-		if(!this.root.parentNode)
-		{
-			console.error("Cannot adjust height of LiteGUI.Area without parent");
-			return;
-		}
-
-		//check parent height
-		var h = this.root.parentNode.offsetHeight;
-
-		//check position
-		var y = this.root.getClientRects()[0].top;
-
-		//adjust height
-		this.root.style.height = "calc( 100% - " + y + "px )";
-	}
-
-	Area.prototype.sendResizeEvent = function(e)
-	{
-		if(this.sections.length)
-			for(var i in this.sections)
-			{
-				var section = this.sections[i];
-				section.resize(e);
-				//$(section).trigger("resize"); //it is a LiteArea
-				//$(section.root).trigger("resize");
-				/*
-				for (var j = 0; j < section.root.childNodes.length; j++)
-					$(section.root.childNodes[j]).trigger("resize");
-				*/
-			}
-		else //send it to the children
-		{
-			for (var j = 0; j < this.root.childNodes.length; j++)
-			{
-				var element = this.root.childNodes[j];
-				if(element.litearea)
-					element.litearea.resize();
-				else
-					$(element).trigger("resize");
-			}
-		}
-
-		if( this.onresize )
-			this.onresize();
-	}
-
-	Area.prototype.split = function(direction, sizes, editable)
-	{
-		direction = direction || "vertical";
-
-		if(this.sections.length) throw "cannot split twice";
-
-		//create areas
-		var area1 = new LiteGUI.Area(null, { content_id: this.content.id });
-		area1.root.style.display = "inline-block";
-		var area2 = new LiteGUI.Area();
-		area2.root.style.display = "inline-block";
-
-		var splitinfo = "";
-		var splitbar = null;
-		var dynamic_section = null;
-		if(editable)
-		{
-			splitinfo = " - " + (Area.splitbar_size + 2) +"px"; //2 px margin ¿?
-			splitbar = document.createElement("div");
-			splitbar.className = "litesplitbar " + direction;
-			if(direction == "vertical")
-				splitbar.style.height = Area.splitbar_size + "px";
-			else
-				splitbar.style.width = Area.splitbar_size + "px";
-			this.splitbar = splitbar;
-			splitbar.addEventListener("mousedown", inner_mousedown);
-		}
-
-		sizes = sizes || ["50%",null];
-
-		if(direction == "vertical")
-		{
-			area1.root.style.width = "100%";
-			area2.root.style.width = "100%";
-
-			if(sizes[0] == null)
-			{
-				var h = sizes[1];
-				if(typeof(h) == "number")
-					h = sizes[1] + "px";
-
-				area1.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
-				area1.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
-				area1.root.style.height = "calc( 100% - " + h + splitinfo + " )";
-				area2.root.style.height = h;
-				area2.size = h;
-				dynamic_section = area1;
-			}
-			else if(sizes[1] == null)
-			{
-				var h = sizes[0];
-				if(typeof(h) == "number")
-					h = sizes[0] + "px";
-
-				area1.root.style.height = h;
-				area1.size = h;
-				area2.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
-				area2.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
-				area2.root.style.height = "calc( 100% - " + h + splitinfo + " )";
-				dynamic_section = area2;
-			}
-			else
-			{
-				var h1 = sizes[0];
-				if(typeof(h1) == "number")
-					h1 = sizes[0] + "px";
-				var h2 = sizes[1];
-				if(typeof(h2) == "number")
-					h2 = sizes[1] + "px";
-				area1.root.style.height = h1;
-				area1.size = h1;
-				area2.root.style.height = h2;
-				area2.size = h2;
-			}
-		}
-		else //horizontal
-		{
-			area1.root.style.height = "100%";
-			area2.root.style.height = "100%";
-
-			if(sizes[0] == null)
-			{
-				var w = sizes[1];
-				if(typeof(w) == "number")
-					w = sizes[1] + "px";
-				area1.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
-				area1.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
-				area1.root.style.width = "calc( 100% - " + w + splitinfo + " )";
-				area2.root.style.width = w;
-				area2.size = sizes[1];
-				dynamic_section = area1;
-			}
-			else if(sizes[1] == null)
-			{
-				var w = sizes[0];
-				if(typeof(w) == "number")
-					w = sizes[0] + "px";
-
-				area1.root.style.width = w;
-				area1.size = w;
-				area2.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
-				area2.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
-				area2.root.style.width = "calc( 100% - " + w + splitinfo + " )";
-				dynamic_section = area2;
-			}
-			else
-			{
-				var w1 = sizes[0];
-				if(typeof(w1) == "number")
-					w1 = sizes[0] + "px";
-				var w2 = sizes[1];
-				if(typeof(w2) == "number")
-					w2 = sizes[1] + "px";
-
-				area1.root.style.width = w1;
-				area1.size = w1;
-				area2.root.style.width = w2;
-				area2.size = w2;
-			}
-		}
-
-		area1.root.removeChild( area1.content );
-		area1.root.appendChild( this.content );
-		area1.content = this.content;
-
-		this.root.appendChild( area1.root );
-		if(splitbar)
-			this.root.appendChild( splitbar );
-		this.root.appendChild( area2.root );
-
-		this.sections = [area1, area2];
-		this.dynamic_section = dynamic_section;
-		this.direction = direction;
-
-		//SPLITTER DRAGGER INTERACTION
-		var that = this;
-		var last_pos = [0,0];
-		function inner_mousedown(e)
-		{
-			var doc = that.root.ownerDocument;
-			doc.addEventListener("mousemove",inner_mousemove);
-			doc.addEventListener("mouseup",inner_mouseup);
-			last_pos[0] = e.pageX;
-			last_pos[1] = e.pageY;
-			e.stopPropagation();
-			e.preventDefault();
-		}
-
-		function inner_mousemove(e)
-		{
-			if(direction == "horizontal")
-			{
-				if (last_pos[0] != e.pageX)
-					that.moveSplit(last_pos[0] - e.pageX);
-			}
-			else if(direction == "vertical")
-			{
-				if (last_pos[1] != e.pageY)
-					that.moveSplit(e.pageY - last_pos[1]);
-			}
-
-			last_pos[0] = e.pageX;
-			last_pos[1] = e.pageY;
-			e.stopPropagation();
-			e.preventDefault();
-			if(that.options.inmediateResize)
-				that.resize();
-		}
-
-		function inner_mouseup(e)
-		{
-			var doc = that.root.ownerDocument;
-			doc.removeEventListener("mousemove",inner_mousemove);
-			doc.removeEventListener("mouseup",inner_mouseup);
-			that.resize();
-		}
-	}
-
-	Area.prototype.hide = function()
-	{
-		this.root.style.display = "none";
-	}
-
-	Area.prototype.show = function()
-	{
-		this.root.style.display = "block";
-	}
-
-	Area.prototype.showSection = function(num)
-	{
-		var section = this.sections[num];
-		var size = 0;
-		
-		if(this.direction == "horizontal")
-			size = section.root.style.width;
-		else
-			size = section.root.style.height;
-
-		if(size.indexOf("calc") != -1)
-			size = "50%";
-
-		for(var i in this.sections)
-		{
-			var section = this.sections[i];
-
-			if(i == num)
-				section.root.style.display = "inline-block";
-			else
-			{
-				if(this.direction == "horizontal")
-					section.root.style.width = "calc( 100% - " + size + " - 5px)";
-				else
-					section.root.style.height = "calc( 100% - " + size + " - 5px)";
-			}
-		}
-
-		if(this.splitbar)
-			this.splitbar.style.display = "inline-block";
-
-		this.sendResizeEvent();
-	}
-
-	Area.prototype.hideSection = function(num)
-	{
-		for(var i in this.sections)
-		{
-			var section = this.sections[i];
-
-			if(i == num)
-				section.root.style.display = "none";
-			else
-			{
-				if(this.direction == "horizontal")
-					section.root.style.width = "100%";
-				else
-					section.root.style.height = "100%";
-			}
-		}
-
-		if(this.splitbar)
-			this.splitbar.style.display = "none";
-
-		this.sendResizeEvent();
-	}
-
-	Area.prototype.moveSplit = function(delta)
-	{
-		if(!this.sections) return;
-
-		var area1 = this.sections[0];
-		var area2 = this.sections[1];
-		var splitinfo = " - "+ Area.splitbar_size +"px";
-
-		if(this.direction == "horizontal")
-		{
-
-			if (this.dynamic_section == area1)
-			{
-				var size = ($(area2.root).width() + delta) + "px";
-				area1.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.width = "calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = size;
-			}
-			else
-			{
-				var size = ($(area1.root).width() - delta) + "px";
-				area1.root.style.width = size;
-				area2.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = "calc( 100% - " + size + splitinfo + " )";
-			}
-		}
-		else if(this.direction == "vertical")
-		{
-			if (this.dynamic_section == area1)
-			{
-				var size = ($(area2.root).height() - delta) + "px";
-				area1.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.height = "calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = size;
-			}
-			else
-			{
-				var size = ($(area1.root).height() + delta) + "px";
-				area1.root.style.height = size;
-				area2.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = "calc( 100% - " + size + splitinfo + " )";
-			}
-		}
-	}
-
-	Area.prototype.setAreaSize = function(area,size)
-	{
-		var element = this.sections[1];
-
-		var splitinfo = " - "+Area.splitbar_size+"px";
-		element.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
-		element.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
-		element.root.style.width = "calc( 100% - " + size + splitinfo + " )";
-	}
-
-	Area.prototype.merge = function(main_section)
-	{
-		if(this.sections.length == 0) throw "not splitted";
-
-		var main = this.sections[main_section || 0];
-
-		this.root.appendChild( main.content );
-		this.content = main.content;
-
-		this.root.removeChild( this.sections[0].root );
-		this.root.removeChild( this.sections[1].root );
-
-		/*
-		while(main.childNodes.length > 0)
-		{
-			var e = main.childNodes[0];
-			this.root.appendChild(e);
-		}
-
-		this.root.removeChild( this.sections[0].root );
-		this.root.removeChild( this.sections[1].root );
-		*/
-
-		this.sections = [];
-		this._computed_size = null;
-		this.resize();
-	}
-
-	Area.prototype.add = function(v)
-	{
-		if(typeof(v) == "string")
-		{
-			var element = document.createElement("div");
-			element.innerHTML = v;
-			v = element;
-		}
-
-		this.content.appendChild( v.root || v );
-	}
-
-	Area.prototype.query = function(v)
-	{
-		return this.root.querySelector(v);
-	}
-
-	LiteGUI.Area = Area;
-
-	/***************** SPLIT ******************/
-
-	/**
-	* Split 
-	*
-	* @class Split
-	* @constructor
-	*/
-	function Split(id, sections, options)
-	{
-		options = options || {};
-
-		var root = document.createElement("div");
-		this.root = root;
-		root.id = id;
-		root.className = "litesplit " + (options.vertical ? "vsplit" : "hsplit");
-		this.sections = [];
-
-		for(var i in sections)
-		{
-			var section = document.createElement("div");
-
-			section.className = "split-section split" + i;
-			if(typeof(sections[i]) == "number")
-			{
-				if(options.vertical)
-					section.style.height = sections[i].toFixed(1) + "%";
-				else
-					section.style.width = sections[i].toFixed(1) + "%";
-			}
-			else if(typeof(sections[i]) == "string")
-			{
-				if(options.vertical)
-					section.style.height = sections[i];
-				else
-					section.style.width = sections[i];
-			}
-			else
-			{
-				if(sections[i].id) section.id = sections[i].id;
-				if(options.vertical)
-					section.style.height = (typeof(sections[i].height) == "Number" ? sections[i].height.toFixed(1) + "%" : sections[i].height);
-				else
-					section.style.width = (typeof(sections[i].width) == "Number" ? sections[i].width.toFixed(1) + "%" : sections[i].width);
-			}
-
-			section.add = function(element) {
-				this.appendChild( element.root || element );
-			}
-
-			this.sections.push(section);
-			root.appendChild(section);
-		}
-
-		if(options.parent)
-		{
-			if(options.parent.root)
-				options.parent.root.appendChild(root);
-			else
-				options.parent.appendChild(root);
-		}
-
-		this.getSection = function(n)
-		{
-			return this.sections[n];
-		}
-	}
-
-	LiteGUI.Split = Split;
-
-
 
 	/**
 	* ContextualMenu 
@@ -2344,6 +1805,564 @@ function beautifyCode(code, reserved)
 	LiteGUI.LineEditor = LineEditor;
 
 })();
+//enclose in a scope
+(function(){
+
+	
+	/****************** AREA **************/
+	/**
+	* Areas can be split several times horizontally or vertically to fit different colums or rows
+	*
+	* @class Area
+	* @constructor
+	*/
+	function Area(id, options)
+	{
+		options = options || {};
+		/* the root element containing all sections */
+		var element = document.createElement("div");
+		element.className = "litearea";
+		if(id) element.id = id;
+		this.root = element;
+		this.root.litearea = this; //dbl link
+
+		var width = options.width || "100%";
+		var height = options.height || "100%";
+
+		if( width < 0 )
+			width = 'calc( 100% - '+Math.abs(width)+'px)';
+		if( height < 0 )
+			height = 'calc( 100% - '+ Math.abs(height)+'px)';
+
+		element.style.width = width;
+		element.style.height = height;
+
+		this.options = options;
+
+		var that = this;
+		window.addEventListener("resize",function(e) { that.resize(e); });
+		//$(this).bind("resize",function(e) { that.resize(e); });
+
+		this._computed_size = [ $(this.root).width(), $(this.root).height() ];
+
+		var content = document.createElement("div");
+		if(options.content_id)
+			content.id = options.content_id;
+		content.className = "liteareacontent";
+		content.style.width = "100%";
+		content.style.height = "100%";
+		this.root.appendChild(content);
+		this.content = content;
+
+		this.split_direction = "none";
+		this.sections = [];
+
+		if(options.autoresize)
+			$(LiteGUI).bind("resized", function() { 
+				that.resize(); 
+			});
+	}
+
+	Area.splitbar_size = 4;
+
+	/* get container of the section */
+	Area.prototype.getSection = function(num)
+	{
+		num = num || 0;
+		if(this.sections.length > num)
+			return this.sections[num];
+		return null;
+	}
+
+	Area.prototype.resize = function(e)
+	{
+		var computed_size = [ $(this.root).width(), $(this.root).height() ];
+		if( e && this._computed_size && computed_size[0] == this._computed_size[0] && computed_size[1] == this._computed_size[1])
+			return;
+
+		this.sendResizeEvent(e);
+	}
+
+	Area.prototype.adjustHeight = function()
+	{
+		if(!this.root.parentNode)
+		{
+			console.error("Cannot adjust height of LiteGUI.Area without parent");
+			return;
+		}
+
+		//check parent height
+		var h = this.root.parentNode.offsetHeight;
+
+		//check position
+		var y = this.root.getClientRects()[0].top;
+
+		//adjust height
+		this.root.style.height = "calc( 100% - " + y + "px )";
+	}
+
+	Area.prototype.sendResizeEvent = function(e)
+	{
+		if(this.sections.length)
+			for(var i in this.sections)
+			{
+				var section = this.sections[i];
+				section.resize(e);
+				//$(section).trigger("resize"); //it is a LiteArea
+				//$(section.root).trigger("resize");
+				/*
+				for (var j = 0; j < section.root.childNodes.length; j++)
+					$(section.root.childNodes[j]).trigger("resize");
+				*/
+			}
+		else //send it to the children
+		{
+			for (var j = 0; j < this.root.childNodes.length; j++)
+			{
+				var element = this.root.childNodes[j];
+				if(element.litearea)
+					element.litearea.resize();
+				else
+					$(element).trigger("resize");
+			}
+		}
+
+		if( this.onresize )
+			this.onresize();
+	}
+
+	Area.prototype.split = function(direction, sizes, editable)
+	{
+		direction = direction || "vertical";
+
+		if(this.sections.length) throw "cannot split twice";
+
+		//create areas
+		var area1 = new LiteGUI.Area(null, { content_id: this.content.id });
+		area1.root.style.display = "inline-block";
+		var area2 = new LiteGUI.Area();
+		area2.root.style.display = "inline-block";
+
+		var splitinfo = "";
+		var splitbar = null;
+		var dynamic_section = null;
+		if(editable)
+		{
+			splitinfo = " - " + (Area.splitbar_size + 2) +"px"; //2 px margin ¿?
+			splitbar = document.createElement("div");
+			splitbar.className = "litesplitbar " + direction;
+			if(direction == "vertical")
+				splitbar.style.height = Area.splitbar_size + "px";
+			else
+				splitbar.style.width = Area.splitbar_size + "px";
+			this.splitbar = splitbar;
+			splitbar.addEventListener("mousedown", inner_mousedown);
+		}
+
+		sizes = sizes || ["50%",null];
+
+		if(direction == "vertical")
+		{
+			area1.root.style.width = "100%";
+			area2.root.style.width = "100%";
+
+			if(sizes[0] == null)
+			{
+				var h = sizes[1];
+				if(typeof(h) == "number")
+					h = sizes[1] + "px";
+
+				area1.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
+				area1.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
+				area1.root.style.height = "calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = h;
+				area2.size = h;
+				dynamic_section = area1;
+			}
+			else if(sizes[1] == null)
+			{
+				var h = sizes[0];
+				if(typeof(h) == "number")
+					h = sizes[0] + "px";
+
+				area1.root.style.height = h;
+				area1.size = h;
+				area2.root.style.height = "-moz-calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = "-webkit-calc( 100% - " + h + splitinfo + " )";
+				area2.root.style.height = "calc( 100% - " + h + splitinfo + " )";
+				dynamic_section = area2;
+			}
+			else
+			{
+				var h1 = sizes[0];
+				if(typeof(h1) == "number")
+					h1 = sizes[0] + "px";
+				var h2 = sizes[1];
+				if(typeof(h2) == "number")
+					h2 = sizes[1] + "px";
+				area1.root.style.height = h1;
+				area1.size = h1;
+				area2.root.style.height = h2;
+				area2.size = h2;
+			}
+		}
+		else //horizontal
+		{
+			area1.root.style.height = "100%";
+			area2.root.style.height = "100%";
+
+			if(sizes[0] == null)
+			{
+				var w = sizes[1];
+				if(typeof(w) == "number")
+					w = sizes[1] + "px";
+				area1.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
+				area1.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
+				area1.root.style.width = "calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = w;
+				area2.size = sizes[1];
+				dynamic_section = area1;
+			}
+			else if(sizes[1] == null)
+			{
+				var w = sizes[0];
+				if(typeof(w) == "number")
+					w = sizes[0] + "px";
+
+				area1.root.style.width = w;
+				area1.size = w;
+				area2.root.style.width = "-moz-calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = "-webkit-calc( 100% - " + w + splitinfo + " )";
+				area2.root.style.width = "calc( 100% - " + w + splitinfo + " )";
+				dynamic_section = area2;
+			}
+			else
+			{
+				var w1 = sizes[0];
+				if(typeof(w1) == "number")
+					w1 = sizes[0] + "px";
+				var w2 = sizes[1];
+				if(typeof(w2) == "number")
+					w2 = sizes[1] + "px";
+
+				area1.root.style.width = w1;
+				area1.size = w1;
+				area2.root.style.width = w2;
+				area2.size = w2;
+			}
+		}
+
+		area1.root.removeChild( area1.content );
+		area1.root.appendChild( this.content );
+		area1.content = this.content;
+
+		this.root.appendChild( area1.root );
+		if(splitbar)
+			this.root.appendChild( splitbar );
+		this.root.appendChild( area2.root );
+
+		this.sections = [area1, area2];
+		this.dynamic_section = dynamic_section;
+		this.direction = direction;
+
+		//SPLITTER DRAGGER INTERACTION
+		var that = this;
+		var last_pos = [0,0];
+		function inner_mousedown(e)
+		{
+			var doc = that.root.ownerDocument;
+			doc.addEventListener("mousemove",inner_mousemove);
+			doc.addEventListener("mouseup",inner_mouseup);
+			last_pos[0] = e.pageX;
+			last_pos[1] = e.pageY;
+			e.stopPropagation();
+			e.preventDefault();
+		}
+
+		function inner_mousemove(e)
+		{
+			if(direction == "horizontal")
+			{
+				if (last_pos[0] != e.pageX)
+					that.moveSplit(last_pos[0] - e.pageX);
+			}
+			else if(direction == "vertical")
+			{
+				if (last_pos[1] != e.pageY)
+					that.moveSplit(e.pageY - last_pos[1]);
+			}
+
+			last_pos[0] = e.pageX;
+			last_pos[1] = e.pageY;
+			e.stopPropagation();
+			e.preventDefault();
+			if(that.options.inmediateResize)
+				that.resize();
+		}
+
+		function inner_mouseup(e)
+		{
+			var doc = that.root.ownerDocument;
+			doc.removeEventListener("mousemove",inner_mousemove);
+			doc.removeEventListener("mouseup",inner_mouseup);
+			that.resize();
+		}
+	}
+
+	Area.prototype.hide = function()
+	{
+		this.root.style.display = "none";
+	}
+
+	Area.prototype.show = function()
+	{
+		this.root.style.display = "block";
+	}
+
+	Area.prototype.showSection = function(num)
+	{
+		var section = this.sections[num];
+		var size = 0;
+		
+		if(this.direction == "horizontal")
+			size = section.root.style.width;
+		else
+			size = section.root.style.height;
+
+		if(size.indexOf("calc") != -1)
+			size = "50%";
+
+		for(var i in this.sections)
+		{
+			var section = this.sections[i];
+
+			if(i == num)
+				section.root.style.display = "inline-block";
+			else
+			{
+				if(this.direction == "horizontal")
+					section.root.style.width = "calc( 100% - " + size + " - 5px)";
+				else
+					section.root.style.height = "calc( 100% - " + size + " - 5px)";
+			}
+		}
+
+		if(this.splitbar)
+			this.splitbar.style.display = "inline-block";
+
+		this.sendResizeEvent();
+	}
+
+	Area.prototype.hideSection = function(num)
+	{
+		for(var i in this.sections)
+		{
+			var section = this.sections[i];
+
+			if(i == num)
+				section.root.style.display = "none";
+			else
+			{
+				if(this.direction == "horizontal")
+					section.root.style.width = "100%";
+				else
+					section.root.style.height = "100%";
+			}
+		}
+
+		if(this.splitbar)
+			this.splitbar.style.display = "none";
+
+		this.sendResizeEvent();
+	}
+
+	Area.prototype.moveSplit = function(delta)
+	{
+		if(!this.sections) return;
+
+		var area1 = this.sections[0];
+		var area2 = this.sections[1];
+		var splitinfo = " - "+ Area.splitbar_size +"px";
+
+		if(this.direction == "horizontal")
+		{
+
+			if (this.dynamic_section == area1)
+			{
+				var size = ($(area2.root).width() + delta) + "px";
+				area1.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
+				area1.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
+				area1.root.style.width = "calc( 100% - " + size + splitinfo + " )";
+				area2.root.style.width = size;
+			}
+			else
+			{
+				var size = ($(area1.root).width() - delta) + "px";
+				area1.root.style.width = size;
+				area2.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
+				area2.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
+				area2.root.style.width = "calc( 100% - " + size + splitinfo + " )";
+			}
+		}
+		else if(this.direction == "vertical")
+		{
+			if (this.dynamic_section == area1)
+			{
+				var size = ($(area2.root).height() - delta) + "px";
+				area1.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
+				area1.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
+				area1.root.style.height = "calc( 100% - " + size + splitinfo + " )";
+				area2.root.style.height = size;
+			}
+			else
+			{
+				var size = ($(area1.root).height() + delta) + "px";
+				area1.root.style.height = size;
+				area2.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
+				area2.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
+				area2.root.style.height = "calc( 100% - " + size + splitinfo + " )";
+			}
+		}
+
+		LiteGUI.trigger( this.root, "split_moved");
+		var areas = this.root.querySelectorAll(".litearea");
+		for(var i = 0; i < areas.length; ++i)
+			LiteGUI.trigger( areas[i], "split_moved" );
+	}
+
+	Area.prototype.addEventListener = function(a,b,c,d)
+	{
+		return this.root.addEventListener(a,b,c,d);
+	}
+
+	Area.prototype.setAreaSize = function(area,size)
+	{
+		var element = this.sections[1];
+
+		var splitinfo = " - "+Area.splitbar_size+"px";
+		element.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
+		element.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
+		element.root.style.width = "calc( 100% - " + size + splitinfo + " )";
+	}
+
+	Area.prototype.merge = function(main_section)
+	{
+		if(this.sections.length == 0) throw "not splitted";
+
+		var main = this.sections[main_section || 0];
+
+		this.root.appendChild( main.content );
+		this.content = main.content;
+
+		this.root.removeChild( this.sections[0].root );
+		this.root.removeChild( this.sections[1].root );
+
+		/*
+		while(main.childNodes.length > 0)
+		{
+			var e = main.childNodes[0];
+			this.root.appendChild(e);
+		}
+
+		this.root.removeChild( this.sections[0].root );
+		this.root.removeChild( this.sections[1].root );
+		*/
+
+		this.sections = [];
+		this._computed_size = null;
+		this.resize();
+	}
+
+	Area.prototype.add = function(v)
+	{
+		if(typeof(v) == "string")
+		{
+			var element = document.createElement("div");
+			element.innerHTML = v;
+			v = element;
+		}
+
+		this.content.appendChild( v.root || v );
+	}
+
+	Area.prototype.query = function(v)
+	{
+		return this.root.querySelector(v);
+	}
+
+	LiteGUI.Area = Area;
+
+	/***************** SPLIT ******************/
+
+	/**
+	* Split 
+	*
+	* @class Split
+	* @constructor
+	*/
+	function Split(id, sections, options)
+	{
+		options = options || {};
+
+		var root = document.createElement("div");
+		this.root = root;
+		root.id = id;
+		root.className = "litesplit " + (options.vertical ? "vsplit" : "hsplit");
+		this.sections = [];
+
+		for(var i in sections)
+		{
+			var section = document.createElement("div");
+
+			section.className = "split-section split" + i;
+			if(typeof(sections[i]) == "number")
+			{
+				if(options.vertical)
+					section.style.height = sections[i].toFixed(1) + "%";
+				else
+					section.style.width = sections[i].toFixed(1) + "%";
+			}
+			else if(typeof(sections[i]) == "string")
+			{
+				if(options.vertical)
+					section.style.height = sections[i];
+				else
+					section.style.width = sections[i];
+			}
+			else
+			{
+				if(sections[i].id) section.id = sections[i].id;
+				if(options.vertical)
+					section.style.height = (typeof(sections[i].height) == "Number" ? sections[i].height.toFixed(1) + "%" : sections[i].height);
+				else
+					section.style.width = (typeof(sections[i].width) == "Number" ? sections[i].width.toFixed(1) + "%" : sections[i].width);
+			}
+
+			section.add = function(element) {
+				this.appendChild( element.root || element );
+			}
+
+			this.sections.push(section);
+			root.appendChild(section);
+		}
+
+		if(options.parent)
+		{
+			if(options.parent.root)
+				options.parent.root.appendChild(root);
+			else
+				options.parent.appendChild(root);
+		}
+
+		this.getSection = function(n)
+		{
+			return this.sections[n];
+		}
+	}
+
+	LiteGUI.Split = Split;
+
+})();
 (function(){
 
 	/************** MENUBAR ************************/
@@ -2875,6 +2894,12 @@ function beautifyCode(code, reserved)
 			}
 		}
 
+		//overwrite
+		if(options.width !== undefined )
+			content.style.width = typeof(options.width) === "string" ? options.width : options.width + "px";
+		if(options.height !== undefined )
+			content.style.height = typeof(options.height) === "string" ? options.height : options.height + "px";
+
 		//add content
 		if(options.content)
 		{
@@ -3246,7 +3271,12 @@ function beautifyCode(code, reserved)
 //enclose in a scope
 (function(){
 
-	//all the tree data is stored in this.tree
+/**
+* To create interactive trees (useful for folders or hierarchies)
+*
+* @class Tree
+* @constructor
+*/
 
 	/*********** LiteTree *****************************/
 	function Tree(id, data, options)
@@ -3271,14 +3301,32 @@ function beautifyCode(code, reserved)
 				that.onBackgroundClicked(e,that);
 		});
 
+		//bg click right mouse
+		root.addEventListener("contextmenu", function(e) { 
+			if(e.button != 2) //right button
+				return false;
+
+			if(that.onContextMenu) 
+				that.onContextMenu(e);
+			e.preventDefault(); 
+			return false;
+		});
+
+
 		var root_item = this.createAndInsert(data, options, null);
 		root_item.className += " root_item";
 		//this.root.appendChild(root_item);
 		this.root_item = root_item;
 	}
 
-	Tree.PADDING = 20;
+	Tree.INDENT = 20;
 
+
+	/**
+	* update tree with new data (old data will be thrown away)
+	* @method updateTree
+	* @param {object} data
+	*/
 	Tree.prototype.updateTree = function(data)
 	{
 		this.root.innerHTML = "";
@@ -3288,6 +3336,15 @@ function beautifyCode(code, reserved)
 		this.root_item = root_item;
 	}
 
+	/**
+	* update tree with new data (old data will be thrown away)
+	* @method insertItem
+	* @param {object} data
+	* @param {string} parent_id
+	* @param {number} position index in case you want to add it before the last position
+	* @param {object} options
+	* @return {DIVElement}
+	*/
 	Tree.prototype.insertItem = function(data, parent_id, position, options)
 	{
 		if(!parent_id)
@@ -3346,16 +3403,22 @@ function beautifyCode(code, reserved)
 
 		this._updateListBox( element );
 
+		if(options.selected)
+			this.markAsSelected( element, true );
+
 		return element;
 	}
 
-	Tree.prototype._insertInside = function(element, parent_index, offset_index )
+	Tree.prototype._insertInside = function(element, parent_index, offset_index, level )
 	{
 		var parent = this.root.childNodes[ parent_index ];
 		var parent_level = parseInt( parent.dataset["level"] );
-		var child_level = parent_level + 1;
+		var child_level = level !== undefined ? level : parent_level + 1;
 
-		element.style.paddingLeft = (child_level * Tree.PADDING) + "px"; //inner padding
+		var indent = element.querySelector(".indentblock");
+		if(indent)
+			indent.style.paddingLeft = (child_level * Tree.INDENT ) + "px"; //inner padding
+		
 		element.dataset["level"] = child_level;
 
 		//under level nodes
@@ -3418,7 +3481,26 @@ function beautifyCode(code, reserved)
 		return -1;
 	}
 
-	Tree.prototype._findChildElements = function( id )
+	Tree.prototype._findElementLastChildIndex = function( start_index )
+	{
+		var level = parseInt( this.root.childNodes[ start_index ].dataset["level"] );
+
+		for(var i = start_index+1; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+
+			var current_level = parseInt( childNode.dataset["level"] );
+			if( current_level == level )
+				return i;
+		}
+
+		return -1;
+	}
+
+	//returns child elements (you can control levels)
+	Tree.prototype._findChildElements = function( id, only_direct )
 	{
 		var parent_index = this._findElementIndex( id );
 		if(parent_index == -1)
@@ -3436,6 +3518,8 @@ function beautifyCode(code, reserved)
 				continue;
 
 			var current_level = parseInt( childNode.dataset["level"] );
+			if(only_direct && current_level > (parent_level + 1) )
+				continue;
 			if(current_level <= parent_level)
 				return result;
 
@@ -3451,6 +3535,7 @@ function beautifyCode(code, reserved)
 
 		var root = document.createElement("li");
 		root.className = "ltreeitem";
+		var that = this;
 
 		//ids are not used because they could collide, classes instead
 		if(data.id)
@@ -3471,8 +3556,14 @@ function beautifyCode(code, reserved)
 		if(data.className)
 			title_element.className += " " + data.className;
 
+		title_element.innerHTML = "<span class='precontent'></span><span class='indentblock'></span><span class='collapsebox'></span><span class='incontent'></span><span class='postcontent'></span>";
+
+
 		var content = data.content || data.id || "";
-		title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" + content + "</span><span class='postcontent'></span>";
+		title_element.querySelector(".incontent").innerHTML = content;
+
+		if(data.precontent)
+			title_element.querySelector(".precontent").innerHTML = data.precontent;
 
 		if(data.dataset)
 			for(var i in data.dataset)
@@ -3483,18 +3574,22 @@ function beautifyCode(code, reserved)
 
 		//var row = root.querySelector(".ltreeitemtitle .incontent");
 		var row = root;
-		row.addEventListener("click",onNodeSelected);
-		row.addEventListener("dblclick",onNodeDblClicked);
+		row.addEventListener("click", onNodeSelected );
+		row.addEventListener("dblclick",onNodeDblClicked );
 		row.addEventListener("contextmenu", function(e) { 
-			var title = this.parentNode;
-			var item = title.parentNode;
-			if(that.onContextMenu) 
-				onContextMenu(e, { item: item, data: item.data} );
+			var item = this;
 			e.preventDefault(); 
+			e.stopPropagation();
+
+			if(e.button != 2) //right button
+				return;
+
+			if(that.onItemContextMenu)
+				return that.onItemContextMenu(e, { item: item, data: item.data} );
+
 			return false;
 		});
 
-		var that = this;
 		function onNodeSelected(e)
 		{
 			e.preventDefault();
@@ -3534,6 +3629,7 @@ function beautifyCode(code, reserved)
 				//mark as selected
 				that.markAsSelected( node );
 
+				that._skip_scroll = true; //avoid scrolling while user clicks something
 				LiteGUI.trigger(that.root, "item_selected", { item: node, data: node.data} );
 				var r = false;
 				if(data.callback) 
@@ -3541,6 +3637,7 @@ function beautifyCode(code, reserved)
 
 				if(!r && that.onItemSelected)
 					that.onItemSelected(node.data, node);
+				that._skip_scroll = false;
 			}
 		}
 
@@ -3584,15 +3681,6 @@ function beautifyCode(code, reserved)
 			
 			e.preventDefault();
 			e.stopPropagation();
-		}
-
-		function onContextMenu(e, item_info)
-		{
-			if(e.button != 2) //right button
-				return;
-
-			if(that.onContextMenu)
-				return that.onContextMenu(e, item_info);
 		}
 
 		//dragging tree
@@ -3665,12 +3753,42 @@ function beautifyCode(code, reserved)
 			*/
 		});
 
-
 		return root;
 	}
 
 	Tree.prototype.filterByName = function(name)
 	{
+		for(var i = 0; i < this.root.childNodes.length; ++i)
+		{
+			var childNode = this.root.childNodes[i];
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
+				continue;
+
+			var content = childNode.querySelector(".incontent");
+			if(!content)
+				continue;
+
+			var str = content.innerHTML.toLowerCase();
+
+			if(!name || str.indexOf( name.toLowerCase() ) != -1)
+			{
+				childNode.style.display = null;
+				var indent = childNode.querySelector(".indentblock");
+				if(indent)
+				{
+					if(name)
+						indent.style.paddingLeft = 0;
+					else
+						indent.style.paddingLeft = paddingLeft = (parseInt(childNode.dataset["level"]) * Tree.INDENT) + "px";
+				}
+			}
+			else
+			{
+				childNode.style.display = "none";
+			}
+		}
+
+		/*
 		var all = this.root.querySelectorAll(".ltreeitemtitle .incontent");
 		for(var i = 0; i < all.length; i++)
 		{
@@ -3684,7 +3802,7 @@ function beautifyCode(code, reserved)
 			if(!name || str.indexOf(name) != -1)
 			{
 				parent.style.display = null;
-				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.PADDING) + "px";
+				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.INDENT) + "px";
 			}
 			else
 			{
@@ -3692,8 +3810,15 @@ function beautifyCode(code, reserved)
 				parent.parentNode.style.paddingLeft = 0;
 			}
 		}
+		*/
 	}	
 
+	/**
+	* get the item with that id, returns the HTML element
+	* @method getItem
+	* @param {string} id
+	* @return {Object}
+	*/
 	Tree.prototype.getItem = function( id )
 	{
 		if(!id)
@@ -3725,6 +3850,11 @@ function beautifyCode(code, reserved)
 		*/
 	}
 
+	/**
+	* in case an item is collapsed, it expands it to show children
+	* @method expandItem
+	* @param {string} id
+	*/
 	Tree.prototype.expandItem = function(id)
 	{
 		var item = this.getItem(id);
@@ -3737,7 +3867,12 @@ function beautifyCode(code, reserved)
 		listbox.setValue(true);
 	}
 
-	Tree.prototype.contractItem = function(id)
+	/**
+	* in case an item is expanded, it collapses it to hide children
+	* @method collapseItem
+	* @param {string} id
+	*/
+	Tree.prototype.collapseItem = function(id)
 	{
 		var item = this.getItem(id);
 		if(!item)
@@ -3749,7 +3884,61 @@ function beautifyCode(code, reserved)
 		listbox.setValue(false);
 	}
 
-	Tree.prototype.setSelectedItem = function( id )
+
+	/**
+	* Tells you if the item its out of the view due to the scrolling
+	* @method isInsideArea
+	* @param {string} id
+	*/
+	Tree.prototype.isInsideArea = function( id )
+	{
+		var item = id.constructor === String ? this.getItem(id) : id;
+		if(!item)
+			return false;
+
+		var rects = this.root.getClientRects();
+		if(!rects.length)
+			return false;
+		var r = rects[0];
+		var h = r.height;
+		var y = item.offsetTop;
+
+		if( this.root.scrollTop < y && y < (this.root.scrollTop + h) )
+			return true;
+		return false;
+	}
+
+	/**
+	* Scrolls to center this item
+	* @method scrollToItem
+	* @param {string} id
+	*/
+	Tree.prototype.scrollToItem = function(id)
+	{
+		var item = id.constructor === String ? this.getItem(id) : id;
+		if(!item)
+			return;
+
+		var rects = this.root.getClientRects();
+		if(!rects.length)
+			return false;
+		var r = rects[0];
+		var h = r.height;
+		var x = parseInt( item.dataset["level"] ) * Tree.INDENT + 50;
+
+		this.root.scrollTop = item.offsetTop - (h * 0.5)|0;
+		if( r.width * 0.75 < x )
+			this.root.scrollLeft = x;
+		else
+			this.root.scrollLeft = 0;
+	}
+
+	/**
+	* mark item as selected
+	* @method setSelectedItem
+	* @param {string} id
+	*/
+	Tree.prototype.setSelectedItem = function( id, scroll )
 	{
 		if(!id)
 		{
@@ -3762,10 +3951,22 @@ function beautifyCode(code, reserved)
 		if(!node) //not found
 			return null;
 
+		//already selected
+		if( node.classList.contains("selected") ) 
+			return;
+
 		this.markAsSelected(node);
+		if( scroll && !this._skip_scroll )
+			this.scrollToItem(node);
+
 		return node;
 	}
 
+	/**
+	* adds item to selection (multiple selection)
+	* @method addItemToSelection
+	* @param {string} id
+	*/
 	Tree.prototype.addItemToSelection = function( id )
 	{
 		if(!id)
@@ -3779,6 +3980,11 @@ function beautifyCode(code, reserved)
 		return node;
 	}
 
+	/**
+	* remove item from selection (multiple selection)
+	* @method removeItemFromSelection
+	* @param {string} id
+	*/
 	Tree.prototype.removeItemFromSelection = function( id )
 	{
 		if(!id)
@@ -3789,34 +3995,58 @@ function beautifyCode(code, reserved)
 		node.title_element.classList.remove("selected");
 	}
 
+	/**
+	* returns the first selected item (its HTML element)
+	* @method getSelectedItem
+	* @return {HTML}
+	*/
 	Tree.prototype.getSelectedItem = function()
 	{
 		return this.root.querySelector(".ltreeitemtitle.selected");
 	}
 
+	/**
+	* returns an array with the selected items (its HTML elements)
+	* @method getSelectedItems
+	* @return {HTML}
+	*/
 	Tree.prototype.getSelectedItems = function()
 	{
 		return this.root.querySelectorAll(".ltreeitemtitle.selected");
 	}
 
-	Tree.prototype.getItemNode = function(id)
-	{
-		return this.root.querySelector(".ltreeitemtitle.selected");
-	}
-
+	/**
+	* returns if an item is selected
+	* @method isItemSelected
+	* @param {string} id
+	* @return {bool}
+	*/
 	Tree.prototype.isItemSelected = function(id)
 	{
-		var node = this.getItemNode(id);
+		var node = this.getItem( id );
 		if(!node)
 			return false;
 		return this.isNodeSelected(node);
 	}
 
-	Tree.prototype.getChildren = function(id)
+	/**
+	* returns the children of an item
+	* @method getChildren
+	* @param {string} id
+	* @param {bool} [only_direct=false] to get only direct children
+	* @return {Array}
+	*/
+	Tree.prototype.getChildren = function(id, only_direct )
 	{
-		return this._findChildElements(id);
+		return this._findChildElements( id, only_direct );
 	}
 
+	/**
+	* returns the parent of a item
+	* @method getParent
+	* @param {string} id
+	* @return {HTML}
+	*/
 	Tree.prototype.getParent = function(id_or_node)
 	{
 		var element = this.getItem( id_or_node );
@@ -3825,6 +4055,13 @@ function beautifyCode(code, reserved)
 		return null;
 	}
 
+	/**
+	* move item with id to be child of parent_id
+	* @method moveItem
+	* @param {string} id
+	* @param {string} parent_id
+	* @return {bool}
+	*/
 	Tree.prototype.moveItem = function(id, parent_id )
 	{
 		if(id === parent_id)
@@ -3847,11 +4084,11 @@ function beautifyCode(code, reserved)
 		//replace parent info
 		node.parent_id = parent_id;
 
-		//parent.list.appendChild( node );
+		//get all children and subchildren
 		var children = this.getChildren( node );
-		children.unshift(node);
+		children.unshift(node); //add the node at the beginning
 
-		//remove all
+		//remove all children
 		for(var i = 0; i < children.length; i++)
 			children[i].parentNode.removeChild( children[i] );
 
@@ -3865,10 +4102,13 @@ function beautifyCode(code, reserved)
 
 		//reinsert
 		parent_index = this._findElementIndex( parent ); //update parent index
+		var last_index = this._findElementLastChildIndex( parent_index );
+		if(last_index == -1)
+			last_index = 0;
 		for(var i = 0; i < children.length; i++)
 		{
 			var child = children[i];
-			this._insertInside( child, parent_index );
+			this._insertInside( child, last_index + i - 1, 0, parseInt( child.dataset["level"] ) );
 		}
 		
 		this._updateListBox( parent );
@@ -3878,25 +4118,39 @@ function beautifyCode(code, reserved)
 		return true;
 	}
 
+	/**
+	* remove item with given id
+	* @method removeItem
+	* @param {string} id
+	* @return {bool}
+	*/
 	Tree.prototype.removeItem = function(id_or_node)
 	{
 		var node = id_or_node;
 		if(typeof(id_or_node) == "string")
 			node = this.getItem(id_or_node);
 		if(!node)
-			return null;
+			return false;
 
 		var parent = this.getParent(node);
 		this.root.removeChild( node );
 
 		if(parent)
 			this._updateListBox(parent);
+		return true;
 	}
 
+	/**
+	* update a given item with new data
+	* @method updateItem
+	* @param {string} id
+	* @param {object} data
+	*/
 	Tree.prototype.updateItem = function(id, data)
 	{
 		var node = this.getItem(id);
-		if(!node) return;
+		if(!node)
+			return;
 
 		node.data = data;
 		if(data.id)
@@ -3909,11 +4163,33 @@ function beautifyCode(code, reserved)
 		}
 	}
 
+	/**
+	* clears all the items
+	* @method clear
+	* @param {bool} keep_root if you want to keep the root item
+	*/
 	Tree.prototype.clear = function(keep_root)
 	{
-		$(keep_root ? this.root_item : this.root).find(".ltreeitem").remove();
+		if(!keep_root)
+		{
+			this.root.innerHTML = "";
+			return;
+		}
+
+		var items = this.root.querySelectorAll(".ltreeitem");
+		for(var i = 1; i < items.length; i++)
+		{
+			var item = items[i];
+			this.root.removeChild( item );
+		}
 	}
 
+
+	Tree.prototype.getNodeByIndex = function(index)
+	{
+		var items = this.root.querySelectorAll(".ltreeitem");
+		return items[index];
+	}
 
 	//private ********************************
 
@@ -3939,7 +4215,7 @@ function beautifyCode(code, reserved)
 		return false;
 	}
 
-	Tree.prototype.markAsSelected = function( node, add_to_existing_selection)
+	Tree.prototype.markAsSelected = function( node, add_to_existing_selection )
 	{
 		//already selected
 		if( node.classList.contains("selected") ) 
@@ -3970,7 +4246,7 @@ function beautifyCode(code, reserved)
 
 		if(!node.listbox)
 		{
-			var pre = node.title_element.querySelector(".precontent");
+			var pre = node.title_element.querySelector(".collapsebox");
 			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
 			box.stopPropagation = true;
 			box.setEmpty(true);
@@ -3996,7 +4272,6 @@ function beautifyCode(code, reserved)
 		for(var i = 0; i < children.length; ++i)
 			children[i].style.display = status == "open" ? null : "none";
 	}
-
 
 	LiteGUI.Tree = Tree;
 })();
@@ -4514,7 +4789,7 @@ jQuery.fn.wclick = function(callback) {
 *
 * @class Inspector
 * @param {string} id
-* @param {Object} options useful options are { width, name_width, full, widgets_per_row }
+* @param {Object} options useful options are { width, widgets_width, name_width, full, widgets_per_row }
 * @constructor
 */
 
@@ -4538,6 +4813,8 @@ function Inspector(id,options)
 
 	if(options.name_width)
 		this.name_width = options.name_width;
+	if(options.widgets_width)
+		this.widgets_width = options.widgets_width;
 
 	if(options.parent) this.appendTo(options.parent);
 	this.widgets_per_row = options.widgets_per_row || 1;
@@ -4748,30 +5025,6 @@ Inspector.assignValue = function(value)
 		instance[this.name] = value;
 }
 
-
-/*
-Inspector.assignValue = function(value)
-{
-	var instance = this.instance;
-	var current_value = instance[this.name];
-
-	if(current_value == null || value == null)
-		instance[this.name] = value;
-	else if(typeof(current_value) == "number")
-		instance[this.name] = parseFloat(value);
-	else if(typeof(current_value) == "string")
-		instance[this.name] = value;
-	else if(value && value.length && current_value && current_value.length)
-	{
-		for(var i = 0; i < current_value.length; ++i)
-			current_value[i] = value[i];
-	}
-	else
-		instance[this.name] = value;
-}
-*/
-
-
 Inspector.prototype.createWidget = function(name, content, options) 
 {
 	options = options || {};
@@ -4781,9 +5034,11 @@ Inspector.prototype.createWidget = function(name, content, options)
 	element.inspector = this;
 	element.options = options;
 	element.name = name;
-	if(options.width)
+
+	var width = options.width || this.widgets_width;
+	if(width)
 	{
-		element.style.width = typeof(options.width) == "string" ? options.width : options.width + "px";
+		element.style.width = typeof(width) == "string" ? width : width + "px";
 		element.style.minWidth = element.style.width;
 	}
 
@@ -4808,13 +5063,21 @@ Inspector.prototype.createWidget = function(name, content, options)
 	}
 
 	var code = "";
+	var pretitle = "";
+
+	if(options.pretitle)
+		pretitle = options.pretitle;
+
 	var content_class = "wcontent ";
+	var title = name;
+	if(options.title)
+		title = options.title;
 	if(name == null)
 		content_class += " full";
 	else if(name == "")
-		code = "<span class='wname' title='"+name+"' "+namewidth+"></span>";
+		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle +"</span>";
 	else
-		code = "<span class='wname' title='"+name+"' "+namewidth+">"+name+"<span class='filling'>....................</span> </span>";
+		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle + name +"<span class='filling'>....................</span> </span>";
 
 	if(typeof(content) == "string")
 		element.innerHTML = code + "<span class='info_content "+content_class+"' "+contentwidth+">"+content+"</span>";

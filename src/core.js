@@ -453,13 +453,18 @@ var LiteGUI = {
 
 	newDiv: function(id, code)
 	{
-		var div = document.createElement("div");
-		div.id = id;
-		div.root = div;
-		if(code !== undefined)
-			div.innerHTML = code;
-		div.add = function(v) { this.appendChild( v.root || v); };
-		return div;
+		return this.createElement("div",id,code);
+	},
+
+	createElement: function(tag, id, content)
+	{
+		var elem = document.createElement( tag );
+		elem.id = id;
+		elem.root = elem;
+		if(content !== undefined)
+			elem.innerHTML = content;
+		elem.add = function(v) { this.appendChild( v.root || v ); };
+		return elem;
 	},
 
 	//used to create a window that retains all the CSS info or the scripts.

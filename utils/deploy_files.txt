@@ -1,5 +1,6 @@
 ../src/core.js
 ../src/widgets.js
+../src/area.js
 ../src/menubar.js
 ../src/tabs.js
 ../src/dragger.js

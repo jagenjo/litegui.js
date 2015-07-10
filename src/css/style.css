@@ -399,6 +399,7 @@ li.ltreeitem .ltreeitemtitle .postcontent {
 	width: 0.9em;
 	height: 0.9em;
 	margin-left: -1px;
+	margin-right: 0.5em;
 	margin-bottom: 2px;
 	line-height: 1em;
 	display: inline-block;
@@ -411,7 +412,6 @@ li.ltreeitem .ltreeitemtitle .postcontent {
 	margin-left: 2px;
 	width: 0.4em;
 	height: 0.4em;
-
 	color: #36A;
 	background-color: #467;
     /* Hide the text. */

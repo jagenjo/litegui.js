@@ -23,7 +23,7 @@ jQuery.fn.wclick = function(callback) {
 *
 * @class Inspector
 * @param {string} id
-* @param {Object} options useful options are { width, name_width, full, widgets_per_row }
+* @param {Object} options useful options are { width, widgets_width, name_width, full, widgets_per_row }
 * @constructor
 */
 
@@ -47,6 +47,8 @@ function Inspector(id,options)
 
 	if(options.name_width)
 		this.name_width = options.name_width;
+	if(options.widgets_width)
+		this.widgets_width = options.widgets_width;
 
 	if(options.parent) this.appendTo(options.parent);
 	this.widgets_per_row = options.widgets_per_row || 1;
@@ -257,30 +259,6 @@ Inspector.assignValue = function(value)
 		instance[this.name] = value;
 }
 
-
-/*
-Inspector.assignValue = function(value)
-{
-	var instance = this.instance;
-	var current_value = instance[this.name];
-
-	if(current_value == null || value == null)
-		instance[this.name] = value;
-	else if(typeof(current_value) == "number")
-		instance[this.name] = parseFloat(value);
-	else if(typeof(current_value) == "string")
-		instance[this.name] = value;
-	else if(value && value.length && current_value && current_value.length)
-	{
-		for(var i = 0; i < current_value.length; ++i)
-			current_value[i] = value[i];
-	}
-	else
-		instance[this.name] = value;
-}
-*/
-
-
 Inspector.prototype.createWidget = function(name, content, options) 
 {
 	options = options || {};
@@ -290,9 +268,11 @@ Inspector.prototype.createWidget = function(name, content, options)
 	element.inspector = this;
 	element.options = options;
 	element.name = name;
-	if(options.width)
+
+	var width = options.width || this.widgets_width;
+	if(width)
 	{
-		element.style.width = typeof(options.width) == "string" ? options.width : options.width + "px";
+		element.style.width = typeof(width) == "string" ? width : width + "px";
 		element.style.minWidth = element.style.width;
 	}
 
@@ -317,13 +297,21 @@ Inspector.prototype.createWidget = function(name, content, options)
 	}
 
 	var code = "";
+	var pretitle = "";
+
+	if(options.pretitle)
+		pretitle = options.pretitle;
+
 	var content_class = "wcontent ";
+	var title = name;
+	if(options.title)
+		title = options.title;
 	if(name == null)
 		content_class += " full";
 	else if(name == "")
-		code = "<span class='wname' title='"+name+"' "+namewidth+"></span>";
+		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle +"</span>";
 	else
-		code = "<span class='wname' title='"+name+"' "+namewidth+">"+name+"<span class='filling'>....................</span> </span>";
+		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle + name +"<span class='filling'>....................</span> </span>";
 
 	if(typeof(content) == "string")
 		element.innerHTML = code + "<span class='info_content "+content_class+"' "+contentwidth+">"+content+"</span>";

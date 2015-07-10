@@ -205,6 +205,12 @@
 			}
 		}
 
+		//overwrite
+		if(options.width !== undefined )
+			content.style.width = typeof(options.width) === "string" ? options.width : options.width + "px";
+		if(options.height !== undefined )
+			content.style.height = typeof(options.height) === "string" ? options.height : options.height + "px";
+
 		//add content
 		if(options.content)
 		{

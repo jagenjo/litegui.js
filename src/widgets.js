@@ -96,21 +96,30 @@
 			var name = values.constructor == Array ? values[i] : i;
 			var value = values[i];
 
-			element.innerHTML = value && value.title ? value.title : name;
-			element.value = value;
-
-			if(typeof(value) == "function")
+			if(value === null)
 			{
-				element.dataset["value"] = name;
-				element.onclick_callback = value;
-			}
-			else if(typeof(value) == "object")
-			{
-				if(value.callback)
-					element.addEventListener("click", function(e) { this.value.callback.apply( this, this.value ); });
+				element.className += "separator";
+				element.innerHTML = "<hr/>"
+				//continue;
 			}
 			else
-				element.dataset["value"] = value;
+			{
+				element.innerHTML = value && value.title ? value.title : name;
+				element.value = value;
+
+				if(typeof(value) == "function")
+				{
+					element.dataset["value"] = name;
+					element.onclick_callback = value;
+				}
+				else if(typeof(value) == "object")
+				{
+					if(value.callback)
+						element.addEventListener("click", function(e) { this.value.callback.apply( this, this.value ); });
+				}
+				else
+					element.dataset["value"] = value;
+			}
 
 			root.appendChild(element);
 			element.addEventListener("click", inner_onclick);

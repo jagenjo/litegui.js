@@ -207,8 +207,9 @@ Inspector.prototype.collectAttributes = function(instance)
 }
 
 //adds the widgets for the attributes specified in attrs_info of instance
-Inspector.prototype.showAttributes = function(instance, attrs_info ) 
+Inspector.prototype.showAttributes = function( instance, attrs_info ) 
 {
+	//for every enumerable property create widget
 	for(var i in attrs_info)
 	{
 		var options = attrs_info[i];
@@ -221,9 +222,15 @@ Inspector.prototype.showAttributes = function(instance, attrs_info )
 		options.instance = instance;
 
 		var type = options.type || options.widget || "string";
+
+		//used to hook stuff on special occasions
+		if( this.on_addAttribute )
+			this.on_addAttribute( type, instance, i, instance[i], options );
+
 		this.add( type, i, instance[i], options );
 	}
 
+	//extra widgets inserted by the object (stored in the constructor)
 	if(instance.constructor.widgets)
 		for(var i in instance.constructor.widgets)
 		{
@@ -451,7 +458,9 @@ Inspector.prototype.addSection = function(name, options)
 				return;
 			element.classList.toggle("collapsed");
 			var seccont = element.querySelector(".wsectioncontent");
-			seccont.style.display = seccont.style.display === "none" ? "" : "none";
+			seccont.style.display = seccont.style.display === "none" ? null : "none";
+			if(options.callback)
+				options.callback.call( element, !element.classList.contains("collapsed") );
 		});
 
 	if(options.collapsed)
@@ -641,8 +650,8 @@ Inspector.prototype.addNumber = function(name, value, options)
 		if(that.onchange) that.onchange(name,e.target.value,element);
 	});
 
-	element.setValue = function(v) { $(this).find("input").val(v).change(); };
-	element.getValue = function() { return $(this).find("input").val(); };
+	element.setValue = function(v) { $(this).find("input").val( v + (options.units || "") ).change(); };
+	element.getValue = function() { return parseFloat( $(this).find("input").val() ); };
 	element.focus = function() { $(this).find("input").focus(); };
 
 	return element;
@@ -1540,7 +1549,10 @@ Inspector.prototype.addTree = function(name, value, options)
 	
 	var tree_root = $(element).find(".wtree")[0];
 	if(options.height)
+	{
 		tree_root.style.height = typeof(options.height) == "number" ? options.height + "px" : options.height;
+		tree_root.style.overflow = "auto";
+	}
 
 	var current = value;
 

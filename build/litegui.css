@@ -172,7 +172,7 @@
 
 .inspector .wsection.collapsed .switch-section-button {
 
-	margin: 0 0 0 2px;
+	margin: 2px 0 0 2px;
 	border-left: 6px solid #333;
 	border-bottom: 6px solid transparent;
 	border-top: 6px solid transparent;
@@ -1514,7 +1514,7 @@ li.ltreeitem {
 	list-style-type: none;
 	cursor: pointer;
 	/*background: url("../imgs/tree_lines_16x16.png") no-repeat scroll 5px -8px transparent;*/
-	padding-left: 20px;
+	/*padding-left: 20px;*/
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
 	user-select: none;

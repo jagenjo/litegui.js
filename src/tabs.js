@@ -50,6 +50,7 @@
 
 		this.list = list;
 		this.root.appendChild(this.list);
+		this.tabs_root = list;
 
 		this.tabs = {};
 		this.selected = null;

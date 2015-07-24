@@ -321,7 +321,7 @@ li.ltreeitem {
 	list-style-type: none;
 	cursor: pointer;
 	/*background: url("../imgs/tree_lines_16x16.png") no-repeat scroll 5px -8px transparent;*/
-	padding-left: 20px;
+	/*padding-left: 20px;*/
 	-moz-user-select: none;  
 	-webkit-user-select: none;  
 	user-select: none;

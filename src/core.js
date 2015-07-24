@@ -467,6 +467,18 @@ var LiteGUI = {
 		return elem;
 	},
 
+	createButton: function( id, content, callback )
+	{
+		var elem = document.createElement("button");
+		elem.id = id;
+		elem.root = elem;
+		if(content !== undefined)
+			elem.innerHTML = content;
+		if(callback)
+			elem.addEventListener("click", callback );
+		return elem;
+	},
+
 	//used to create a window that retains all the CSS info or the scripts.
 	newWindow: function(title, width, height, options)
 	{
@@ -639,6 +651,7 @@ var LiteGUI = {
 			element.dispatchEvent(evt);
 		else
 			throw("trigger can only be called in DOMElements");
+		return evt;
 	},
 
 	draggable: function(container, dragger)

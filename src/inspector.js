@@ -33,7 +33,10 @@ function Inspector(id,options)
 	this.root = document.createElement("DIV");
 	this.root.className = "inspector " + ( options.full ? "full" : "");
 	if(options.one_line)
+	{
+		this.one_line = true;
 		this.root.className += " one-line";
+	}
 
 	if(id)
 		this.root.id = id;
@@ -295,7 +298,7 @@ Inspector.prototype.createWidget = function(name, content, options)
 
 	var namewidth = "";
 	var contentwidth = "";
-	if(name != null && (this.name_width || options.name_width))
+	if(name != null && (this.name_width || options.name_width) && !this.one_line)
 	{
 		var w = this.name_width || options.name_width;
 		if(typeof(w) == "number") w = w.toFixed() + "px";
@@ -305,6 +308,7 @@ Inspector.prototype.createWidget = function(name, content, options)
 
 	var code = "";
 	var pretitle = "";
+	var filling = this.one_line ? "" : "<span class='filling'>....................</span>";
 
 	if(options.pretitle)
 		pretitle = options.pretitle;
@@ -318,7 +322,7 @@ Inspector.prototype.createWidget = function(name, content, options)
 	else if(name == "")
 		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle +"</span>";
 	else
-		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle + name +"<span class='filling'>....................</span> </span>";
+		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle + name + filling + "</span>";
 
 	if(typeof(content) == "string")
 		element.innerHTML = code + "<span class='info_content "+content_class+"' "+contentwidth+">"+content+"</span>";
@@ -337,7 +341,7 @@ Inspector.onWidgetChange = function(element, name, value, options, expand_value 
 	this.values[name] = value;
 	//LiteGUI.trigger( this.current_section, "wchange", value );
 	$(this.current_section).trigger("wchange",value); //used for undo //TODO: REMOVE
-	var r = null;
+	var r = undefined;
 	if(options.callback)
 	{
 		if(expand_value)
@@ -364,6 +368,7 @@ Inspector.widget_constructors = {
 	color: 'addColor',
 	"boolean": 'addCheckbox', 
 	checkbox: 'addCheckbox',
+	icon: 'addIcon',
 	vec2: 'addVector2',
 	vector2: 'addVector2',
 	vec3: 'addVector3',
@@ -568,7 +573,10 @@ Inspector.prototype.addString = function(name,value, options)
 
 	this.tab_index += 1;
 
-	element.setValue = function(v) { input.value = v; LiteGUI.trigger(input, "change" ); };
+	element.setValue = function(v) { 
+		input.value = v; 
+		LiteGUI.trigger(input, "change" );
+	};
 	element.getValue = function() { return input.value; };
 	element.focus = function() { $(this).find("input").focus(); };
 	element.wchange = function(callback) { $(this).wchange(callback); }
@@ -918,7 +926,13 @@ Inspector.prototype.addInfo = function(name,value, options)
 		element = document.createElement("div");
 		if(options.className)
 			element.className = options.className;
-		element.innerHTML = "<span class='winfo'>"+value+"</span>";
+		if(value.nodeName !== undefined)
+		{
+			element.innerHTML = "<span class='winfo'></span>";
+			element.childNodes[0].appendChild( value );
+		}
+		else
+			element.innerHTML = "<span class='winfo'>"+value+"</span>";
 	}
 
 	var info = element.querySelector(".winfo");
@@ -1062,26 +1076,29 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 	var element = this.createWidget(name,"<span class='inputfield'><span tabIndex='"+this.tab_index+"' class='fixed flag checkbox "+(value ? "on" : "off")+"'>"+label+"</span></span>", options );
 	this.tab_index++;
 
-	$(element).find(".wcontent .checkbox").keypress( function(e) { 
+	var checkbox = element.querySelector(".wcontent .checkbox");
+	checkbox.addEventListener("keypress", function(e) { 
 		if(e.keyCode == 32)
-			$(this).click();
+			LiteGUI.trigger(this, "click");
 	});
 
-	$(element).click( function() {
+	element.addEventListener("click", function() {
 		var v = !this.data;
 		this.data = v;
-		$(element).find("span.flag").html(v ? label_on : label_off);
+		element.querySelector("span.flag").innerHTML = v ? label_on : label_off;
 		if(v)
-			$(element).find("span.checkbox").addClass("on");
+			checkbox.classList.add("on");
 		else
-			$(element).find("span.checkbox").removeClass("on");
+			checkbox.classList.remove("on");
 		Inspector.onWidgetChange.call(that,element,name,v, options);
-	})[0].data = value;
+	});
+	
+	element.data = value;
 
 	element.setValue = function(v) { 
 		if(	that.values[name] != v)
-			$(this).find(".checkbox").click(); 
-		};
+			LiteGUI.trigger( checkbox, "click" ); 
+	};
 
 	this.append(element,options);
 	return element;
@@ -1132,7 +1149,10 @@ Inspector.prototype.addCombo = function(name, value, options)
 			values = options.values;
 		if(values) 
 			for(var i in values)
-				code += "<option "+( values[i] == value?" selected":"")+">" + ( values.length ?  values[i] : i) + "</option>";
+			{
+				var item_value = values[i];
+				code += "<option data-value='" + item_value + "' "+( item_value == value ? " selected":"")+">" + ( values.length ? item_value : i) + "</option>";
+			}
 	}
 	code += "</select>";
 
@@ -1144,6 +1164,22 @@ Inspector.prototype.addCombo = function(name, value, options)
 			value = values[value];
 		Inspector.onWidgetChange.call(that,element,name,value, options);
 	});
+
+	element.setValue = function(v) { 
+		var select = element.querySelector("select");
+		var items = select.querySelectorAll("option");
+		var index = 0;
+		for(var i in items)
+		{
+			var item = items[i];
+			if( item.dataset["value"] == v )
+			{
+				select.selectedIndex = index;
+				return;
+			}
+			index++;
+		}
+	};
 
 	this.append(element,options);
 	return element;
@@ -1373,9 +1409,10 @@ Inspector.prototype.addButton = function(name, value, options)
 	
 	var element = this.createWidget(name,"<button class='"+c+"' tabIndex='"+ this.tab_index + "'>"+value+"</button>", options);
 	this.tab_index++;
-	$(element).find("button").click(function() {
+	var button = element.querySelector("button");
+	button.addEventListener("click", function() {
 		Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
-		$(element).trigger("wclick",value);
+		LiteGUI.trigger( button, "wclick", value );
 	});
 	this.append(element,options);
 
@@ -1404,11 +1441,67 @@ Inspector.prototype.addButtons = function(name, value, options)
 		}
 	}
 	var element = this.createWidget(name,code, options);
-	$(element).find("button").click(function() {
-		Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
-		$(element).trigger("wclick",this.innerHTML);
+	var buttons = element.querySelectorAll("button");
+	for(var i = 0; i < buttons.length; ++i)
+	{
+		var button = buttons[i];
+		button.addEventListener("click", function() {
+			Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
+			LiteGUI.trigger( element, "wclick",this.innerHTML );
+		});
+	}
+
+	this.append(element,options);
+	return element;
+}
+
+Inspector.prototype.addIcon = function(name, value, options)
+{
+	options = this.processOptions(options);
+
+	value = value || "";
+	var that = this;
+
+	var img_url = options.image;
+	var width = options.width || options.size || 18;
+	var height = options.height || options.size || 18;
+
+	var element = this.createWidget(name,"<span class='icon' tabIndex='"+ this.tab_index + "'></span>", options);
+	this.tab_index++;
+	var icon = element.querySelector("span");
+
+	var x = options.x || 0;
+	if(options.index)
+		x = options.index * -width;
+	var y = value ? height : 0;
+
+	element.style.minWidth = element.style.width = (width) + "px";
+	element.style.margin = "1px";
+	
+	icon.style.display = "inline-block"
+	icon.style.cursor = "pointer";
+	icon.style.width = width + "px";
+	icon.style.height = height + "px";
+	icon.style.backgroundImage = "url('"+img_url+"')";
+	icon.style.backgroundPosition = x + "px " + y + "px";
+
+	icon.addEventListener("click", function() {
+		value = !value;
+		Inspector.onWidgetChange.call(that,element,name, value, options);
+		LiteGUI.trigger( element, "wclick", value);
+
+		var y = value ? height : 0;
+		icon.style.backgroundPosition = x + "px " + y + "px";
 	});
 	this.append(element,options);
+
+	element.setValue = function(v) { 
+		var y = value ? height : 0;
+		icon.style.backgroundPosition = x + "px " + y + "px";
+		//LiteGUI.trigger(input, "change" );
+	};
+	element.getValue = function() { return value; };
+
 	return element;
 }
 

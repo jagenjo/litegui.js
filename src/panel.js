@@ -88,7 +88,7 @@
 			if(options.hide)
 				code += "<button class='mini-button hide-button'></button>";
 			
-			if(options.close) code += "<button class='mini-button close-button'></button>";
+			if(options.close || options.closable) code += "<button class='mini-button close-button'></button>";
 			code += "</div>";
 		}
 
@@ -325,6 +325,15 @@
 	Dialog.prototype.close = function() {
 		$(this.root).remove();
 		$(this).trigger("closed");
+	}
+
+	Dialog.prototype.highlight = function(time)
+	{
+		time = time || 100;
+		this.root.style.outline = "1px solid white";
+		setTimeout( (function(){
+			this.root.style.outline = null;
+		}).bind(this), time );
 	}
 
 	Dialog.minimized = [];

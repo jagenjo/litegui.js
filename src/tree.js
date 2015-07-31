@@ -1,15 +1,22 @@
 //enclose in a scope
 (function(){
 
+
 /**
 * To create interactive trees (useful for folders or hierarchies)
+* data should be in the next structure:
+* {
+*    id: unique_identifier,
+*    content: what to show in the HTML (if omited id will be shown)
+*	 children: []  array with another object with the same structure
+* }
 *
 * @class Tree
 * @constructor
 */
 
 	/*********** LiteTree *****************************/
-	function Tree(id, data, options)
+	function Tree( id, data, options )
 	{
 		var root = document.createElement("div");
 		this.root = root;
@@ -19,8 +26,11 @@
 		root.className = "litetree";
 		this.tree = data;
 		var that = this;
-		options = options || {allow_rename: true, drag: true, allow_multiselection: false};
+		options = options || {allow_rename: false, drag: false, allow_multiselection: false};
 		this.options = options;
+
+		if(options.height)
+			this.root.style.height = typeof(options.height) == "string" ? options.height : Math.round(options.height) + "px";
 
 		//bg click
 		root.addEventListener("click", function(e){

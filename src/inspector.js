@@ -35,7 +35,7 @@ function Inspector(id,options)
 	if(options.one_line)
 	{
 		this.one_line = true;
-		this.root.className += " one-line";
+		this.root.className += " one_line";
 	}
 
 	if(id)
@@ -636,15 +636,18 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 	var dragger = new LiteGUI.Dragger(value, options);
 	dragger.root.style.width = "calc( 100% - 1px )";
-	$(element).find(".wcontent").append(dragger.root);
+	element.querySelector(".wcontent").appendChild( dragger.root );
 	$(dragger.root).bind("start_dragging", inner_before_change.bind(options) );
+
 	function inner_before_change(e)
 	{
 		if(this.callback_before) 
 			this.callback_before.call(element);
 	}
 
-	$(element).find("input").change( function(e) { 
+	var input = element.querySelector("input");
+	
+	$(input).change( function(e) { 
 		that.values[name] = e.target.value;
 		//Inspector.onWidgetChange.call(that,this,name,ret, options);
 
@@ -652,15 +655,22 @@ Inspector.prototype.addNumber = function(name, value, options)
 		{
 			var ret = options.callback.call(element, parseFloat( e.target.value) ); 
 			if( typeof(ret) == "number")
-				$(this).val(ret);
+				this.value = ret;
 		}
 		$(element).trigger("wchange",e.target.value);
 		if(that.onchange) that.onchange(name,e.target.value,element);
 	});
 
-	element.setValue = function(v) { $(this).find("input").val( v + (options.units || "") ).change(); };
-	element.getValue = function() { return parseFloat( $(this).find("input").val() ); };
-	element.focus = function() { $(this).find("input").focus(); };
+	element.setValue = function(v) { 
+		v = parseFloat(v);
+		if(options.precision)
+			v = v.toFixed( options.precision );
+		input.value = v + (options.units || "");
+		LiteGUI.trigger( input,"change" );
+	};
+
+	element.getValue = function() { return parseFloat( input.value ); };
+	element.focus = function() { $(input).focus(); };
 
 	return element;
 }
@@ -683,17 +693,19 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	options.full = true;
 	this.tab_index++;
 
+	var wcontent = element.querySelector(".wcontent");
+
 	var dragger1 = new LiteGUI.Dragger(value[0], options);
 	dragger1.root.style.marginLeft = 0;
 	dragger1.root.style.width = "calc( 50% - 1px )";
-	$(element).find(".wcontent").append(dragger1.root);
+	wcontent.appendChild( dragger1.root );
 
 	options.tab_index = this.tab_index;
 	this.tab_index++;
 
 	var dragger2 = new LiteGUI.Dragger(value[1], options);
 	dragger2.root.style.width = "calc( 50% - 1px )";
-	$(element).find(".wcontent").append(dragger2.root);
+	wcontent.appendChild( dragger2.root );
 
 	$(dragger1.root).bind("start_dragging",inner_before_change.bind(options) );
 	$(dragger2.root).bind("start_dragging",inner_before_change.bind(options) );
@@ -703,6 +715,7 @@ Inspector.prototype.addVector2 = function(name,value, options)
 		if(this.callback_before) this.callback_before(e);
 	}
 
+	//ALL INPUTS
 	$(element).find("input").change( function(e) { 
 		//gather all three parameters
 		var r = [];
@@ -1172,6 +1185,8 @@ Inspector.prototype.addCombo = function(name, value, options)
 		for(var i in items)
 		{
 			var item = items[i];
+			if(!item || !item.dataset) //weird bug
+				continue;
 			if( item.dataset["value"] == v )
 			{
 				select.selectedIndex = index;
@@ -1463,12 +1478,13 @@ Inspector.prototype.addIcon = function(name, value, options)
 	var that = this;
 
 	var img_url = options.image;
-	var width = options.width || options.size || 18;
-	var height = options.height || options.size || 18;
+	var width = options.width || options.size || 20;
+	var height = options.height || options.size || 20;
 
-	var element = this.createWidget(name,"<span class='icon' tabIndex='"+ this.tab_index + "'></span>", options);
+	var element = this.createWidget(name,"<span class='icon' "+(options.title ? "title='"+options.title+"'" : "" )+" tabIndex='"+ this.tab_index + "'></span>", options);
 	this.tab_index++;
-	var icon = element.querySelector("span");
+	var content = element.querySelector("span.wcontent");
+	var icon = element.querySelector("span.icon");
 
 	var x = options.x || 0;
 	if(options.index)
@@ -1476,8 +1492,9 @@ Inspector.prototype.addIcon = function(name, value, options)
 	var y = value ? height : 0;
 
 	element.style.minWidth = element.style.width = (width) + "px";
-	element.style.margin = "1px";
-	
+	element.style.margin = "0 2px"; element.style.padding = "0";
+	content.style.margin = "0"; content.style.padding = "0";
+
 	icon.style.display = "inline-block"
 	icon.style.cursor = "pointer";
 	icon.style.width = width + "px";
@@ -1485,13 +1502,18 @@ Inspector.prototype.addIcon = function(name, value, options)
 	icon.style.backgroundImage = "url('"+img_url+"')";
 	icon.style.backgroundPosition = x + "px " + y + "px";
 
-	icon.addEventListener("click", function() {
+	icon.addEventListener("mousedown", function(e) {
+		e.preventDefault();
 		value = !value;
 		Inspector.onWidgetChange.call(that,element,name, value, options);
 		LiteGUI.trigger( element, "wclick", value);
 
 		var y = value ? height : 0;
 		icon.style.backgroundPosition = x + "px " + y + "px";
+
+		if(options.toggle === false)
+			setTimeout( function(){ icon.style.backgroundPosition = x + "px 0px"; value = false; },200 );
+
 	});
 	this.append(element,options);
 

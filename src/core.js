@@ -577,12 +577,16 @@ var LiteGUI = {
 
 		var dialog = this.showMessage(content,options);
 		dialog.content.style.paddingBottom = "10px";
-		dialog.content.querySelector("button").addEventListener("click", function() {
+		var buttons = dialog.content.querySelectorAll("button");
+		for(var i = 0; i < buttons.length; i++)
+			buttons[i].addEventListener("click", inner);
+
+		function inner(v) {
 			var v = this.dataset["value"] == "yes";
 			if(callback) 
 				callback(v);
 			dialog.close();
-		});
+		}
 
 		return dialog;
 	},
@@ -605,15 +609,20 @@ var LiteGUI = {
 		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage(content,options);
-		dialog.content.querySelector("button").addEventListener("click", function() {
-			var input = $(dialog.content).find(options.textarea ? "textarea" : "input").val();
+
+		var buttons = dialog.content.querySelectorAll("button");
+		for(var i = 0; i < buttons.length; i++)
+			buttons[i].addEventListener("click", inner);
+
+		function inner() {
+			var value = dialog.content.querySelector("input,textarea").value;
 			if(this.dataset["value"] == "cancel")
-				input = null;
+				value = null;
 
 			if(callback)
-				callback( input );
+				callback( value );
 			dialog.close();
-		});
+		};
 
 		var elem = dialog.content.querySelector("input,textarea");
 		elem.focus();

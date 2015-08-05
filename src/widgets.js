@@ -85,6 +85,17 @@
 		root.style.pointerEvents = "none";
 		setTimeout(function() { root.style.pointerEvents = "auto"; },100); //delay so the mouse up event is not caugh by this element
 
+		//this prevents the default contextual browser menu to open in case this menu was created when pressing right button 
+		root.addEventListener("mouseup", function(e){ 
+			e.preventDefault(); return true; 
+		}, true);
+		root.addEventListener("contextmenu", function(e) { 
+			if(e.button != 2) //right button
+				return false;
+			e.preventDefault(); 
+			return false;
+		},true);
+
 
 		this.root = root;
 		

@@ -3400,7 +3400,6 @@ function beautifyCode(code, reserved)
 	*/
 	Tree.prototype.insertItem = function(data, parent_id, position, options)
 	{
-        options = options || {};
 		if(!parent_id)
 		{
 			var root = this.root.childNodes[0];

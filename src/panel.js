@@ -44,10 +44,17 @@
 	}
 
 	/****************** DIALOG **********************/
+	/**
+	* Dialog
+	*
+	* @class Dialog
+	* @param {string} id
+	* @param {Object} options useful options are { title, width, height, closable, on_close, }
+	* @constructor
+	*/
 	function Dialog(id, options)
 	{
 		this._ctor( id, options );
-		//this.makeDialog(options);
 	}
 
 	Dialog.MINIMIZED_WIDTH = 200;
@@ -97,8 +104,8 @@
 		panel.innerHTML = code;
 
 		this.root = panel;
-		this.content = $(panel).find(".content")[0];
-		this.footer = $(panel).find(".panel-footer")[0];
+		this.content = panel.querySelector(".content");
+		this.footer = panel.querySelector(".panel-footer");
 
 		if(options.buttons)
 		{
@@ -107,16 +114,33 @@
 		}
 
 		//if(options.scroll == false)	this.content.style.overflow = "hidden";
-		if(options.scroll == true)	this.content.style.overflow = "auto";
+		if(options.scroll == true)
+			this.content.style.overflow = "auto";
 
-		$(panel).find(".close-button").bind("click", this.close.bind(this) );
-		$(panel).find(".minimize-button").bind("click", this.minimize.bind(this) );
-		$(panel).find(".maximize-button").bind("click", this.maximize.bind(this) );
-		$(panel).find(".hide-button").bind("click", this.hide.bind(this) );
+		//buttons *********************************
+		var close_button = panel.querySelector(".close-button");
+		if(close_button)
+			close_button.addEventListener("click", this.close.bind(this) );
+
+		var maximize_button = panel.querySelector(".maximize-button");
+		if(maximize_button)
+			maximize_button.addEventListener("click", this.maximize.bind(this) );
+
+		var minimize_button = panel.querySelector(".minimize-button");
+		if(minimize_button)
+			minimize_button.addEventListener("click", this.minimize.bind(this) );
+
+		var hide_button = panel.querySelector(".hide-button");
+		if(hide_button)
+			hide_button.addEventListener("click", this.hide.bind(this) );
 
 		this.makeDialog(options);
 	}
 
+	/**
+	* add widget or html to the content of the dialog
+	* @method add
+	*/
 	Dialog.prototype.add = function( litegui_item )
 	{
 		this.content.appendChild( litegui_item.root || litegui_item );
@@ -183,8 +207,7 @@
 		this.resizable = true;
 		var footer = this.footer;
 		footer.style.minHeight = "4px";
-
-		$(footer).addClass("resizable");
+		footer.classList.add("resizable");
 
 		footer.addEventListener("mousedown", inner_mouse);
 
@@ -280,9 +303,13 @@
 		if(parent.content)
 			parent.content.appendChild(panel);
 		else if( typeof(parent) == "string")
-			$(parent).append(panel)
+		{
+			parent = document.querySelector( parent );
+			if(parent)
+				parent.appendChild( panel )
+		}
 		else
-			parent.appendChild(panel); 
+			parent.appendChild( panel ); 
 	}
 
 	Dialog.prototype.addButton = function(name,options)
@@ -293,9 +320,9 @@
 		button.innerHTML = name;
 		if(options.className) button.className = options.className;
 
-		$(this.root).find(".panel-footer").append(button);
+		this.root.querySelector(".panel-footer").appendChild( button );
 
-		$(button).bind("click", function(e) { 
+		button.addEventListener("click", function(e) { 
 			if(options.callback)
 				options.callback(this);
 
@@ -322,9 +349,15 @@
 	}
 	*/	
 
+	/**
+	* destroys the dialog
+	* @method close
+	*/
 	Dialog.prototype.close = function() {
 		$(this.root).remove();
 		$(this).trigger("closed");
+		if(this.on_close)
+			this.on_close();
 	}
 
 	Dialog.prototype.highlight = function(time)
@@ -344,12 +377,17 @@
 		this.minimized = true;
 		this.old_pos = $(this.root).position();
 
-		$(this.root).find(".content").hide();
-		$(this.root).draggable({ disabled: true });
-		$(this.root).find(".minimize-button").hide();
-		$(this.root).find(".maximize-button").show();
-		$(this.root).css({width: LiteGUI.Dialog.MINIMIZED_WIDTH});
+		this.root.querySelector(".content").style.display = "none";
+		
+		var minimize_button = this.root.querySelector(".minimize-button");
+		if(minimize_button)	
+			minimize_button.style.display = "none";
 
+		var maximize_button = this.root.querySelector(".maximize-button");
+		if(maximize_button)
+			maximize_button.style.display = null;
+
+		this.root.style.width = LiteGUI.Dialog.MINIMIZED_WIDTH + "px";
 
 		$(this).bind("closed", function() {
 			LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
@@ -369,19 +407,26 @@
 			var dialog = LiteGUI.Dialog.minimized[i];
 			var parent = dialog.root.parentNode;
 			var pos = $(parent).height() - 20;
-			$(panel.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+			$(dialog.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
 		}
 	}
 
 	Dialog.prototype.maximize = function() {
-		if(!this.minimized) return;
+		if(!this.minimized)
+			return;
 		this.minimized = false;
 
-		$(this.root).find(".content").show();
+		this.root.querySelector(".content").style.display = null;
 		$(this.root).draggable({ disabled: false });
 		$(this.root).animate({ left: this.old_pos.left+"px" , top: this.old_pos.top + "px", width: this.width },100);
-		$(this.root).find(".minimize-button").show();
-		$(this.root).find(".maximize-button").hide();
+
+		var minimize_button = this.root.querySelector(".minimize-button");
+		if(minimize_button)
+			minimize_button.style.display = null;
+
+		var maximize_button = this.root.querySelector(".maximize-button");
+		if(maximize_button)
+			maximize_button.style.display = "none";
 
 		LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
 		LiteGUI.Dialog.arrangeMinimized();
@@ -411,20 +456,28 @@
 		parent.attach(this.root);
 	}
 
+	/**
+	* shows a hidden dialog
+	* @method show
+	*/
 	Dialog.prototype.show = function(v,callback)
 	{
 		if(!this.root.parentNode)
 			LiteGUI.add(this);
 
 		//$(this.root).show(v,null,100,callback);
-		$(this.root).show();
+		this.root.style.display = null;
 		$(this).trigger("shown");
 	}
 
+	/**
+	* hides the dialog
+	* @method hide
+	*/
 	Dialog.prototype.hide = function(v,callback)
 	{
 		//$(this.root).hide(v,null,100,callback);
-		$(this.root).hide();
+		this.root.style.display = "none";
 		$(this).trigger("hidden");
 	}
 
@@ -448,6 +501,11 @@
 		this.root.style.top = Math.floor(( $(this.root.parentNode).height() - $(this.root).height() ) * 0.5) + "px";
 	}
 
+	/**
+	* Adjust the size of the dialog to the size of the content
+	* @method adjustSize
+	* @param {number} margin
+	*/
 	Dialog.prototype.adjustSize = function( margin )
 	{
 		margin = margin || 0;

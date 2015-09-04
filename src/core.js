@@ -196,9 +196,37 @@ var LiteGUI = {
 				this.modules[i].onUnload();
 	},
 
+	//events
+	trigger: function(element, event_name, params)
+	{
+		var evt = document.createEvent( 'CustomEvent' );
+		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
+		if(element.dispatchEvent)
+			element.dispatchEvent(evt);
+		else
+			throw("trigger can only be called in DOMElements");
+		return evt;
+	},
+
+	bind: function(element, event, callback)
+	{
+		element.addEventListener(event, callback);
+	},
+
+	unbind: function(element, event, callback)
+	{
+		element.removeEventListener(event, callback);
+	},
+
 	add: function( litegui_element )
 	{
 		this.content.appendChild( litegui_element.root || litegui_element );
+	},
+
+	remove: function( element )
+	{
+		if(element.parentNode)
+			element.parentNode.removeChild(element);
 	},
 
 	getById: function(id)
@@ -253,6 +281,7 @@ var LiteGUI = {
 		this.last_undo_time = now;
 		if(this.undo_steps.length > this.max_undo_steps)
 			this.undo_steps.shift();
+		LiteGUI.trigger(this.root, "new_undo", o);
 	},
 
 	doUndo: function()
@@ -263,12 +292,13 @@ var LiteGUI = {
 		if(step.callback != null)
 			step.callback(step.data);
 
-		$(LiteGUI).trigger("undo", step);
+		LiteGUI.trigger(this.root, "undo", step);
 	},
 
 	removeUndoSteps: function()
 	{
 		this.undo_steps = [];
+		LiteGUI.trigger(this.root, "clear_undo" );
 	},
 
 	// Clipboard ******************
@@ -276,12 +306,12 @@ var LiteGUI = {
 	toClipboard: function( object )
 	{
 		if(object == null) return;
-		localStorage.setItem("lite_clipboard", JSON.stringify( object ) );
+		localStorage.setItem("litegui_clipboard", JSON.stringify( object ) );
 	},
 
 	getClipboard: function()
 	{
-		var data = localStorage.getItem("lite_clipboard");
+		var data = localStorage.getItem("litegui_clipboard");
 		if(!data) return null;
 		return JSON.parse(data);
 	},
@@ -650,17 +680,6 @@ var LiteGUI = {
 	focus: function( element )
 	{
 		element.focus();
-	},
-
-	trigger: function(element, event_name, params)
-	{
-		var evt = document.createEvent( 'CustomEvent' );
-		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
-		if(element.dispatchEvent)
-			element.dispatchEvent(evt);
-		else
-			throw("trigger can only be called in DOMElements");
-		return evt;
 	},
 
 	draggable: function(container, dragger)
@@ -1066,7 +1085,7 @@ if(typeof escapeHtmlEntities == 'undefined') {
         };
     }
 
-function beautifyCode(code, reserved)
+function beautifyCode( code, reserved, skip_css )
 {
 	reserved = reserved || ["abstract", "else", "instanceof", "super", "boolean", "enum", "int", "switch", "break", "export", "interface", "synchronized", "byte", "extends", "let", "this", "case", "false", "long", "throw", "catch", "final", "native", "throws", "char", "finally", "new", "transient", "class", "float", "null", "true", "const", "for", "package", "try", "continue", "function", "private", "typeof", "debugger", "goto", "protected", "var", "default", "if", "public", "void", "delete", "implements", "return", "volatile", "do", "import", "short", "while", "double", "in", "static", "with"];
 
@@ -1103,6 +1122,50 @@ function beautifyCode(code, reserved)
 		return "<span class='cmnt'>" + v + "</span>";
 	});
 
+	if(!skip_css)
+		code = "<style>.obj { color: #79B; } .prop { color: #B97; }	.str,.num { color: #A79; } .cmnt { color: #798; } .rsv { color: #9AB; } </style>" + code;
+
+	return code;
+}
+
+function beautifyJSON( code, skip_css )
+{
+	if(typeof(code) == "object")
+		code = JSON.stringify(code);
+
+	var reserved = ["false", "true", "null"];
+
+	//reserved words
+	code = code.replace(/(\w+)/g, function(v) {
+		if(reserved.indexOf(v) != -1)
+			return "<span class='rsv'>" + v + "</span>";
+		return v;
+	});
+
+
+	//numbers
+	code = code.replace(/([0-9]+)/g, function(v) {
+		return "<span class='num'>" + v + "</span>";
+	});
+
+	//obj.method
+	code = code.replace(/(\w+\.\w+)/g, function(v) {
+		var t = v.split(".");
+		return "<span class='obj'>" + t[0] + "</span>.<span class='prop'>" + t[1] + "</span>";
+	});
+
+	//strings
+	code = code.replace(/(\"(\\.|[^\"])*\")/g, function(v) {
+		return "<span class='str'>" + v + "</span>";
+	});
+
+	//comments
+	code = code.replace(/(\/\/[a-zA-Z0-9\?\!\(\)_ ]*)/g, function(v) {
+		return "<span class='cmnt'>" + v + "</span>";
+	});
+
+	if(!skip_css)
+		code = "<style>.obj { color: #79B; } .prop { color: #B97; }	.str { color: #A79; } .num { color: #B97; } .cmnt { color: #798; } .rsv { color: #9AB; } </style>" + code;
 
 	return code;
 }

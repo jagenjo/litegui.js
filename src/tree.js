@@ -149,9 +149,13 @@
 		return element;
 	}
 
+	//element to add, position of the parent node, position inside children, the depth level
 	Tree.prototype._insertInside = function(element, parent_index, offset_index, level )
 	{
 		var parent = this.root.childNodes[ parent_index ];
+		if(!parent)
+			throw("No parent node found, index: " + parent_index +", nodes: " + this.root.childNodes.length );
+
 		var parent_level = parseInt( parent.dataset["level"] );
 		var child_level = level !== undefined ? level : parent_level + 1;
 
@@ -848,7 +852,7 @@
 		for(var i = 0; i < children.length; i++)
 		{
 			var child = children[i];
-			this._insertInside( child, last_index + i - 1, 0, parseInt( child.dataset["level"] ) );
+			this._insertInside( child, parent_index, last_index + i - 1, parseInt( child.dataset["level"] ) );
 		}
 		
 		this._updateListBox( parent );

@@ -197,9 +197,37 @@ var LiteGUI = {
 				this.modules[i].onUnload();
 	},
 
+	//events
+	trigger: function(element, event_name, params)
+	{
+		var evt = document.createEvent( 'CustomEvent' );
+		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
+		if(element.dispatchEvent)
+			element.dispatchEvent(evt);
+		else
+			throw("trigger can only be called in DOMElements");
+		return evt;
+	},
+
+	bind: function(element, event, callback)
+	{
+		element.addEventListener(event, callback);
+	},
+
+	unbind: function(element, event, callback)
+	{
+		element.removeEventListener(event, callback);
+	},
+
 	add: function( litegui_element )
 	{
 		this.content.appendChild( litegui_element.root || litegui_element );
+	},
+
+	remove: function( element )
+	{
+		if(element.parentNode)
+			element.parentNode.removeChild(element);
 	},
 
 	getById: function(id)
@@ -254,6 +282,7 @@ var LiteGUI = {
 		this.last_undo_time = now;
 		if(this.undo_steps.length > this.max_undo_steps)
 			this.undo_steps.shift();
+		LiteGUI.trigger(this.root, "new_undo", o);
 	},
 
 	doUndo: function()
@@ -264,12 +293,13 @@ var LiteGUI = {
 		if(step.callback != null)
 			step.callback(step.data);
 
-		$(LiteGUI).trigger("undo", step);
+		LiteGUI.trigger(this.root, "undo", step);
 	},
 
 	removeUndoSteps: function()
 	{
 		this.undo_steps = [];
+		LiteGUI.trigger(this.root, "clear_undo" );
 	},
 
 	// Clipboard ******************
@@ -277,12 +307,12 @@ var LiteGUI = {
 	toClipboard: function( object )
 	{
 		if(object == null) return;
-		localStorage.setItem("lite_clipboard", JSON.stringify( object ) );
+		localStorage.setItem("litegui_clipboard", JSON.stringify( object ) );
 	},
 
 	getClipboard: function()
 	{
-		var data = localStorage.getItem("lite_clipboard");
+		var data = localStorage.getItem("litegui_clipboard");
 		if(!data) return null;
 		return JSON.parse(data);
 	},
@@ -651,17 +681,6 @@ var LiteGUI = {
 	focus: function( element )
 	{
 		element.focus();
-	},
-
-	trigger: function(element, event_name, params)
-	{
-		var evt = document.createEvent( 'CustomEvent' );
-		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
-		if(element.dispatchEvent)
-			element.dispatchEvent(evt);
-		else
-			throw("trigger can only be called in DOMElements");
-		return evt;
 	},
 
 	draggable: function(container, dragger)
@@ -1067,7 +1086,7 @@ if(typeof escapeHtmlEntities == 'undefined') {
         };
     }
 
-function beautifyCode(code, reserved)
+function beautifyCode( code, reserved, skip_css )
 {
 	reserved = reserved || ["abstract", "else", "instanceof", "super", "boolean", "enum", "int", "switch", "break", "export", "interface", "synchronized", "byte", "extends", "let", "this", "case", "false", "long", "throw", "catch", "final", "native", "throws", "char", "finally", "new", "transient", "class", "float", "null", "true", "const", "for", "package", "try", "continue", "function", "private", "typeof", "debugger", "goto", "protected", "var", "default", "if", "public", "void", "delete", "implements", "return", "volatile", "do", "import", "short", "while", "double", "in", "static", "with"];
 
@@ -1104,6 +1123,50 @@ function beautifyCode(code, reserved)
 		return "<span class='cmnt'>" + v + "</span>";
 	});
 
+	if(!skip_css)
+		code = "<style>.obj { color: #79B; } .prop { color: #B97; }	.str,.num { color: #A79; } .cmnt { color: #798; } .rsv { color: #9AB; } </style>" + code;
+
+	return code;
+}
+
+function beautifyJSON( code, skip_css )
+{
+	if(typeof(code) == "object")
+		code = JSON.stringify(code);
+
+	var reserved = ["false", "true", "null"];
+
+	//reserved words
+	code = code.replace(/(\w+)/g, function(v) {
+		if(reserved.indexOf(v) != -1)
+			return "<span class='rsv'>" + v + "</span>";
+		return v;
+	});
+
+
+	//numbers
+	code = code.replace(/([0-9]+)/g, function(v) {
+		return "<span class='num'>" + v + "</span>";
+	});
+
+	//obj.method
+	code = code.replace(/(\w+\.\w+)/g, function(v) {
+		var t = v.split(".");
+		return "<span class='obj'>" + t[0] + "</span>.<span class='prop'>" + t[1] + "</span>";
+	});
+
+	//strings
+	code = code.replace(/(\"(\\.|[^\"])*\")/g, function(v) {
+		return "<span class='str'>" + v + "</span>";
+	});
+
+	//comments
+	code = code.replace(/(\/\/[a-zA-Z0-9\?\!\(\)_ ]*)/g, function(v) {
+		return "<span class='cmnt'>" + v + "</span>";
+	});
+
+	if(!skip_css)
+		code = "<style>.obj { color: #79B; } .prop { color: #B97; }	.str { color: #A79; } .num { color: #B97; } .cmnt { color: #798; } .rsv { color: #9AB; } </style>" + code;
 
 	return code;
 }
@@ -3462,9 +3525,13 @@ function beautifyCode(code, reserved)
 		return element;
 	}
 
+	//element to add, position of the parent node, position inside children, the depth level
 	Tree.prototype._insertInside = function(element, parent_index, offset_index, level )
 	{
 		var parent = this.root.childNodes[ parent_index ];
+		if(!parent)
+			throw("No parent node found, index: " + parent_index +", nodes: " + this.root.childNodes.length );
+
 		var parent_level = parseInt( parent.dataset["level"] );
 		var child_level = level !== undefined ? level : parent_level + 1;
 
@@ -4161,7 +4228,7 @@ function beautifyCode(code, reserved)
 		for(var i = 0; i < children.length; i++)
 		{
 			var child = children[i];
-			this._insertInside( child, last_index + i - 1, 0, parseInt( child.dataset["level"] ) );
+			this._insertInside( child, parent_index, last_index + i - 1, parseInt( child.dataset["level"] ) );
 		}
 		
 		this._updateListBox( parent );
@@ -4374,10 +4441,17 @@ function beautifyCode(code, reserved)
 	}
 
 	/****************** DIALOG **********************/
+	/**
+	* Dialog
+	*
+	* @class Dialog
+	* @param {string} id
+	* @param {Object} options useful options are { title, width, height, closable, on_close, }
+	* @constructor
+	*/
 	function Dialog(id, options)
 	{
 		this._ctor( id, options );
-		//this.makeDialog(options);
 	}
 
 	Dialog.MINIMIZED_WIDTH = 200;
@@ -4427,8 +4501,8 @@ function beautifyCode(code, reserved)
 		panel.innerHTML = code;
 
 		this.root = panel;
-		this.content = $(panel).find(".content")[0];
-		this.footer = $(panel).find(".panel-footer")[0];
+		this.content = panel.querySelector(".content");
+		this.footer = panel.querySelector(".panel-footer");
 
 		if(options.buttons)
 		{
@@ -4437,16 +4511,33 @@ function beautifyCode(code, reserved)
 		}
 
 		//if(options.scroll == false)	this.content.style.overflow = "hidden";
-		if(options.scroll == true)	this.content.style.overflow = "auto";
+		if(options.scroll == true)
+			this.content.style.overflow = "auto";
 
-		$(panel).find(".close-button").bind("click", this.close.bind(this) );
-		$(panel).find(".minimize-button").bind("click", this.minimize.bind(this) );
-		$(panel).find(".maximize-button").bind("click", this.maximize.bind(this) );
-		$(panel).find(".hide-button").bind("click", this.hide.bind(this) );
+		//buttons *********************************
+		var close_button = panel.querySelector(".close-button");
+		if(close_button)
+			close_button.addEventListener("click", this.close.bind(this) );
+
+		var maximize_button = panel.querySelector(".maximize-button");
+		if(maximize_button)
+			maximize_button.addEventListener("click", this.maximize.bind(this) );
+
+		var minimize_button = panel.querySelector(".minimize-button");
+		if(minimize_button)
+			minimize_button.addEventListener("click", this.minimize.bind(this) );
+
+		var hide_button = panel.querySelector(".hide-button");
+		if(hide_button)
+			hide_button.addEventListener("click", this.hide.bind(this) );
 
 		this.makeDialog(options);
 	}
 
+	/**
+	* add widget or html to the content of the dialog
+	* @method add
+	*/
 	Dialog.prototype.add = function( litegui_item )
 	{
 		this.content.appendChild( litegui_item.root || litegui_item );
@@ -4513,8 +4604,7 @@ function beautifyCode(code, reserved)
 		this.resizable = true;
 		var footer = this.footer;
 		footer.style.minHeight = "4px";
-
-		$(footer).addClass("resizable");
+		footer.classList.add("resizable");
 
 		footer.addEventListener("mousedown", inner_mouse);
 
@@ -4610,9 +4700,13 @@ function beautifyCode(code, reserved)
 		if(parent.content)
 			parent.content.appendChild(panel);
 		else if( typeof(parent) == "string")
-			$(parent).append(panel)
+		{
+			parent = document.querySelector( parent );
+			if(parent)
+				parent.appendChild( panel )
+		}
 		else
-			parent.appendChild(panel); 
+			parent.appendChild( panel ); 
 	}
 
 	Dialog.prototype.addButton = function(name,options)
@@ -4623,9 +4717,9 @@ function beautifyCode(code, reserved)
 		button.innerHTML = name;
 		if(options.className) button.className = options.className;
 
-		$(this.root).find(".panel-footer").append(button);
+		this.root.querySelector(".panel-footer").appendChild( button );
 
-		$(button).bind("click", function(e) { 
+		button.addEventListener("click", function(e) { 
 			if(options.callback)
 				options.callback(this);
 
@@ -4652,9 +4746,15 @@ function beautifyCode(code, reserved)
 	}
 	*/	
 
+	/**
+	* destroys the dialog
+	* @method close
+	*/
 	Dialog.prototype.close = function() {
 		$(this.root).remove();
 		$(this).trigger("closed");
+		if(this.on_close)
+			this.on_close();
 	}
 
 	Dialog.prototype.highlight = function(time)
@@ -4674,12 +4774,17 @@ function beautifyCode(code, reserved)
 		this.minimized = true;
 		this.old_pos = $(this.root).position();
 
-		$(this.root).find(".content").hide();
-		$(this.root).draggable({ disabled: true });
-		$(this.root).find(".minimize-button").hide();
-		$(this.root).find(".maximize-button").show();
-		$(this.root).css({width: LiteGUI.Dialog.MINIMIZED_WIDTH});
+		this.root.querySelector(".content").style.display = "none";
+		
+		var minimize_button = this.root.querySelector(".minimize-button");
+		if(minimize_button)	
+			minimize_button.style.display = "none";
 
+		var maximize_button = this.root.querySelector(".maximize-button");
+		if(maximize_button)
+			maximize_button.style.display = null;
+
+		this.root.style.width = LiteGUI.Dialog.MINIMIZED_WIDTH + "px";
 
 		$(this).bind("closed", function() {
 			LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
@@ -4699,19 +4804,26 @@ function beautifyCode(code, reserved)
 			var dialog = LiteGUI.Dialog.minimized[i];
 			var parent = dialog.root.parentNode;
 			var pos = $(parent).height() - 20;
-			$(panel.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+			$(dialog.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
 		}
 	}
 
 	Dialog.prototype.maximize = function() {
-		if(!this.minimized) return;
+		if(!this.minimized)
+			return;
 		this.minimized = false;
 
-		$(this.root).find(".content").show();
+		this.root.querySelector(".content").style.display = null;
 		$(this.root).draggable({ disabled: false });
 		$(this.root).animate({ left: this.old_pos.left+"px" , top: this.old_pos.top + "px", width: this.width },100);
-		$(this.root).find(".minimize-button").show();
-		$(this.root).find(".maximize-button").hide();
+
+		var minimize_button = this.root.querySelector(".minimize-button");
+		if(minimize_button)
+			minimize_button.style.display = null;
+
+		var maximize_button = this.root.querySelector(".maximize-button");
+		if(maximize_button)
+			maximize_button.style.display = "none";
 
 		LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
 		LiteGUI.Dialog.arrangeMinimized();
@@ -4741,20 +4853,28 @@ function beautifyCode(code, reserved)
 		parent.attach(this.root);
 	}
 
+	/**
+	* shows a hidden dialog
+	* @method show
+	*/
 	Dialog.prototype.show = function(v,callback)
 	{
 		if(!this.root.parentNode)
 			LiteGUI.add(this);
 
 		//$(this.root).show(v,null,100,callback);
-		$(this.root).show();
+		this.root.style.display = null;
 		$(this).trigger("shown");
 	}
 
+	/**
+	* hides the dialog
+	* @method hide
+	*/
 	Dialog.prototype.hide = function(v,callback)
 	{
 		//$(this.root).hide(v,null,100,callback);
-		$(this.root).hide();
+		this.root.style.display = "none";
 		$(this).trigger("hidden");
 	}
 
@@ -4778,6 +4898,11 @@ function beautifyCode(code, reserved)
 		this.root.style.top = Math.floor(( $(this.root.parentNode).height() - $(this.root).height() ) * 0.5) + "px";
 	}
 
+	/**
+	* Adjust the size of the dialog to the size of the content
+	* @method adjustSize
+	* @param {number} margin
+	*/
 	Dialog.prototype.adjustSize = function( margin )
 	{
 		margin = margin || 0;
@@ -4907,6 +5032,16 @@ Inspector.prototype.clear = function()
 	this.widgets = {};
 
 	this.addSection();
+}
+
+/**
+* Tryes to refresh (calls on_refresh)
+* @method clear
+*/
+Inspector.prototype.refresh = function()
+{
+	if(this.on_refresh)
+		this.on_refresh();
 }
 
 Inspector.prototype.append = function(widget, options)
@@ -5262,10 +5397,10 @@ Inspector.prototype.set = function(name, value)
 
 Inspector.prototype.addSection = function(name, options)
 {
-	options = this.processOptions(options);
-
 	if(this.current_group)
 		this.endGroup();
+
+	options = this.processOptions(options);
 
 	var element = document.createElement("DIV");
 	element.className = "wsection";
@@ -5277,6 +5412,8 @@ Inspector.prototype.addSection = function(name, options)
 
 	if(options.id)
 		element.id = options.id;
+	if(options.instance)
+		element.instance = options.instance;
 
 	var code = "";
 	if(name)
@@ -5299,12 +5436,33 @@ Inspector.prototype.addSection = function(name, options)
 	if(options.collapsed)
 		element.querySelector(".wsectioncontent").style.display = "none";
 
+	this.setCurrentSection( element );
+
+	if(options.widgets_per_row)
+		this.widgets_per_row = options.widgets_per_row;
+
+	element.refresh = function()
+	{
+		if(element.on_refresh)
+			element.on_refresh.call(this, element);
+	}
+
+	return element;
+}
+
+Inspector.prototype.setCurrentSection = function(element)
+{
+	if(this.current_group)
+		this.endGroup();
+
 	this.current_section = element;
 	this.current_section_content = element.querySelector(".wsectioncontent");
 	this.content = this.current_section_content; //shortcut
-	if(options.widgets_per_row)
-		this.widgets_per_row = options.widgets_per_row;
-	return element;
+}
+
+Inspector.prototype.getCurrentSection = function()
+{
+	return this.current_section;
 }
 
 Inspector.prototype.beginGroup = function(name, options)
@@ -5423,7 +5581,9 @@ Inspector.prototype.addStringButton = function(name,value, options)
 	var element = this.createWidget(name,"<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
 	var input = element.querySelector(".wcontent input");
 	input.addEventListener("change", function(e) { 
-		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		if(r !== undefined)
+			this.value = r;
 	});
 	
 	var button = element.querySelector(".wcontent button");
@@ -6165,6 +6325,7 @@ Inspector.prototype.addList = function(name, values, options)
 			$(this).toggleClass("selected");
 		else
 		{
+			//batch action, jquery...
 			$(element).find("li").removeClass("selected");
 			$(this).addClass("selected");
 		}
@@ -6205,7 +6366,7 @@ Inspector.prototype.addList = function(name, values, options)
 		for(var i = 0; i < items.length; i++)
 		{
 			if(items[i].dataset["name"] == name)
-				$(items[i]).remove();
+				LiteGUI.remove( items[i] );
 		}
 	}
 
@@ -6221,17 +6382,51 @@ Inspector.prototype.addList = function(name, values, options)
 		return r;
 	}
 
+	element.getIndex = function(num)
+	{
+		var items = this.querySelectorAll("ul li");
+		return items[num];
+	}
+
+	element.selectIndex = function(num)
+	{
+		var items = this.querySelectorAll("ul li");
+		for(var i = 0; i < items.length; ++i)
+		{
+			var item = items[i];
+			if(i == num)
+				item.classList.add("selected");
+			else
+				item.classList.remove("selected");
+		}
+		return items[num];
+	}
+
+	element.scrollToIndex = function(num)
+	{
+		var items = this.querySelectorAll("ul li");
+		var item = items[num];
+		if(!item)
+			return;
+		this.scrollTop = item.offsetTop;
+	}
+
 	element.selectAll = function()
 	{
 		var items = this.querySelectorAll("ul li");
 		for(var i = 0; i < items.length; ++i)
 		{
 			var item = items[i];
-			if($(item).hasClass("selected"))
+			if( item.classList.contains("selected") )
 				continue;
 			$(item).click();
 		}
 		return r;
+	}
+
+	element.setValue = function(v)
+	{
+		this.updateItems(v);
 	}
 
 	if(options.height) 
@@ -6333,22 +6528,27 @@ Inspector.prototype.addIcon = function(name, value, options)
 	icon.addEventListener("mousedown", function(e) {
 		e.preventDefault();
 		value = !value;
-		Inspector.onWidgetChange.call(that,element,name, value, options);
+		var ret = Inspector.onWidgetChange.call(that,element,name, value, options);
 		LiteGUI.trigger( element, "wclick", value);
+
+		if(ret !== undefined)
+			value = ret;
 
 		var y = value ? height : 0;
 		icon.style.backgroundPosition = x + "px " + y + "px";
 
-		if(options.toggle === false)
+		if(options.toggle === false) //blink
 			setTimeout( function(){ icon.style.backgroundPosition = x + "px 0px"; value = false; },200 );
 
 	});
 	this.append(element,options);
 
-	element.setValue = function(v) { 
+	element.setValue = function(v, skip_event ) { 
+		value = v;
 		var y = value ? height : 0;
 		icon.style.backgroundPosition = x + "px " + y + "px";
-		//LiteGUI.trigger(input, "change" );
+		if(!skip_event)
+			Inspector.onWidgetChange.call(that,element,name, value, options);
 	};
 	element.getValue = function() { return value; };
 

@@ -1247,7 +1247,7 @@ a:hover {
 }
 
 .litemenubar ul {
-	font-family: Tahoma;
+	font-family:Tahoma, sans-serif;
 	margin: 0;
 	padding: 0;
 }
@@ -1417,6 +1417,12 @@ button.close-button {
 	-webkit-user-select: none;  
 	cursor: pointer;
 	transition: all 0.3s;
+}
+
+.litetabs li.wtab .tabtitle {
+    overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .litetabs.horizontal > ul.wtabcontainer > li.wtab {

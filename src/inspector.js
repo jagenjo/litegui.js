@@ -81,6 +81,16 @@ Inspector.prototype.clear = function()
 	this.addSection();
 }
 
+/**
+* Tryes to refresh (calls on_refresh)
+* @method clear
+*/
+Inspector.prototype.refresh = function()
+{
+	if(this.on_refresh)
+		this.on_refresh();
+}
+
 Inspector.prototype.append = function(widget, options)
 {
 	var root = this.root;
@@ -434,10 +444,10 @@ Inspector.prototype.set = function(name, value)
 
 Inspector.prototype.addSection = function(name, options)
 {
-	options = this.processOptions(options);
-
 	if(this.current_group)
 		this.endGroup();
+
+	options = this.processOptions(options);
 
 	var element = document.createElement("DIV");
 	element.className = "wsection";
@@ -449,6 +459,8 @@ Inspector.prototype.addSection = function(name, options)
 
 	if(options.id)
 		element.id = options.id;
+	if(options.instance)
+		element.instance = options.instance;
 
 	var code = "";
 	if(name)
@@ -471,12 +483,33 @@ Inspector.prototype.addSection = function(name, options)
 	if(options.collapsed)
 		element.querySelector(".wsectioncontent").style.display = "none";
 
+	this.setCurrentSection( element );
+
+	if(options.widgets_per_row)
+		this.widgets_per_row = options.widgets_per_row;
+
+	element.refresh = function()
+	{
+		if(element.on_refresh)
+			element.on_refresh.call(this, element);
+	}
+
+	return element;
+}
+
+Inspector.prototype.setCurrentSection = function(element)
+{
+	if(this.current_group)
+		this.endGroup();
+
 	this.current_section = element;
 	this.current_section_content = element.querySelector(".wsectioncontent");
 	this.content = this.current_section_content; //shortcut
-	if(options.widgets_per_row)
-		this.widgets_per_row = options.widgets_per_row;
-	return element;
+}
+
+Inspector.prototype.getCurrentSection = function()
+{
+	return this.current_section;
 }
 
 Inspector.prototype.beginGroup = function(name, options)
@@ -595,7 +628,9 @@ Inspector.prototype.addStringButton = function(name,value, options)
 	var element = this.createWidget(name,"<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
 	var input = element.querySelector(".wcontent input");
 	input.addEventListener("change", function(e) { 
-		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		if(r !== undefined)
+			this.value = r;
 	});
 	
 	var button = element.querySelector(".wcontent button");
@@ -1337,6 +1372,7 @@ Inspector.prototype.addList = function(name, values, options)
 			$(this).toggleClass("selected");
 		else
 		{
+			//batch action, jquery...
 			$(element).find("li").removeClass("selected");
 			$(this).addClass("selected");
 		}
@@ -1377,7 +1413,7 @@ Inspector.prototype.addList = function(name, values, options)
 		for(var i = 0; i < items.length; i++)
 		{
 			if(items[i].dataset["name"] == name)
-				$(items[i]).remove();
+				LiteGUI.remove( items[i] );
 		}
 	}
 
@@ -1393,17 +1429,51 @@ Inspector.prototype.addList = function(name, values, options)
 		return r;
 	}
 
+	element.getIndex = function(num)
+	{
+		var items = this.querySelectorAll("ul li");
+		return items[num];
+	}
+
+	element.selectIndex = function(num)
+	{
+		var items = this.querySelectorAll("ul li");
+		for(var i = 0; i < items.length; ++i)
+		{
+			var item = items[i];
+			if(i == num)
+				item.classList.add("selected");
+			else
+				item.classList.remove("selected");
+		}
+		return items[num];
+	}
+
+	element.scrollToIndex = function(num)
+	{
+		var items = this.querySelectorAll("ul li");
+		var item = items[num];
+		if(!item)
+			return;
+		this.scrollTop = item.offsetTop;
+	}
+
 	element.selectAll = function()
 	{
 		var items = this.querySelectorAll("ul li");
 		for(var i = 0; i < items.length; ++i)
 		{
 			var item = items[i];
-			if($(item).hasClass("selected"))
+			if( item.classList.contains("selected") )
 				continue;
 			$(item).click();
 		}
 		return r;
+	}
+
+	element.setValue = function(v)
+	{
+		this.updateItems(v);
 	}
 
 	if(options.height) 
@@ -1505,22 +1575,27 @@ Inspector.prototype.addIcon = function(name, value, options)
 	icon.addEventListener("mousedown", function(e) {
 		e.preventDefault();
 		value = !value;
-		Inspector.onWidgetChange.call(that,element,name, value, options);
+		var ret = Inspector.onWidgetChange.call(that,element,name, value, options);
 		LiteGUI.trigger( element, "wclick", value);
+
+		if(ret !== undefined)
+			value = ret;
 
 		var y = value ? height : 0;
 		icon.style.backgroundPosition = x + "px " + y + "px";
 
-		if(options.toggle === false)
+		if(options.toggle === false) //blink
 			setTimeout( function(){ icon.style.backgroundPosition = x + "px 0px"; value = false; },200 );
 
 	});
 	this.append(element,options);
 
-	element.setValue = function(v) { 
+	element.setValue = function(v, skip_event ) { 
+		value = v;
 		var y = value ? height : 0;
 		icon.style.backgroundPosition = x + "px " + y + "px";
-		//LiteGUI.trigger(input, "change" );
+		if(!skip_event)
+			Inspector.onWidgetChange.call(that,element,name, value, options);
 	};
 	element.getValue = function() { return value; };
 

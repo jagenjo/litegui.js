@@ -107,6 +107,14 @@
 		return this.tabs[id];
 	}
 
+	Tabs.prototype.getNumOfTabs = function()
+	{
+		var num = 0;
+		for(var i in this.tabs)
+			num++;
+		return num;
+	}
+
 	Tabs.prototype.getTabContent = function(id)
 	{
 		var tab = this.tabs[id];
@@ -138,16 +146,20 @@
 		//the tab element
 		var element = document.createElement("LI");
 		var safe_id = id.replace(/ /gi,"_");
-		element.className = "wtab wtab-" + safe_id;
+		element.className = "wtab wtab-" + safe_id + " ";
 		//if(options.selected) element.className += " selected";
 		element.dataset["id"] = id;
 		element.innerHTML = "<span class='tabtitle'>" + (options.title || id) + "</span>";
 
+		if(options.button)
+			element.className += "button ";
+		if(options.tab_className)
+			element.className += options.tab_className;
 		if(options.bigicon)
 			element.innerHTML = "<img class='tabbigicon' src='" + options.bigicon+"'/>" + element.innerHTML;
 		if(options.closable)
 		{
-			element.innerHTML += "<span class='tabclose'>X</span>";
+			element.innerHTML += "<span class='tabclose'>" + LiteGUI.special_codes.close + "</span>";
 			element.querySelector("span.tabclose").addEventListener("click", function(e) { 
 				that.removeTab(id);
 				e.preventDefault();
@@ -156,12 +168,22 @@
 		}
 		//WARNING: do not modify element.innerHTML or event will be lost
 
-		if(options.index && options.index != -1)
+		if( options.index !== undefined )
 		{
-			this.list.insertBefore(element, this.list.childNodes[options.index]);
+			var after = this.list.childNodes[options.index];
+			if(after)
+				this.list.insertBefore(element,after);
+			else
+				this.list.appendChild(element);
 		}
 		else
 			this.list.appendChild(element);
+
+		if(options.tab_width)
+		{
+			element.style.width = options.tab_width.constructor === Number ? ( options.tab_width.toFixed(0) + "px" ) : options.tab_width;
+			element.style.minWidth = "0";
+		}
 
 		//the content of the tab
 		var content = document.createElement("div");
@@ -223,11 +245,17 @@
 		this.root.appendChild(content);
 
 		//when clicked
-		element.addEventListener("click", Tabs.prototype.onTabClicked );
+		if(!options.button)
+			element.addEventListener("click", Tabs.prototype.onTabClicked );
+		else
+			element.addEventListener("click", function(e){ 
+				var tab_id = this.dataset["id"];
+				if(options.callback)
+					options.callback( tab_id, e );
+			});
+
 		element.options = options;
 		element.tabs = this;
-
-		this.list.appendChild(element);
 
 		var tab_info = {id: id, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
 		if(options.onclose)
@@ -298,7 +326,7 @@
 		{
 			//launch callback
 			if(options.callback) 
-				options.callback(tab_id, tab_content);
+				options.callback(tab_id, tab_content,e);
 
 			$(that).trigger("wchange",[tab_id, tab_content]);
 			if(that.onchange)

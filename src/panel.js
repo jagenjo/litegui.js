@@ -89,13 +89,14 @@
 		{
 			code += "<div class='panel-header'>"+options.title+"</div><div class='buttons'>";
 			if(options.minimize){
-				code += "<button class='mini-button minimize-button'></button>";
+				code += "<button class='mini-button minimize-button'>-</button>";
 				code += "<button class='mini-button maximize-button' style='display:none'></button>";
 			}
 			if(options.hide)
 				code += "<button class='mini-button hide-button'></button>";
 			
-			if(options.close || options.closable) code += "<button class='mini-button close-button'></button>";
+			if(options.close || options.closable)
+				code += "<button class='mini-button close-button'>"+ LiteGUI.special_codes.close +"</button>";
 			code += "</div>";
 		}
 
@@ -106,6 +107,12 @@
 		this.root = panel;
 		this.content = panel.querySelector(".content");
 		this.footer = panel.querySelector(".panel-footer");
+
+		if(options.fullcontent)
+		{
+			this.content.style.width = "100%";		
+			this.content.style.height = "100%";		
+		}
 
 		if(options.buttons)
 		{
@@ -333,22 +340,6 @@
 		return button;
 	}
 
-	/*
-	Panel.prototype.open = function(v) {
-		$(this).trigger("opened");
-
-		if(!v)
-		{
-			$(this.root).remove();
-			return
-		}
-
-		$(this.root).hide('fade',null,function() {
-			$(this).remove();
-		});
-	}
-	*/	
-
 	/**
 	* destroys the dialog
 	* @method close
@@ -451,7 +442,7 @@
 
 	Dialog.prototype.bringToFront = function()
 	{
-		var parent = $(this.root).parent();
+		var parent = this.root.parentNode;
 		parent.detach(this.root);
 		parent.attach(this.root);
 	}
@@ -463,7 +454,7 @@
 	Dialog.prototype.show = function(v,callback)
 	{
 		if(!this.root.parentNode)
-			LiteGUI.add(this);
+			LiteGUI.add( this );
 
 		//$(this.root).show(v,null,100,callback);
 		this.root.style.display = null;
@@ -488,17 +479,31 @@
 		this.root.style.top = y + "px";
 	}
 
-	Dialog.prototype.setSize = function(w,h)
+	Dialog.prototype.setSize = function( w, h )
 	{
-		this.root.style.width = w + "px";
-		this.root.style.height = h + "px";
+		this.root.style.width = typeof(w) == "number" ? w + "px" : w;
+		this.root.style.height = typeof(h) == "number" ? h + "px" : h;
+	}
+
+	Dialog.prototype.setTitle = function(text)
+	{
+		if(!this.header)
+			return;
+		this.header.innerHTML = text;
 	}
 
 	Dialog.prototype.center = function()
 	{
+		if(!this.root.parentNode)
+			return;
+
 		this.root.position = "absolute";
-		this.root.style.left = Math.floor(( $(this.root.parentNode).width() - $(this.root).width() ) * 0.5) + "px";
-		this.root.style.top = Math.floor(( $(this.root.parentNode).height() - $(this.root).height() ) * 0.5) + "px";
+		var width = this.root.offsetWidth;
+		var height = this.root.offsetHeight;
+		var parent_width = this.root.parentNode.offsetWidth;
+		var parent_height = this.root.parentNode.offsetHeight;
+		this.root.style.left = Math.floor(( parent_width - width ) * 0.5) + "px";
+		this.root.style.top = Math.floor(( parent_height - height ) * 0.5) + "px";
 	}
 
 	/**
@@ -506,13 +511,22 @@
 	* @method adjustSize
 	* @param {number} margin
 	*/
-	Dialog.prototype.adjustSize = function( margin )
+	Dialog.prototype.adjustSize = function( margin, skip_timeout )
 	{
 		margin = margin || 0;
 		this.content.style.height = "auto";
-		var width = $(this.content).width();
-		var height = $(this.content).height() + 20 + margin;
-		this.setSize(width,height);
+
+		if(this.content.offsetHeight == 0 && !skip_timeout) //happens sometimes if the dialog is not yet visible
+		{
+			var that = this;
+			setTimeout( function(){ that.adjustSize( margin, true ); }, 1 );
+			return;
+		}
+
+		var width = this.content.offsetWidth;
+		var height = this.content.offsetHeight + 20 + margin;
+
+		this.setSize( width, height );
 	}
 
 	Dialog.prototype.clear = function()

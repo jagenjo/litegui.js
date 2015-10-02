@@ -19,13 +19,8 @@ var LiteGUI = {
 	//used for blacken when a modal dialog is shown
 	modalbg_div: null,
 
-	_modules_initialized: false,
-
 	//the top menu
 	mainmenu: null,
-
-	//registered modules
-	modules: [],
 
 	/**
 	* initializes the lib, must be called
@@ -74,10 +69,6 @@ var LiteGUI = {
 		if(options.gui_callback)
 			options.gui_callback();
 
-		//init all modules attached to the GUI
-		if(options.initModules != false) 
-			this.initModules();
-
 		//maximize
 		if( this.root.classList.contains("fullscreen") )
 		{
@@ -85,137 +76,62 @@ var LiteGUI = {
 				LiteGUI.maximizeWindow();
 			});
 		}
-
-		//grab some keys
-		document.addEventListener("keydown",function(e){
-			if(e.target.nodeName.toLowerCase() == "input" || e.target.nodeName.toLowerCase() == "textarea")
-				return;
-			if(e.keyCode == 17) return; //ctrl
-
-			if(e.keyCode == 26 || (e.keyCode == 90 && (e.ctrlKey || e.metaKey)) || (e.charCode == 122 && e.ctrlKey) ) //undo
-				LiteGUI.doUndo();
-			if(e.keyCode == 27) //esc
-				$(LiteGUI).trigger("escape");
-
-		});
-
-		//some modules may need to be unloaded
-		window.onbeforeunload = this.onUnload.bind(this);
 	},
 
-
-	initModules: function()
-	{
-		var catch_exceptions = false;
-
-		//pre init
-		for(var i in this.modules)
-			if (this.modules[i].preInit)
-			{
-				if(!catch_exceptions)
-				{
-					this.modules[i].preInit();
-					continue;
-				}
-				try
-				{
-					this.modules[i].preInit();
-				}
-				catch (err)
-				{
-					console.error(err);
-				}
-			}
-
-		//init
-		for(var i in this.modules)
-			if (this.modules[i].init && !this.modules[i]._initialized)
-			{
-				if(!catch_exceptions)
-				{
-					this.modules[i].init();
-				}
-				else
-				{
-					try
-					{
-						this.modules[i].init();
-					}
-					catch (err)
-					{
-						console.error(err);
-					}
-				}
-				this.modules[i]._initialized = true;
-			}
-
-		//post init
-		for(var i in this.modules)
-			if (this.modules[i].postInit)
-			{
-				if(!catch_exceptions)
-				{
-					this.modules[i].postInit();
-				}
-				else
-				{
-					try
-					{
-						this.modules[i].postInit();
-					}
-					catch (err)
-					{
-						console.error(err);
-					}
-				}
-			}
-
-
-		this._modules_initialized = true;
-	},
-
-	registerModule: function(module)
-	{
-		this.modules.push(module);
-
-		//initialize on late registration
-		if(this._modules_initialized)
-		{
-			if (module.preInit) module.preInit();
-			if (module.init) module.init();
-			if (module.postInit) module.postInit();
-		}
-
-		$(this).trigger("module_registered",module);
-	},
-
-	onUnload: function()
-	{
-		for(var i in this.modules)
-			if (this.modules[i].onUnload)
-				this.modules[i].onUnload();
-	},
-
-	//events
+	/**
+	* Triggers a simple event in an object (similar to jQuery.trigger)
+	* @method trigger
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {Object} element could be an HTMLEntity or a regular object
+	*/
 	trigger: function(element, event_name, params)
 	{
 		var evt = document.createEvent( 'CustomEvent' );
 		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
-		if(element.dispatchEvent)
+		if( element.dispatchEvent )
 			element.dispatchEvent(evt);
+		else if( element.__events )
+			element.__events.dispatchEvent(evt);
 		else
-			throw("trigger can only be called in DOMElements");
+			throw("Event couldnt be dispatched");
 		return evt;
 	},
 
-	bind: function(element, event, callback)
+	/**
+	* Binds an event in an object (similar to jQuery.bind)
+	* If the element is not an HTML entity a new one is created, attached to the object (as non-enumerable, called __events) and used
+	* @method trigger
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {String} event the string defining the event
+	* @param {Function} callback where to call
+	*/
+	bind: function( element, event, callback )
 	{
-		element.addEventListener(event, callback);
+		if(element.addEventListener)
+			element.addEventListener(event, callback);
+		else if(element.__events)
+			element.__events.addEventListener( event, callback );
+		else
+		{
+			//create a dummy HTMLentity so we can use it to bind HTML events
+			var dummy = document.createElement("span");
+			Object.defineProperty( element, "__events", {
+				enumerable: false,
+				configurable: false,
+				writable: false,
+				value: dummy
+			});
+			element.__events.addEventListener( event, callback );
+		}
 	},
 
 	unbind: function(element, event, callback)
 	{
-		element.removeEventListener(event, callback);
+		if( element.removeEventListener )
+			element.removeEventListener( event, callback );
+		else if( element.__events && element.__events.removeEventListener )
+			element.__events.removeEventListener( event, callback );
 	},
 
 	add: function( litegui_element )
@@ -225,7 +141,17 @@ var LiteGUI = {
 
 	remove: function( element )
 	{
-		if(element.parentNode)
+		if(element && element.constructor === String)
+		{
+			var elements = document.querySelectorAll( element );
+			for(var i = 0; i < elements.length; ++i)
+			{
+				var element = elements[i];
+				if(element && element.parentNode)
+					element.parentNode.removeChild(element);
+			}
+		}
+		else if(element.parentNode)
 			element.parentNode.removeChild(element);
 	},
 
@@ -267,53 +193,42 @@ var LiteGUI = {
 		this.root.style.cursor = name;
 	},
 
-	//UNDO **********************
-	max_undo_steps: 100,
-	min_time_between_undos: 500,
-	last_undo_time: 0, //to avoid doing too many undo steps simultaneously
-
-	addUndoStep: function(o)
-	{
-		var now =  new Date().getTime();
-		if( (now - this.last_undo_time) < this.min_time_between_undos) 
-			return;
-		this.undo_steps.push(o);
-		this.last_undo_time = now;
-		if(this.undo_steps.length > this.max_undo_steps)
-			this.undo_steps.shift();
-		LiteGUI.trigger(this.root, "new_undo", o);
-	},
-
-	doUndo: function()
-	{
-		if(!this.undo_steps.length) return;
-
-		var step = this.undo_steps.pop();
-		if(step.callback != null)
-			step.callback(step.data);
-
-		LiteGUI.trigger(this.root, "undo", step);
-	},
-
-	removeUndoSteps: function()
-	{
-		this.undo_steps = [];
-		LiteGUI.trigger(this.root, "clear_undo" );
-	},
-
 	// Clipboard ******************
-
 	toClipboard: function( object )
 	{
-		if(object == null) return;
-		localStorage.setItem("litegui_clipboard", JSON.stringify( object ) );
+		if(object && object.constructor !== String )
+			object = JSON.stringify( object );
+
+		var input = null;
+		var in_clipboard = false;
+		try
+		{
+			var copySupported = document.queryCommandSupported('copy');
+			input = document.createElement("input");
+			input.type = "text";
+			input.style.opacity = 0;
+			input.value = object;
+			document.body.appendChild( input );
+			input.select();
+			in_clipboard = document.execCommand('copy');
+			console.log( in_clipboard ? "saved to clipboard" : "problem saving to clipboard");
+			document.body.removeChild( input );
+		} catch (err) {
+			if(input)
+				document.body.removeChild( input );
+			console.log('Oops, unable to copy using the true clipboard');
+		}
+
+		//old system
+		localStorage.setItem("litegui_clipboard", object );
 	},
 
 	getClipboard: function()
 	{
 		var data = localStorage.getItem("litegui_clipboard");
-		if(!data) return null;
-		return JSON.parse(data);
+		if(!data) 
+			return null;
+		return JSON.parse( data );
 	},
 
 	// CSS ************************
@@ -486,14 +401,19 @@ var LiteGUI = {
 		return this.createElement("div",id,code);
 	},
 
-	createElement: function(tag, id, content)
+	createElement: function(tag, id, content, style)
 	{
 		var elem = document.createElement( tag );
-		elem.id = id;
+		if(id)
+			elem.id = id;
 		elem.root = elem;
-		if(content !== undefined)
+		if(content)
 			elem.innerHTML = content;
 		elem.add = function(v) { this.appendChild( v.root || v ); };
+
+		if(style)
+			for(var i in style)
+				elem.style[i] = style[i];
 		return elem;
 	},
 
@@ -778,6 +698,10 @@ var LiteGUI = {
 			}
 		}
 		return o;
+	},
+
+	special_codes: {
+		close: "&#10005;"
 	}
 };
 

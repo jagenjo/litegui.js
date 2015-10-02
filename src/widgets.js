@@ -96,9 +96,18 @@
 			return false;
 		},true);
 
-
 		this.root = root;
-		
+
+		//title
+		if(options.title)
+		{
+			var element = document.createElement("div");
+			element.className = "litemenu-title";
+			element.innerHTML = options.title;
+			root.appendChild(element);
+		}
+
+		//entries
 		for(var i in values)
 		{
 			var element = document.createElement("div");
@@ -160,6 +169,8 @@
 		{
 			left = (options.event.pageX - 10);
 			top = (options.event.pageY - 10);
+			if(options.title)
+				top -= 20;
 
 			var rect = document.body.getClientRects()[0];
 			if(left > (rect.width - $(root).width() - 10))

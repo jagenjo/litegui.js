@@ -71,13 +71,15 @@ Inspector.prototype.appendTo = function(parent, at_front)
 */
 Inspector.prototype.clear = function()
 {
-	purgeElement(this.root, true); //hack, but doesnt seem to work
-	$(this.root).empty();
+	purgeElement( this.root, true ); //hack, but doesnt seem to work
+	this.root.innerHTML = "";
 
 	this.sections = [];
 	this.values = {};
 	this.widgets = {};
 
+	this.current_container = null;
+	this._current_container_stack = null;
 	this.addSection();
 }
 
@@ -94,15 +96,38 @@ Inspector.prototype.refresh = function()
 Inspector.prototype.append = function(widget, options)
 {
 	var root = this.root;
-	if(this.current_group_content)
+	if( this.current_container )
+		root = this.current_container;
+	else if( this.current_group_content )
 		root = this.current_group_content;
-	else if(this.current_section_content)
+	else if( this.current_section_content )
 		root = this.current_section_content;
 
 	if(options && options.replace)
-		options.replace.parentNode.replaceChild(widget, options.replace);
+		options.replace.parentNode.replaceChild( widget, options.replace );
 	else
-		root.appendChild(widget);
+		root.appendChild( widget );
+}
+
+Inspector.prototype.pushContainer = function( element )
+{
+	if(!this._current_container_stack)
+		this._current_container_stack = [ element ];
+	else
+		this._current_container_stack.push( element );
+
+	this.current_container = element;
+}
+
+Inspector.prototype.popContainer = function()
+{
+	if(this._current_container_stack && this._current_container_stack.length)
+	{
+		this._current_container_stack.pop();
+		this.current_container = this._current_container_stack[ this._current_container_stack.length - 1 ];
+	}
+	else
+		this.current_container = null;
 }
 
 Inspector.prototype.setup = function(info)
@@ -310,7 +335,7 @@ Inspector.prototype.createWidget = function(name, content, options)
 	var contentwidth = "";
 	if(name != null && (this.name_width || options.name_width) && !this.one_line)
 	{
-		var w = this.name_width || options.name_width;
+		var w = options.name_width || this.name_width;
 		if(typeof(w) == "number") w = w.toFixed() + "px";
 		namewidth = "style='width: calc(" + w + " - 0px); width: -webkit-calc(" + w + " - 0px); width: -moz-calc(" + w + " - 0px); '"; //hack 
 		contentwidth = "style='width: calc( 100% - " + w + "); width: -webkit-calc(100% - " + w + "); width: -moz-calc( 100% - " + w + "); '";
@@ -442,6 +467,37 @@ Inspector.prototype.set = function(name, value)
 	//TODO
 }
 
+Inspector.prototype.addContainer = function(name, options)
+{
+	options = this.processOptions(options);
+
+	var element = document.createElement("DIV");
+	element.className = "wcontainer";
+	if(options.className)
+		element.className += " " + options.className;
+	if(options.id)
+		element.id = options.id;
+
+	this.append( element );
+	this.pushContainer( element );
+
+	if(options.widgets_per_row)
+		this.widgets_per_row = options.widgets_per_row;
+
+	element.refresh = function()
+	{
+		if(element.on_refresh)
+			element.on_refresh.call(this, element);
+	}
+	return element;
+}
+
+Inspector.prototype.endContainer = function(name, options)
+{
+	this.popContainer();
+}
+
+
 Inspector.prototype.addSection = function(name, options)
 {
 	if(this.current_group)
@@ -497,6 +553,7 @@ Inspector.prototype.addSection = function(name, options)
 	return element;
 }
 
+
 Inspector.prototype.setCurrentSection = function(element)
 {
 	if(this.current_group)
@@ -529,7 +586,7 @@ Inspector.prototype.beginGroup = function(name, options)
 	if(options.collapsed)
 		content.style.display = "none";
 
-	element.appendChild(content);
+	element.appendChild( content );
 
 	var collapsed = options.collapsed || false;
 	element.querySelector(".wgroupheader").addEventListener("click", function() { 
@@ -1466,9 +1523,9 @@ Inspector.prototype.addList = function(name, values, options)
 			var item = items[i];
 			if( item.classList.contains("selected") )
 				continue;
-			$(item).click();
+			//$(item).click();
+			LiteGUI.trigger( item, "click" );
 		}
-		return r;
 	}
 
 	element.setValue = function(v)

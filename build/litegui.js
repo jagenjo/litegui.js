@@ -91,11 +91,10 @@ var LiteGUI = {
 		var evt = document.createEvent( 'CustomEvent' );
 		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
 		if( element.dispatchEvent )
-			element.dispatchEvent(evt);
+			element.dispatchEvent( evt );
 		else if( element.__events )
-			element.__events.dispatchEvent(evt);
-		else
-			throw("Event couldnt be dispatched");
+			element.__events.dispatchEvent( evt );
+		//else nothing seems binded here so nothing to do
 		return evt;
 	},
 
@@ -109,6 +108,8 @@ var LiteGUI = {
 	*/
 	bind: function( element, event, callback )
 	{
+		if(!callback)
+			throw("bind callback missing");
 		if(element.addEventListener)
 			element.addEventListener(event, callback);
 		else if(element.__events)
@@ -117,16 +118,25 @@ var LiteGUI = {
 		{
 			//create a dummy HTMLentity so we can use it to bind HTML events
 			var dummy = document.createElement("span");
+			dummy.widget = element; //double link
 			Object.defineProperty( element, "__events", {
 				enumerable: false,
 				configurable: false,
 				writable: false,
 				value: dummy
 			});
+
 			element.__events.addEventListener( event, callback );
 		}
 	},
 
+	/**
+	* Unbinds an event in an object (similar to jQuery.unbind)
+	* @method unbind
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {String} event the string defining the event
+	* @param {Function} callback where to call
+	*/
 	unbind: function(element, event, callback)
 	{
 		if( element.removeEventListener )
@@ -135,14 +145,24 @@ var LiteGUI = {
 			element.__events.removeEventListener( event, callback );
 	},
 
+	/**
+	* Appends litegui widget to the global interface
+	* @method add
+	* @param {Object} litegui_element
+	*/
 	add: function( litegui_element )
 	{
 		this.content.appendChild( litegui_element.root || litegui_element );
 	},
 
+	/**
+	* Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.
+	* @method remove
+	* @param {Object} litegui_element it also supports HTMLentity or selector string
+	*/
 	remove: function( element )
 	{
-		if(element && element.constructor === String)
+		if(element && element.constructor === String) //selector
 		{
 			var elements = document.querySelectorAll( element );
 			for(var i = 0; i < elements.length; ++i)
@@ -152,10 +172,18 @@ var LiteGUI = {
 					element.parentNode.removeChild(element);
 			}
 		}
-		else if(element.parentNode)
-			element.parentNode.removeChild(element);
+		else if( element.root && element.root.parentNode ) //ltiegui widget
+			element.root.parentNode.removeChild( element.root );
+		else if( element.parentNode ) //regular HTML entity
+			element.parentNode.removeChild( element );
 	},
 
+	/**
+	* wrapper of document.getElementById
+	* @method getById
+	* @param {String} id
+	* return {HTMLEntity}
+	**/
 	getById: function(id)
 	{
 		return document.getElementById(id);
@@ -189,12 +217,21 @@ var LiteGUI = {
 		this.setWindowSize();
 	},
 
+	/**
+	* Change cursor
+	* @method setCursor
+	* @param {String} cursor
+	**/
 	setCursor: function( name )
 	{
 		this.root.style.cursor = name;
 	},
 
-	// Clipboard ******************
+	/**
+	* Copy a string to the clipboard (it needs to be invoqued from a click event)
+	* @method toClipboard
+	* @param {String} data
+	**/
 	toClipboard: function( object )
 	{
 		if(object && object.constructor !== String )
@@ -224,23 +261,52 @@ var LiteGUI = {
 		localStorage.setItem("litegui_clipboard", object );
 	},
 
+	/**
+	* Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)
+	* @method getClipboard
+	* @return {String} clipboard
+	**/
 	getClipboard: function()
 	{
 		var data = localStorage.getItem("litegui_clipboard");
 		if(!data) 
 			return null;
-		return JSON.parse( data );
+		if(data[0] == "{")
+			return JSON.parse( data );
+		return data;
 	},
 
-	// CSS ************************
+	/**
+	* Insert some CSS code to the website
+	* @method addCSS
+	* @param {String|Object} code it could be a string with CSS rules, or an object with the style syntax.
+	**/
 	addCSS: function(code)
 	{
-		var style = document.createElement('style');
-		style.type = 'text/css';
-		style.innerHTML = code;
-		document.getElementsByTagName('head')[0].appendChild(style);
+		if(!code)
+			return;
+
+		if(code.constructor === String)
+		{
+			var style = document.createElement('style');
+			style.type = 'text/css';
+			style.innerHTML = code;
+			document.getElementsByTagName('head')[0].appendChild(style);
+			return;
+		}
+		else
+		{
+			for(var i in code)
+			document.body.style[i] = code[i];
+		}
 	},
 
+	/**
+	* Requires a new CSS
+	* @method requireCSS
+	* @param {String} url string with url or an array with several urls
+	* @param {Function} on_complete
+	**/
 	requireCSS: function(url, on_complete)
 	{
 		if(typeof(url)=="string")
@@ -261,6 +327,12 @@ var LiteGUI = {
 		}
 	},
 
+	/**
+	* Request file from url (it could be a binary, text, etc.). If you want a simplied version use 
+	* @method request
+	* @param {Object} request object with all the parameters like data (for sending forms), dataType, success, error
+	* @param {Function} on_complete
+	**/
 	request: function(request)
 	{
 		var dataType = request.dataType || "text";
@@ -324,7 +396,7 @@ var LiteGUI = {
 				}
 			}
 			if(request.success)
-				request.success.call(this, response);
+				request.success.call(this, response, this);
 		};
         xhr.onerror = function(err) {
 			if(request.error)
@@ -334,7 +406,52 @@ var LiteGUI = {
 		return xhr;
 	},	
 
-	requireScript: function(url, on_complete, on_progress, on_error )
+	/**
+	* Request file from url
+	* @method requestText
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestText: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:"text", success: on_complete, error: on_error });
+	},
+
+	/**
+	* Request file from url
+	* @method requestJSON
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestJSON: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:"json", success: on_complete, error: on_error });
+	},
+
+	/**
+	* Request binary file from url
+	* @method requestBinary
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestBinary: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:"binary", success: on_complete, error: on_error });
+	},
+	
+	
+	/**
+	* Request script and inserts it in the DOM
+	* @method requireScript
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	* @param {Function} on_progress (if several files are required, on_progress is called after every file is added to the DOM)
+	**/
+	requireScript: function(url, on_complete, on_error, on_progress )
 	{
 		if(typeof(url)=="string")
 			url = [url];
@@ -402,6 +519,14 @@ var LiteGUI = {
 		return this.createElement("div",id,code);
 	},
 
+	/**
+	* Request script and inserts it in the DOM
+	* @method createElement
+	* @param {String} tag
+	* @param {String} id
+	* @param {String} content
+	* @param {Object} style
+	**/
 	createElement: function(tag, id, content, style)
 	{
 		var elem = document.createElement( tag );
@@ -418,6 +543,13 @@ var LiteGUI = {
 		return elem;
 	},
 
+	/**
+	* Request script and inserts it in the DOM
+	* @method createButton
+	* @param {String} id
+	* @param {String} content
+	* @param {Function} callback when the button is pressed
+	**/
 	createButton: function( id, content, callback )
 	{
 		var elem = document.createElement("button");
@@ -473,14 +605,20 @@ var LiteGUI = {
 		options.title = options.title || "Attention";
 		options.content = content;
 		options.close = 'fade';
-		var dialog = new LiteGUI.Dialog("info_message",options);
+		var dialog = new LiteGUI.Dialog(null,options);
 		if(!options.noclose)
 			dialog.addButton("Close",{ close: true });
 		dialog.makeModal('fade');
 		return dialog;
 	},
 
-	popup: function(content,options)
+	/**
+	* Shows a dialog with a message
+	* @method popup
+	* @param {String} content
+	* @param {Object} options ( min_height, content, noclose )
+	**/
+	popup: function( content, options )
 	{
 		options = options || {};
 
@@ -499,7 +637,13 @@ var LiteGUI = {
 	},
 
 
-	alert: function(content,options)
+	/**
+	* Shows an alert dialog with a message
+	* @method alert
+	* @param {String} content
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	alert: function( content, options )
 	{
 		options = options || {};
 
@@ -513,6 +657,13 @@ var LiteGUI = {
 		return this.showMessage(content,options);
 	},
 
+	/**
+	* Shows a confirm dialog with a message
+	* @method confirm
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
 	confirm: function(content, callback, options)
 	{
 		options = options || {};
@@ -534,15 +685,22 @@ var LiteGUI = {
 
 		function inner(v) {
 			var v = this.dataset["value"] == "yes";
+			dialog.close(); //close before callback
 			if(callback) 
 				callback(v);
-			dialog.close();
 		}
 
 		return dialog;
 	},
 
-	prompt: function(content, callback, options )
+	/**
+	* Shows a prompt dialog with a message
+	* @method prompt
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	prompt: function( content, callback, options )
 	{
 		options = options || {};
 		options.className = "alert";
@@ -559,29 +717,43 @@ var LiteGUI = {
 
 		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
-		var dialog = this.showMessage(content,options);
+		var dialog = this.showMessage( content, options );
 
 		var buttons = dialog.content.querySelectorAll("button");
 		for(var i = 0; i < buttons.length; i++)
 			buttons[i].addEventListener("click", inner);
 
-		function inner() {
-			var value = dialog.content.querySelector("input,textarea").value;
-			if(this.dataset["value"] == "cancel")
-				value = null;
+		var input = dialog.content.querySelector("input,textarea");
+		input.addEventListener("keydown", inner_key, true);
 
+		function inner() {
+			var value = input.value;
+			if(this.dataset && this.dataset["value"] == "cancel")
+				value = null;
+			dialog.close(); //close before callback
 			if(callback)
 				callback( value );
-			dialog.close();
 		};
 
-		var elem = dialog.content.querySelector("input,textarea");
-		elem.focus();
+		function inner_key(e)
+		{
+			if (!e)
+				e = window.event;
+			var keyCode = e.keyCode || e.which;
+			if (keyCode == '13'){
+				inner();
+				return false;
+			}		
+		};
 
+		input.focus();
 		return dialog;
 	},
 
-	//Add support to get variables from the URL
+	/**
+	* Returns the URL vars ( ?foo=faa&foo2=etc )
+	* @method getUrlVars
+	**/
 	getUrlVars: function(){
 		var vars = [], hash;
 		var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
@@ -603,6 +775,12 @@ var LiteGUI = {
 		element.focus();
 	},
 
+	/**
+	* Makes one element draggable
+	* @method draggable
+	* @param {HTMLEntity} container the element that will be dragged
+	* @param {HTMLEntity} dragger the area to start the dragging
+	**/
 	draggable: function(container, dragger)
 	{
 		dragger = dragger || container;
@@ -660,7 +838,12 @@ var LiteGUI = {
 		}
 	},
 
-	//extracted from LiteScene
+	/**
+	* Clones object content
+	* @method cloneObject
+	* @param {Object} object
+	* @param {Object} target
+	**/
 	cloneObject: function(object, target)
 	{
 		var o = target || {};
@@ -1402,12 +1585,11 @@ function beautifyJSON( code, skip_css )
 	* @param {Array} values
 	* @param {Object} options
 	*/
-	function List(id,items,options)
+	function List( id, items, options )
 	{
 		options = options || {};
 
-		var root = document.createElement("ul");
-		this.root = root;
+		var root = this.root = document.createElement("ul");
 		root.id = id;
 		root.className = "litelist";
 		this.items = [];
@@ -1421,6 +1603,7 @@ function beautifyJSON( code, skip_css )
 			var item = document.createElement("li");
 			item.className = "list-item";
 			item.data = items[i];
+			item.dataset["value"] = items[i];
 
 			var content = "";
 			if(typeof(items[i]) == "string")
@@ -1428,28 +1611,49 @@ function beautifyJSON( code, skip_css )
 			else
 			{
 				content = (items[i].name || items[i].title || "") + "<span class='arrow'></span>";
-				if(items[i].id)	item.id = items[i].id;
+				if(items[i].id)
+					item.id = items[i].id;
 			}
 			item.innerHTML = content;
+
+			item.addEventListener("click", function() {
+
+				$(root).find(".list-item.selected").removeClass("selected");
+				this.classList.add("selected");
+				$(that.root).trigger("wchanged", this);
+				if(that.callback)
+					that.callback( this.data  );
+			});
 
 			root.appendChild(item);
 		}
 
-		$(root).find(".list-item").click( function() {
-			$(root).find(".list-item.selected").removeClass("selected");
-			$(this).addClass("selected");
-
-			$(that.root).trigger("wchanged", this);
-			if(that.callback)
-				that.callback( this.data  );
-		});
 
 		if(options.parent)
 		{
 			if(options.parent.root)
-				$(options.parent.root).append(root);
+				options.parent.root.appendChild( root );
 			else
-				$(options.parent).append(root);
+				options.parent.appendChild( root );
+		}
+	}
+
+	List.prototype.getSelectedItem = function()
+	{
+		return this.root.querySelector(".list-item.selected");
+	}
+
+	List.prototype.setSelectedItem = function( name )
+	{
+		var items = this.root.querySelectorAll(".list-item");
+		for(var i = 0; i < items.length; i++)
+		{
+			var item = items[i];
+			if(item.data == name)
+			{
+				LiteGUI.trigger( item, "click" );
+				break;
+			}
 		}
 	}
 
@@ -1850,7 +2054,7 @@ function beautifyJSON( code, skip_css )
 
 	
 	/****************** AREA **************/
-	/**
+	/** An Area is am streched container.
 	* Areas can be split several times horizontally or vertically to fit different colums or rows
 	*
 	* @class Area
@@ -1860,10 +2064,14 @@ function beautifyJSON( code, skip_css )
 	{
 		options = options || {};
 		/* the root element containing all sections */
-		var element = document.createElement("div");
-		element.className = "litearea";
-		if(id) element.id = id;
-		this.root = element;
+		var root = document.createElement("div");
+		root.className = "litearea";
+		if(id)
+			root.id = id;
+		if(options.className)
+			root.className += options.className;
+
+		this.root = root;
 		this.root.litearea = this; //dbl link
 
 		var width = options.width || "100%";
@@ -1874,16 +2082,17 @@ function beautifyJSON( code, skip_css )
 		if( height < 0 )
 			height = 'calc( 100% - '+ Math.abs(height)+'px)';
 
-		element.style.width = width;
-		element.style.height = height;
+		root.style.width = width;
+		root.style.height = height;
 
 		this.options = options;
 
 		var that = this;
-		window.addEventListener("resize",function(e) { that.resize(e); });
+		//window.addEventListener("resize",function(e) { that.onResize(e); });
 		//$(this).bind("resize",function(e) { that.resize(e); });
 
-		this._computed_size = [ $(this.root).width(), $(this.root).height() ];
+		//this._computed_size = [ $(this.root).width(), $(this.root).height() ];
+		this._computed_size = [ this.root.offsetWidth, this.root.offserHeight ];
 
 		var content = document.createElement("div");
 		if(options.content_id)
@@ -1891,15 +2100,15 @@ function beautifyJSON( code, skip_css )
 		content.className = "liteareacontent";
 		content.style.width = "100%";
 		content.style.height = "100%";
-		this.root.appendChild(content);
+		this.root.appendChild( content );
 		this.content = content;
 
 		this.split_direction = "none";
 		this.sections = [];
 
 		if(options.autoresize)
-			$(LiteGUI).bind("resized", function() { 
-				that.resize(); 
+			LiteGUI.bind( LiteGUI, "resized", function() { 
+				that.onResize(); 
 			});
 	}
 
@@ -1914,13 +2123,61 @@ function beautifyJSON( code, skip_css )
 		return null;
 	}
 
-	Area.prototype.resize = function(e)
+	Area.prototype.onResize = function(e)
 	{
-		var computed_size = [ $(this.root).width(), $(this.root).height() ];
+		//this._computed_size = [ $(this.root).width(), $(this.root).height() ];
+		var computed_size = [ this.root.offsetWidth, this.root.offsetHeight ];
 		if( e && this._computed_size && computed_size[0] == this._computed_size[0] && computed_size[1] == this._computed_size[1])
 			return;
 
 		this.sendResizeEvent(e);
+	}
+
+	//sends the resize event to all the sections
+	Area.prototype.sendResizeEvent = function(e)
+	{
+		if(this.sections.length)
+			for(var i in this.sections)
+			{
+				var section = this.sections[i];
+				section.onResize(e);
+				//$(section).trigger("resize"); //it is a LiteArea
+				//$(section.root).trigger("resize");
+				/*
+				for (var j = 0; j < section.root.childNodes.length; j++)
+					$(section.root.childNodes[j]).trigger("resize");
+				*/
+			}
+		else //send it to the children
+		{
+			for (var j = 0; j < this.root.childNodes.length; j++)
+			{
+				var element = this.root.childNodes[j];
+				if(element.litearea)
+					element.litearea.onResize();
+				else
+					LiteGUI.trigger( element, "resize" );
+			}
+		}
+
+		//inner callback
+		if( this.onresize )
+			this.onresize();
+	}
+
+	Area.prototype.getWidth = function()
+	{
+		return this.root.offsetWidth;
+	}
+
+	Area.prototype.getHeight = function()
+	{
+		return this.root.offsetHeight;
+	}
+
+	Area.prototype.isVisible = function()
+	{
+		return this.root.style.display != "none";	
 	}
 
 	Area.prototype.adjustHeight = function()
@@ -1939,36 +2196,6 @@ function beautifyJSON( code, skip_css )
 
 		//adjust height
 		this.root.style.height = "calc( 100% - " + y + "px )";
-	}
-
-	Area.prototype.sendResizeEvent = function(e)
-	{
-		if(this.sections.length)
-			for(var i in this.sections)
-			{
-				var section = this.sections[i];
-				section.resize(e);
-				//$(section).trigger("resize"); //it is a LiteArea
-				//$(section.root).trigger("resize");
-				/*
-				for (var j = 0; j < section.root.childNodes.length; j++)
-					$(section.root.childNodes[j]).trigger("resize");
-				*/
-			}
-		else //send it to the children
-		{
-			for (var j = 0; j < this.root.childNodes.length; j++)
-			{
-				var element = this.root.childNodes[j];
-				if(element.litearea)
-					element.litearea.resize();
-				else
-					$(element).trigger("resize");
-			}
-		}
-
-		if( this.onresize )
-			this.onresize();
 	}
 
 	Area.prototype.split = function(direction, sizes, editable)
@@ -2137,7 +2364,7 @@ function beautifyJSON( code, skip_css )
 			e.stopPropagation();
 			e.preventDefault();
 			if(that.options.inmediateResize)
-				that.resize();
+				that.onResize();
 		}
 
 		function inner_mouseup(e)
@@ -2145,7 +2372,7 @@ function beautifyJSON( code, skip_css )
 			var doc = that.root.ownerDocument;
 			doc.removeEventListener("mousemove",inner_mousemove);
 			doc.removeEventListener("mouseup",inner_mouseup);
-			that.resize();
+			that.onResize();
 		}
 	}
 
@@ -2224,47 +2451,62 @@ function beautifyJSON( code, skip_css )
 		var area2 = this.sections[1];
 		var splitinfo = " - "+ Area.splitbar_size +"px";
 
+		var min_size = this.options.minSplitSize || 10;
+
 		if(this.direction == "horizontal")
 		{
 
 			if (this.dynamic_section == area1)
 			{
-				var size = ($(area2.root).width() + delta) + "px";
-				area1.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.width = "calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = size;
+				//var size = ($(area2.root).width() + delta) + "px";
+				var size = (area2.root.offsetWidth + delta);
+				if(size < min_size)
+					size = min_size;
+				area1.root.style.width = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.width = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.width = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.width = size + "px"; //other split
 			}
 			else
 			{
-				var size = ($(area1.root).width() - delta) + "px";
-				area1.root.style.width = size;
-				area2.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = "calc( 100% - " + size + splitinfo + " )";
+				//var size = ($(area1.root).width() - delta) + "px";
+				var size = (area1.root.offsetWidth - delta);
+				if(size < min_size)
+					size = min_size;
+				area2.root.style.width = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.width = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.width = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.width = size + "px"; //other split
 			}
 		}
 		else if(this.direction == "vertical")
 		{
 			if (this.dynamic_section == area1)
 			{
-				var size = ($(area2.root).height() - delta) + "px";
-				area1.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.height = "calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = size;
+				//var size = ($(area2.root).height() - delta) + "px";
+				var size = (area2.root.offsetHeight - delta);
+				if(size < min_size)
+					size = min_size;
+				area1.root.style.height = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.height = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.height = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.height = size + "px"; //other split
 			}
 			else
 			{
-				var size = ($(area1.root).height() + delta) + "px";
-				area1.root.style.height = size;
-				area2.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = "calc( 100% - " + size + splitinfo + " )";
+				//var size = ($(area1.root).height() + delta) + "px";
+				var size = (area1.root.offsetHeight + delta);
+				if(size < min_size)
+					size = min_size;
+				area2.root.style.height = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.height = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.height = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.height = size + "px"; //other split
 			}
 		}
 
 		LiteGUI.trigger( this.root, "split_moved");
+		//trigger split_moved event in all areas inside this area
 		var areas = this.root.querySelectorAll(".litearea");
 		for(var i = 0; i < areas.length; ++i)
 			LiteGUI.trigger( areas[i], "split_moved" );
@@ -2310,7 +2552,7 @@ function beautifyJSON( code, skip_css )
 
 		this.sections = [];
 		this._computed_size = null;
-		this.resize();
+		this.onResize();
 	}
 
 	Area.prototype.add = function(v)
@@ -2425,7 +2667,7 @@ function beautifyJSON( code, skip_css )
 
 	Menubar.prototype.clear = function()
 	{
-		$(this.content).empty();
+		this.content.innerHTML = "";
 		this.menu = [];
 		this.panels = [];
 	}
@@ -2435,9 +2677,12 @@ function beautifyJSON( code, skip_css )
 		$(panel.content).prepend(this.root);
 	}
 
-	Menubar.prototype.add = function(path, data)
+	Menubar.prototype.add = function( path, data )
 	{
 		data = data || {};
+
+		if( typeof(data) == "function" )
+			data = { callback: data };
 
 		var prev_length = this.menu.length;
 
@@ -2445,25 +2690,27 @@ function beautifyJSON( code, skip_css )
 		var current_token = 0;
 		var current_pos = 0;
 		var menu = this.menu;
+		var last_item = null;
 
-		while(menu)
+		while( menu )
 		{
 			if(current_token > 5)
 				throw("Error: Menubar too deep");
 			//token not found in this menu, create it
-			if(menu.length == current_pos)
+			if( menu.length == current_pos )
 			{
-				var v = { children: []};
+				var v = { parent: last_item, children: [] };
+				last_item = v;
 				if(current_token == tokens.length - 1)
 					v.data = data;
 
 				v.disable = function() { if( this.data ) this.data.disabled = true; }
 				v.enable = function() { if( this.data ) delete this.data.disabled; }
 
-				v.name = tokens[current_token];
-				menu.push(v);
+				v.name = tokens[ current_token ];
+				menu.push( v );
 				current_token++;
-				if(current_token == tokens.length)
+				if( current_token == tokens.length )
 					break;
 				v.children = [];
 				menu = v.children;
@@ -2472,11 +2719,12 @@ function beautifyJSON( code, skip_css )
 			}
 
 			//token found in this menu, get inside for next token
-			if(menu[current_pos] && tokens[current_token] == menu[current_pos].name)
+			if( menu[ current_pos ] && tokens[ current_token ] == menu[ current_pos ].name )
 			{
 				if(current_token < tokens.length - 1)
 				{
-					menu = menu[current_pos].children;
+					last_item = menu[ current_pos ];
+					menu = menu[ current_pos ].children;
 					current_pos = 0;
 					current_token++;
 					continue;
@@ -2494,47 +2742,65 @@ function beautifyJSON( code, skip_css )
 			this.updateMenu();
 	};
 
-	Menubar.prototype.separator = function(path, order)
+	Menubar.prototype.remove = function( path )
 	{
-		var menu = this.findMenu(path);
-		if(!menu) return;
-		menu.push( {separator: true, order: order || 10 } );
+		var menu = this.findMenu( path );
+		if(!menu)
+			return;
+		if(!menu.parent || !menu.parent.children)
+			return console.warn("menu without parent?");
+		
+		var index = menu.parent.children.indexOf( menu );
+		if(index != -1)
+			menu.parent.children.splice( index, 1 );
+	},
+
+	Menubar.prototype.separator = function( path, order )
+	{
+		var menu = this.findMenu( path );
+		if(!menu)
+			return;
+		menu.children.push( {separator: true, order: order || 10 } );
 	}
 
-
-	Menubar.prototype.findMenu = function(path)
+	//returns the menu entry that matches this path
+	Menubar.prototype.findMenu = function( path )
 	{
 		var tokens = path.split("/");
 		var current_token = 0;
 		var current_pos = 0;
 		var menu = this.menu;
 
-		while(menu)
+		while( menu )
 		{
+			//no more tokens, return last found menu
 			if(current_token == tokens.length)
 				return menu;
 
+			//this menu doesnt have more entries
 			if(menu.length <= current_pos)
 				return null;
 
-			if(tokens[current_token] == "*")
-				return menu[current_pos].children;
+			if(tokens[ current_token ] == "*")
+				return menu[ current_pos ].children;
 
 			//token found in this menu, get inside for next token
-			if(tokens[current_token] == menu[current_pos].name)
+			if( tokens[ current_token ] == menu[ current_pos ].name )
 			{
-				if(current_token < tokens.length)
+				if(current_token == tokens.length - 1) //last token
 				{
-					menu = menu[current_pos].children;
+					return menu[ current_pos ];
+				}
+				else
+				{
+					menu = menu[ current_pos ].children;
 					current_pos = 0;
 					current_token++;
 					continue;
 				}
-				else //last token
-				{
-					return menu[current_pos];
-				}
 			}
+
+			//check next entry in this menu
 			current_pos++;
 		}
 		return null;
@@ -2545,7 +2811,7 @@ function beautifyJSON( code, skip_css )
 	{
 		var that = this;
 
-		$(this.content).empty();
+		this.content.innerHTML = "";
 		for(var i in this.menu)
 		{
 			var element = document.createElement("li");
@@ -2555,7 +2821,7 @@ function beautifyJSON( code, skip_css )
 			this.menu[i].element = element;
 
 			/* ON CLICK TOP MAIN MENU ITEM */
-			$(element).bind("click", function(e) {
+			element.addEventListener("click", function(e) {
 				var item = this.data;
 
 				if(item.data && item.data.callback && typeof(item.data.callback) == "function")
@@ -2574,7 +2840,7 @@ function beautifyJSON( code, skip_css )
 				}
 			});
 
-			$(element).bind("mouseover", function(e) {
+			element.addEventListener("mouseover", function(e) {
 				that.hidePanels();
 				if(that.is_open)
 					that.showMenu( this.data, e, this );
@@ -2583,10 +2849,11 @@ function beautifyJSON( code, skip_css )
 	}
 
 	Menubar.prototype.hidePanels = function() {
-		if(!this.panels.length) return;
+		if(!this.panels.length)
+			return;
 
 		for(var i in this.panels)
-			$(this.panels[i]).remove();
+			LiteGUI.remove(this.panels[i]);
 		this.panels = [];
 	}
 
@@ -2596,9 +2863,11 @@ function beautifyJSON( code, skip_css )
 		if(!is_submenu)
 			this.hidePanels();
 
-		if(!menu.children || !menu.children.length) return;
+		if(!menu.children || !menu.children.length)
+			return;
 		var that = this;
-		if(that.closing_by_leave) clearInterval(that.closing_by_leave);
+		if(that.closing_by_leave)
+			clearInterval(that.closing_by_leave);
 
 		var element = document.createElement("div");
 		element.className = "litemenubar-panel";
@@ -2648,7 +2917,7 @@ function beautifyJSON( code, skip_css )
 			}
 
 			/* ON CLICK SUBMENU ITEM */
-			$(item).bind("click",function(){
+			item.addEventListener("click",function(){
 				var item = this.data;
 				if(item.data)
 				{
@@ -2662,9 +2931,9 @@ function beautifyJSON( code, skip_css )
 						{
 							item.data.instance[item.data.property] = !item.data.instance[item.data.property];
 							if(	item.data.instance[item.data.property] )
-								$(this).addClass("checked");
+								this.classList.add("checked");
 							else
-								$(this).removeClass("checked");
+								this.classList.remove("checked");
 						}
 						else if( item.data.hasOwnProperty("value") )
 						{
@@ -2677,9 +2946,9 @@ function beautifyJSON( code, skip_css )
 					{
 						item.data.checkbox = !item.data.checkbox;
 						if(	item.data.checkbox )
-							$(this).addClass("checked");
+							this.classList.add("checked");
 						else
-							$(this).removeClass("checked");
+							this.classList.remove("checked");
 					}
 
 					//execute a function
@@ -2698,10 +2967,10 @@ function beautifyJSON( code, skip_css )
 					that.hidePanels();
 				}
 			});
-			$(element).append(item);
+			element.appendChild( item );
 		}
 
-		$(element).bind("mouseleave",function(e){
+		element.addEventListener("mouseleave",function(e){
 			//if( $(e.target).hasClass("litemenubar-panel") || $(e.target).parents().hasClass("litemenubar-panel") ) 	return;
 			
 			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
@@ -2711,7 +2980,7 @@ function beautifyJSON( code, skip_css )
 			},LiteGUI.Menubar.closing_time);
 		});
 
-		$(element).bind("mouseenter",function(e){
+		element.addEventListener("mouseenter",function(e){
 			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
 			that.closing_by_leave = null;
 		});
@@ -2721,7 +2990,7 @@ function beautifyJSON( code, skip_css )
 		element.style.top = jQ.offset().top + jQ.height() + ( is_submenu ? -20 : 2 ) + "px";
 
 		this.panels.push(element);
-		$(document.body).append(element);
+		document.body.appendChild( element );
 		$(element).hide().show();
 	}
 
@@ -2730,6 +2999,13 @@ function beautifyJSON( code, skip_css )
 /**************  ***************************/
 (function(){
 	
+
+	/**
+	* Widget that contains several tabs and their content
+	*
+	* @class Tabs
+	* @constructor
+	*/
 	function Tabs(id,options)
 	{
 		options = options || {};
@@ -2803,6 +3079,12 @@ function beautifyJSON( code, skip_css )
 		this.root.style.display = "none";
 	}
 
+
+	/**
+	* Returns the currently selected tab in the form of a tab object
+	* @method getCurrentTab
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
 	Tabs.prototype.getCurrentTab = function()
 	{
 		if(!this.current_tab)
@@ -2815,7 +3097,11 @@ function beautifyJSON( code, skip_css )
 		return this.current_tab[0];
 	}
 
-	//used to know from which tab we come
+	/**
+	* Returns the last tab pressed before this one. used to know from which tab we come
+	* @method getCurrentTab
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
 	Tabs.prototype.getPreviousTab = function()
 	{
 		if(!this.previous_tab)
@@ -2823,7 +3109,7 @@ function beautifyJSON( code, skip_css )
 		return this.tabs[ this.previous_tab[0] ];
 	}
 
-	Tabs.prototype.appendTo = function(parent,at_front)
+	Tabs.prototype.appendTo = function(parent, at_front)
 	{
 		if(at_front)
 			$(parent).prepend(this.root);
@@ -2831,11 +3117,22 @@ function beautifyJSON( code, skip_css )
 			$(parent).append(this.root);
 	}
 
+	/**
+	* Returns a tab 
+	* @method getTab
+	* @param {String} id tab id
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
 	Tabs.prototype.getTab = function(id)
 	{
 		return this.tabs[id];
 	}
 
+	/**
+	* Returns how many tabs there is
+	* @method getNumOfTabs
+	* @return {number} number of tabs
+	*/
 	Tabs.prototype.getNumOfTabs = function()
 	{
 		var num = 0;
@@ -2844,6 +3141,12 @@ function beautifyJSON( code, skip_css )
 		return num;
 	}
 
+	/**
+	* Returns the content HTML element of a tab
+	* @method getTabContent
+	* @param {String} id
+	* @return {HTMLEntity} content
+	*/
 	Tabs.prototype.getTabContent = function(id)
 	{
 		var tab = this.tabs[id];
@@ -2851,6 +3154,12 @@ function beautifyJSON( code, skip_css )
 			return tab.content;
 	}
 
+	/**
+	* Returns the index of a tab (the position in the tabs list)
+	* @method getTabIndex
+	* @param {String} id
+	* @return {number} index
+	*/
 	Tabs.prototype.getTabIndex = function(id)
 	{
 		var tab = this.tabs[id];
@@ -2863,7 +3172,14 @@ function beautifyJSON( code, skip_css )
 	}
 
 
-	//create a new tab, where name is a unique identifier
+	/**
+	* Create a new tab, where id is a unique identifier
+	* @method addTab
+	* @param {String} id
+	* @param {Object} options { title: tab text, callback: called when selected, callback_leave: callback when leaving, content: HTML content, closable: if it can be closed (callback is onclose), tab_width: size of the tab, tab_className: classes for the tab element, id: content id, size: full means all, mode: "vertical" or "horizontal", button: if it is a button tab, not a selectable tab}
+	* @param {bool} skip_event prevent dispatching events
+	* @return {Object} an object containing { id, tab, content }
+	*/
 	Tabs.prototype.addTab = function( id, options, skip_event )
 	{
 		options = options || {};
@@ -2931,6 +3247,7 @@ function beautifyJSON( code, skip_css )
 				content.style.overflow = "auto";
 				if(options.size == "full")
 				{
+					content.style.width = "100%";
 					content.style.height = "calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
 					content.style.height = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
 					content.style.height = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
@@ -2947,6 +3264,7 @@ function beautifyJSON( code, skip_css )
 				content.style.overflow = "auto";
 				if(options.size == "full")
 				{
+					content.style.height = "100%";
 					content.style.width = "calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
 					content.style.width = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
 					content.style.width = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
@@ -3122,6 +3440,11 @@ function beautifyJSON( code, skip_css )
 		}
 
 		this.tabs = {};
+	}
+
+	Tabs.prototype.clear = function()
+	{
+		this.removeAllTabs();
 	}
 
 	Tabs.prototype.hideTab = function(id)
@@ -3342,12 +3665,22 @@ function beautifyJSON( code, skip_css )
 
 
 /**
-* To create interactive trees (useful for folders or hierarchies)
-* data should be in the next structure:
+* To create interactive trees (useful for folders or hierarchies).
+* Options are:
+*	+ allow_multiselection: allow to select multiple elements using the shift key
+*	+ allow_rename: double click to rename items in the tree
+*	+ allow_drag: drag elements around
+*	+ height
+* Item data should be in the next format:
 * {
 *    id: unique_identifier,
 *    content: what to show in the HTML (if omited id will be shown)
 *	 children: []  array with another object with the same structure
+*	 className: class
+*    precontent: HTML inserted before the content
+*	 visible: boolean, to hide it
+*	 dataset: dataset for the element
+*	 onDragData: callback in case the user drags this item somewhere else
 * }
 *
 * @class Tree
@@ -3365,7 +3698,7 @@ function beautifyJSON( code, skip_css )
 		root.className = "litetree";
 		this.tree = data;
 		var that = this;
-		options = options || {allow_rename: false, drag: false, allow_multiselection: false};
+		options = options || {allow_rename: false, allow_drag: true, allow_multiselection: false};
 		this.options = options;
 
 		if(options.height)
@@ -3482,7 +3815,7 @@ function beautifyJSON( code, skip_css )
 
 		this._updateListBox( element );
 
-		if(options.selected)
+		if(options && options.selected)
 			this.markAsSelected( element, true );
 
 		return element;
@@ -3655,6 +3988,9 @@ function beautifyJSON( code, skip_css )
 		root.appendChild(title_element);
 		root.title_element = title_element;
 
+		if(data.visible === false)
+			root.style.display = "none";
+
 		//var row = root.querySelector(".ltreeitemtitle .incontent");
 		var row = root;
 		row.addEventListener("click", onNodeSelected );
@@ -3767,74 +4103,86 @@ function beautifyJSON( code, skip_css )
 		}
 
 		//dragging tree
-		var draggable_element = title_element;
-		draggable_element.draggable = true;
-
-		//starts dragging this element
-		draggable_element.addEventListener("dragstart", function(ev) {
-			//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
-			//ev.dataTransfer.setData("node-id", this.parentNode.id);
-			ev.dataTransfer.setData("item_id", this.parentNode.dataset["item_id"]);
-		});
-
-		//something being dragged entered
-		draggable_element.addEventListener("dragenter", function (ev)
+		if(this.options.allow_drag)
 		{
-			ev.preventDefault();
-			if(data.skipdrag)
-				return false;
+			var draggable_element = title_element;
+			draggable_element.draggable = true;
 
-			title_element.classList.add("dragover");
-		});
+			//starts dragging this element
+			draggable_element.addEventListener("dragstart", function(ev) {
+				//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
+				//ev.dataTransfer.setData("node-id", this.parentNode.id);
+				ev.dataTransfer.setData("item_id", this.parentNode.dataset["item_id"]);
+				if(!data.onDragData)
+					return;
 
-		draggable_element.addEventListener("dragleave", function (ev)
-		{
-			ev.preventDefault();
-			//console.log(data.id);
-			title_element.classList.remove("dragover");
-			//if(ev.srcElement == this) return;
-		});
-
-		//test if allows to drag stuff on top?
-		draggable_element.addEventListener("dragover", on_drag_over );
-		function on_drag_over(ev)
-		{
-			ev.preventDefault();
-		}
-
-		draggable_element.addEventListener("drop", function (ev)
-		{
-			$(title_element).removeClass("dragover");
-			ev.preventDefault();
-			if(data.skipdrag)
-				return false;
-
-			var item_id = ev.dataTransfer.getData("item_id");
-
-			//var data = ev.dataTransfer.getData("Text");
-			if(!item_id)
-			{
-				LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
-				return;
-			}
-
-			//try
-			{
-				var parent_id = this.parentNode.dataset["item_id"];
-
-				if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+				var drag_data =	data.onDragData();
+				if(drag_data)
 				{
-					if( that.moveItem( item_id, parent_id ) )
-						LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+					for(var i in drag_data)
+						ev.dataTransfer.setData(i,drag_data[i]);
 				}
-			}
-			/*
-			catch (err)
+			});
+
+			//something being dragged entered
+			draggable_element.addEventListener("dragenter", function (ev)
 			{
-				console.error("Error: " + err );
+				ev.preventDefault();
+				if(data.skipdrag)
+					return false;
+
+				title_element.classList.add("dragover");
+			});
+
+			draggable_element.addEventListener("dragleave", function (ev)
+			{
+				ev.preventDefault();
+				//console.log(data.id);
+				title_element.classList.remove("dragover");
+				//if(ev.srcElement == this) return;
+			});
+
+			//test if allows to drag stuff on top?
+			draggable_element.addEventListener("dragover", on_drag_over );
+			function on_drag_over(ev)
+			{
+				ev.preventDefault();
 			}
-			*/
-		});
+
+			draggable_element.addEventListener("drop", function (ev)
+			{
+				title_element.classList.remove("dragover");
+				ev.preventDefault();
+				if(data.skipdrag)
+					return false;
+
+				var item_id = ev.dataTransfer.getData("item_id");
+
+				//var data = ev.dataTransfer.getData("Text");
+				if(!item_id)
+				{
+					LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
+					return;
+				}
+
+				//try
+				{
+					var parent_id = this.parentNode.dataset["item_id"];
+
+					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+					{
+						if( that.moveItem( item_id, parent_id ) )
+							LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+					}
+				}
+				/*
+				catch (err)
+				{
+					console.error("Error: " + err );
+				}
+				*/
+			});
+		} //allow drag
 
 		return root;
 	}
@@ -3843,7 +4191,7 @@ function beautifyJSON( code, skip_css )
 	{
 		for(var i = 0; i < this.root.childNodes.length; ++i)
 		{
-			var childNode = this.root.childNodes[i];
+			var childNode = this.root.childNodes[i]; //ltreeitem
 			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
 				continue;
 
@@ -3855,7 +4203,8 @@ function beautifyJSON( code, skip_css )
 
 			if(!name || str.indexOf( name.toLowerCase() ) != -1)
 			{
-				childNode.style.display = null;
+				if( childNode.data && childNode.data.visible !== false )
+					childNode.style.display = null;
 				var indent = childNode.querySelector(".indentblock");
 				if(indent)
 				{
@@ -4395,7 +4744,8 @@ function beautifyJSON( code, skip_css )
 		this.footer = this.root.querySelector(".panel-footer");
 
 		//if(options.scroll == false)	this.content.style.overflow = "hidden";
-		if(options.scroll == true)	this.content.style.overflow = "auto";
+		if(options.scroll == true)
+			this.content.style.overflow = "auto";
 	}
 
 	Panel.prototype.add = function( litegui_item )
@@ -4553,8 +4903,6 @@ function beautifyJSON( code, skip_css )
 		if(options.resizable)
 			this.setResizable();
 
-		//$(panel).bind("click",function(){});
-
 		var parent = null;
 		if(options.parent)
 			parent = typeof(options.parent) == "string" ? document.querySelector(options.parent) : options.parent;
@@ -4568,7 +4916,8 @@ function beautifyJSON( code, skip_css )
 
 	Dialog.prototype.setResizable = function()
 	{
-		if(this.resizable) return;
+		if(this.resizable)
+			return;
 
 		var root = this.root;
 		this.resizable = true;
@@ -4705,10 +5054,12 @@ function beautifyJSON( code, skip_css )
 	* @method close
 	*/
 	Dialog.prototype.close = function() {
-		$(this.root).remove();
-		$(this).trigger("closed");
+		LiteGUI.remove( this );
+		LiteGUI.trigger( this, "closed", this);
 		if(this.on_close)
 			this.on_close();
+		if(this.onclose)
+			console.warn("Dialog: Do not use onclose, use on_close instead");
 	}
 
 	Dialog.prototype.highlight = function(time)
@@ -4740,7 +5091,7 @@ function beautifyJSON( code, skip_css )
 
 		this.root.style.width = LiteGUI.Dialog.MINIMIZED_WIDTH + "px";
 
-		$(this).bind("closed", function() {
+		LiteGUI.bind( this, "closed", function() {
 			LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
 			LiteGUI.Dialog.arrangeMinimized();
 		});
@@ -4748,7 +5099,7 @@ function beautifyJSON( code, skip_css )
 		LiteGUI.Dialog.minimized.push( this );
 		LiteGUI.Dialog.arrangeMinimized();
 
-		$(this).trigger("minimizing");
+		LiteGUI.trigger( this,"minimizing" );
 	}
 
 	Dialog.arrangeMinimized = function()
@@ -4781,7 +5132,7 @@ function beautifyJSON( code, skip_css )
 
 		LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
 		LiteGUI.Dialog.arrangeMinimized();
-		$(this).trigger("maximizing");
+		LiteGUI.trigger( this, "maximizing" );
 	}
 
 	Dialog.prototype.makeModal = function()
@@ -4792,7 +5143,7 @@ function beautifyJSON( code, skip_css )
 		this.show();
 		this.center();
 
-		$(this).bind("closed", inner );
+		LiteGUI.bind( this, "closed", inner );
 
 		function inner(e)
 		{
@@ -4818,7 +5169,7 @@ function beautifyJSON( code, skip_css )
 
 		//$(this.root).show(v,null,100,callback);
 		this.root.style.display = null;
-		$(this).trigger("shown");
+		LiteGUI.trigger( this, "shown" );
 	}
 
 	/**
@@ -4827,9 +5178,8 @@ function beautifyJSON( code, skip_css )
 	*/
 	Dialog.prototype.hide = function(v,callback)
 	{
-		//$(this.root).hide(v,null,100,callback);
 		this.root.style.display = "none";
-		$(this).trigger("hidden");
+		LiteGUI.trigger(this, "hidden");
 	}
 
 	Dialog.prototype.setPosition = function(x,y)

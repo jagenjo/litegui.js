@@ -100,7 +100,7 @@ function updateSidePanel( root )
 	//tabs 
 	var tabs_widget = new LiteGUI.Tabs("paneltab");
 	tabs_widget.addTab("Info");
-	tabs_widget.addTab("Tree",{selected:true});
+	tabs_widget.addTab("Tree",{selected:true, width: "100%", height: 200});
 	tabs_widget.addTab("Extra");
 
 	$(tabs_widget.getTabContent("Info")).append("<strong>Example of code inside tab container</strong>");
@@ -118,17 +118,18 @@ function updateSidePanel( root )
 				{ id: "Child3" },
 			]};
 
-	var litetree = new LiteGUI.Tree("tree",mytree,{allow_rename:true});
-	$(litetree).bind("item_selected", function(e,node) {
+	var litetree = new LiteGUI.Tree("tree", mytree, {allow_rename:true});
+	LiteGUI.bind( litetree, "item_selected", function(e,node) {
 		console.log("Node selected: " + node); 
 	});
-	tabs_widget.getTabContent("Tree").appendChild( litetree.root );
+	var tree_tab_content = tabs_widget.getTabContent("Tree");
+	tree_tab_content.appendChild( litetree.root )
 
 	litetree.insertItem( {id:"FOO"}, "Child2",2 );
 	//litetree.removeItem( "SubChild1" );
 	//litetree.moveItem( "FOO", "Child3" );
 	litetree.insertItem( {id:"MAX"}, "Child1" );
-	$(root.content).append(tabs_widget.root);
+	root.add( tabs_widget );
 
 	//side panel widget
 	var widgets = new LiteGUI.Inspector();

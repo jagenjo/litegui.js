@@ -90,11 +90,10 @@ var LiteGUI = {
 		var evt = document.createEvent( 'CustomEvent' );
 		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
 		if( element.dispatchEvent )
-			element.dispatchEvent(evt);
+			element.dispatchEvent( evt );
 		else if( element.__events )
-			element.__events.dispatchEvent(evt);
-		else
-			throw("Event couldnt be dispatched");
+			element.__events.dispatchEvent( evt );
+		//else nothing seems binded here so nothing to do
 		return evt;
 	},
 
@@ -108,6 +107,8 @@ var LiteGUI = {
 	*/
 	bind: function( element, event, callback )
 	{
+		if(!callback)
+			throw("bind callback missing");
 		if(element.addEventListener)
 			element.addEventListener(event, callback);
 		else if(element.__events)
@@ -116,16 +117,25 @@ var LiteGUI = {
 		{
 			//create a dummy HTMLentity so we can use it to bind HTML events
 			var dummy = document.createElement("span");
+			dummy.widget = element; //double link
 			Object.defineProperty( element, "__events", {
 				enumerable: false,
 				configurable: false,
 				writable: false,
 				value: dummy
 			});
+
 			element.__events.addEventListener( event, callback );
 		}
 	},
 
+	/**
+	* Unbinds an event in an object (similar to jQuery.unbind)
+	* @method unbind
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {String} event the string defining the event
+	* @param {Function} callback where to call
+	*/
 	unbind: function(element, event, callback)
 	{
 		if( element.removeEventListener )
@@ -134,14 +144,24 @@ var LiteGUI = {
 			element.__events.removeEventListener( event, callback );
 	},
 
+	/**
+	* Appends litegui widget to the global interface
+	* @method add
+	* @param {Object} litegui_element
+	*/
 	add: function( litegui_element )
 	{
 		this.content.appendChild( litegui_element.root || litegui_element );
 	},
 
+	/**
+	* Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.
+	* @method remove
+	* @param {Object} litegui_element it also supports HTMLentity or selector string
+	*/
 	remove: function( element )
 	{
-		if(element && element.constructor === String)
+		if(element && element.constructor === String) //selector
 		{
 			var elements = document.querySelectorAll( element );
 			for(var i = 0; i < elements.length; ++i)
@@ -151,10 +171,18 @@ var LiteGUI = {
 					element.parentNode.removeChild(element);
 			}
 		}
-		else if(element.parentNode)
-			element.parentNode.removeChild(element);
+		else if( element.root && element.root.parentNode ) //ltiegui widget
+			element.root.parentNode.removeChild( element.root );
+		else if( element.parentNode ) //regular HTML entity
+			element.parentNode.removeChild( element );
 	},
 
+	/**
+	* wrapper of document.getElementById
+	* @method getById
+	* @param {String} id
+	* return {HTMLEntity}
+	**/
 	getById: function(id)
 	{
 		return document.getElementById(id);
@@ -188,12 +216,21 @@ var LiteGUI = {
 		this.setWindowSize();
 	},
 
+	/**
+	* Change cursor
+	* @method setCursor
+	* @param {String} cursor
+	**/
 	setCursor: function( name )
 	{
 		this.root.style.cursor = name;
 	},
 
-	// Clipboard ******************
+	/**
+	* Copy a string to the clipboard (it needs to be invoqued from a click event)
+	* @method toClipboard
+	* @param {String} data
+	**/
 	toClipboard: function( object )
 	{
 		if(object && object.constructor !== String )
@@ -223,23 +260,52 @@ var LiteGUI = {
 		localStorage.setItem("litegui_clipboard", object );
 	},
 
+	/**
+	* Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)
+	* @method getClipboard
+	* @return {String} clipboard
+	**/
 	getClipboard: function()
 	{
 		var data = localStorage.getItem("litegui_clipboard");
 		if(!data) 
 			return null;
-		return JSON.parse( data );
+		if(data[0] == "{")
+			return JSON.parse( data );
+		return data;
 	},
 
-	// CSS ************************
+	/**
+	* Insert some CSS code to the website
+	* @method addCSS
+	* @param {String|Object} code it could be a string with CSS rules, or an object with the style syntax.
+	**/
 	addCSS: function(code)
 	{
-		var style = document.createElement('style');
-		style.type = 'text/css';
-		style.innerHTML = code;
-		document.getElementsByTagName('head')[0].appendChild(style);
+		if(!code)
+			return;
+
+		if(code.constructor === String)
+		{
+			var style = document.createElement('style');
+			style.type = 'text/css';
+			style.innerHTML = code;
+			document.getElementsByTagName('head')[0].appendChild(style);
+			return;
+		}
+		else
+		{
+			for(var i in code)
+			document.body.style[i] = code[i];
+		}
 	},
 
+	/**
+	* Requires a new CSS
+	* @method requireCSS
+	* @param {String} url string with url or an array with several urls
+	* @param {Function} on_complete
+	**/
 	requireCSS: function(url, on_complete)
 	{
 		if(typeof(url)=="string")
@@ -260,6 +326,12 @@ var LiteGUI = {
 		}
 	},
 
+	/**
+	* Request file from url (it could be a binary, text, etc.). If you want a simplied version use 
+	* @method request
+	* @param {Object} request object with all the parameters like data (for sending forms), dataType, success, error
+	* @param {Function} on_complete
+	**/
 	request: function(request)
 	{
 		var dataType = request.dataType || "text";
@@ -323,7 +395,7 @@ var LiteGUI = {
 				}
 			}
 			if(request.success)
-				request.success.call(this, response);
+				request.success.call(this, response, this);
 		};
         xhr.onerror = function(err) {
 			if(request.error)
@@ -333,7 +405,52 @@ var LiteGUI = {
 		return xhr;
 	},	
 
-	requireScript: function(url, on_complete, on_progress, on_error )
+	/**
+	* Request file from url
+	* @method requestText
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestText: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:"text", success: on_complete, error: on_error });
+	},
+
+	/**
+	* Request file from url
+	* @method requestJSON
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestJSON: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:"json", success: on_complete, error: on_error });
+	},
+
+	/**
+	* Request binary file from url
+	* @method requestBinary
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestBinary: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:"binary", success: on_complete, error: on_error });
+	},
+	
+	
+	/**
+	* Request script and inserts it in the DOM
+	* @method requireScript
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	* @param {Function} on_progress (if several files are required, on_progress is called after every file is added to the DOM)
+	**/
+	requireScript: function(url, on_complete, on_error, on_progress )
 	{
 		if(typeof(url)=="string")
 			url = [url];
@@ -401,6 +518,14 @@ var LiteGUI = {
 		return this.createElement("div",id,code);
 	},
 
+	/**
+	* Request script and inserts it in the DOM
+	* @method createElement
+	* @param {String} tag
+	* @param {String} id
+	* @param {String} content
+	* @param {Object} style
+	**/
 	createElement: function(tag, id, content, style)
 	{
 		var elem = document.createElement( tag );
@@ -417,6 +542,13 @@ var LiteGUI = {
 		return elem;
 	},
 
+	/**
+	* Request script and inserts it in the DOM
+	* @method createButton
+	* @param {String} id
+	* @param {String} content
+	* @param {Function} callback when the button is pressed
+	**/
 	createButton: function( id, content, callback )
 	{
 		var elem = document.createElement("button");
@@ -472,14 +604,20 @@ var LiteGUI = {
 		options.title = options.title || "Attention";
 		options.content = content;
 		options.close = 'fade';
-		var dialog = new LiteGUI.Dialog("info_message",options);
+		var dialog = new LiteGUI.Dialog(null,options);
 		if(!options.noclose)
 			dialog.addButton("Close",{ close: true });
 		dialog.makeModal('fade');
 		return dialog;
 	},
 
-	popup: function(content,options)
+	/**
+	* Shows a dialog with a message
+	* @method popup
+	* @param {String} content
+	* @param {Object} options ( min_height, content, noclose )
+	**/
+	popup: function( content, options )
 	{
 		options = options || {};
 
@@ -498,7 +636,13 @@ var LiteGUI = {
 	},
 
 
-	alert: function(content,options)
+	/**
+	* Shows an alert dialog with a message
+	* @method alert
+	* @param {String} content
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	alert: function( content, options )
 	{
 		options = options || {};
 
@@ -512,6 +656,13 @@ var LiteGUI = {
 		return this.showMessage(content,options);
 	},
 
+	/**
+	* Shows a confirm dialog with a message
+	* @method confirm
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
 	confirm: function(content, callback, options)
 	{
 		options = options || {};
@@ -533,15 +684,22 @@ var LiteGUI = {
 
 		function inner(v) {
 			var v = this.dataset["value"] == "yes";
+			dialog.close(); //close before callback
 			if(callback) 
 				callback(v);
-			dialog.close();
 		}
 
 		return dialog;
 	},
 
-	prompt: function(content, callback, options )
+	/**
+	* Shows a prompt dialog with a message
+	* @method prompt
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	prompt: function( content, callback, options )
 	{
 		options = options || {};
 		options.className = "alert";
@@ -558,29 +716,43 @@ var LiteGUI = {
 
 		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
-		var dialog = this.showMessage(content,options);
+		var dialog = this.showMessage( content, options );
 
 		var buttons = dialog.content.querySelectorAll("button");
 		for(var i = 0; i < buttons.length; i++)
 			buttons[i].addEventListener("click", inner);
 
-		function inner() {
-			var value = dialog.content.querySelector("input,textarea").value;
-			if(this.dataset["value"] == "cancel")
-				value = null;
+		var input = dialog.content.querySelector("input,textarea");
+		input.addEventListener("keydown", inner_key, true);
 
+		function inner() {
+			var value = input.value;
+			if(this.dataset && this.dataset["value"] == "cancel")
+				value = null;
+			dialog.close(); //close before callback
 			if(callback)
 				callback( value );
-			dialog.close();
 		};
 
-		var elem = dialog.content.querySelector("input,textarea");
-		elem.focus();
+		function inner_key(e)
+		{
+			if (!e)
+				e = window.event;
+			var keyCode = e.keyCode || e.which;
+			if (keyCode == '13'){
+				inner();
+				return false;
+			}		
+		};
 
+		input.focus();
 		return dialog;
 	},
 
-	//Add support to get variables from the URL
+	/**
+	* Returns the URL vars ( ?foo=faa&foo2=etc )
+	* @method getUrlVars
+	**/
 	getUrlVars: function(){
 		var vars = [], hash;
 		var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
@@ -602,6 +774,12 @@ var LiteGUI = {
 		element.focus();
 	},
 
+	/**
+	* Makes one element draggable
+	* @method draggable
+	* @param {HTMLEntity} container the element that will be dragged
+	* @param {HTMLEntity} dragger the area to start the dragging
+	**/
 	draggable: function(container, dragger)
 	{
 		dragger = dragger || container;
@@ -659,7 +837,12 @@ var LiteGUI = {
 		}
 	},
 
-	//extracted from LiteScene
+	/**
+	* Clones object content
+	* @method cloneObject
+	* @param {Object} object
+	* @param {Object} target
+	**/
 	cloneObject: function(object, target)
 	{
 		var o = target || {};

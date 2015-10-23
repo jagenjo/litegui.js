@@ -38,10 +38,10 @@
 		var widgets = new LiteGUI.Inspector();
 		widgets.addTitle("Dialogs");
 		widgets.addButton("Alert","Show", function() { LiteGUI.alert("foo"); } );
-		widgets.addButton("Prompt","Show", function() { LiteGUI.prompt("What are you?"); } );
+		widgets.addButton("Prompt","Show", function() { LiteGUI.prompt("What are you?", function(v){ if(v) LiteGUI.alert(v); }); } );
 		widgets.addButton("Confirm","Show", function() { LiteGUI.confirm("Are you sure?"); } );
 		widgets.addButton("Dialog","Show", function() {
-			var dialog = new LiteGUI.Dialog("simple-dialog",{title:"My dialog",close:true, draggable: true});
+			var dialog = new LiteGUI.Dialog("simple-dialog",{title:"My dialog", content:"<p>Boring content</p>" ,close:true, resizable: true, draggable: true});
 			dialog.show();
 			dialog.center();
 		});
@@ -53,8 +53,8 @@
 		mainarea.getSection(1).add( main_panel );
 
 		//create some tabs
-		var tabs = new LiteGUI.Tabs("tabs");
-		var code_tab = tabs.addTab("Code");
+		var tabs = new LiteGUI.Tabs("tabs",{ size: "full" });
+		var code_tab = tabs.addTab("Code", { size: "full" });
 
 		//show the code applying the most basic code beautify algorithm (by me!)
 		var code = escapeHtmlEntities(document.querySelector("body script").innerHTML);

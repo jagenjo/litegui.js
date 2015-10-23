@@ -20,7 +20,7 @@
 
 	Menubar.prototype.clear = function()
 	{
-		$(this.content).empty();
+		this.content.innerHTML = "";
 		this.menu = [];
 		this.panels = [];
 	}
@@ -30,9 +30,12 @@
 		$(panel.content).prepend(this.root);
 	}
 
-	Menubar.prototype.add = function(path, data)
+	Menubar.prototype.add = function( path, data )
 	{
 		data = data || {};
+
+		if( typeof(data) == "function" )
+			data = { callback: data };
 
 		var prev_length = this.menu.length;
 
@@ -40,25 +43,27 @@
 		var current_token = 0;
 		var current_pos = 0;
 		var menu = this.menu;
+		var last_item = null;
 
-		while(menu)
+		while( menu )
 		{
 			if(current_token > 5)
 				throw("Error: Menubar too deep");
 			//token not found in this menu, create it
-			if(menu.length == current_pos)
+			if( menu.length == current_pos )
 			{
-				var v = { children: []};
+				var v = { parent: last_item, children: [] };
+				last_item = v;
 				if(current_token == tokens.length - 1)
 					v.data = data;
 
 				v.disable = function() { if( this.data ) this.data.disabled = true; }
 				v.enable = function() { if( this.data ) delete this.data.disabled; }
 
-				v.name = tokens[current_token];
-				menu.push(v);
+				v.name = tokens[ current_token ];
+				menu.push( v );
 				current_token++;
-				if(current_token == tokens.length)
+				if( current_token == tokens.length )
 					break;
 				v.children = [];
 				menu = v.children;
@@ -67,11 +72,12 @@
 			}
 
 			//token found in this menu, get inside for next token
-			if(menu[current_pos] && tokens[current_token] == menu[current_pos].name)
+			if( menu[ current_pos ] && tokens[ current_token ] == menu[ current_pos ].name )
 			{
 				if(current_token < tokens.length - 1)
 				{
-					menu = menu[current_pos].children;
+					last_item = menu[ current_pos ];
+					menu = menu[ current_pos ].children;
 					current_pos = 0;
 					current_token++;
 					continue;
@@ -89,47 +95,65 @@
 			this.updateMenu();
 	};
 
-	Menubar.prototype.separator = function(path, order)
+	Menubar.prototype.remove = function( path )
 	{
-		var menu = this.findMenu(path);
-		if(!menu) return;
-		menu.push( {separator: true, order: order || 10 } );
+		var menu = this.findMenu( path );
+		if(!menu)
+			return;
+		if(!menu.parent || !menu.parent.children)
+			return console.warn("menu without parent?");
+		
+		var index = menu.parent.children.indexOf( menu );
+		if(index != -1)
+			menu.parent.children.splice( index, 1 );
+	},
+
+	Menubar.prototype.separator = function( path, order )
+	{
+		var menu = this.findMenu( path );
+		if(!menu)
+			return;
+		menu.children.push( {separator: true, order: order || 10 } );
 	}
 
-
-	Menubar.prototype.findMenu = function(path)
+	//returns the menu entry that matches this path
+	Menubar.prototype.findMenu = function( path )
 	{
 		var tokens = path.split("/");
 		var current_token = 0;
 		var current_pos = 0;
 		var menu = this.menu;
 
-		while(menu)
+		while( menu )
 		{
+			//no more tokens, return last found menu
 			if(current_token == tokens.length)
 				return menu;
 
+			//this menu doesnt have more entries
 			if(menu.length <= current_pos)
 				return null;
 
-			if(tokens[current_token] == "*")
-				return menu[current_pos].children;
+			if(tokens[ current_token ] == "*")
+				return menu[ current_pos ].children;
 
 			//token found in this menu, get inside for next token
-			if(tokens[current_token] == menu[current_pos].name)
+			if( tokens[ current_token ] == menu[ current_pos ].name )
 			{
-				if(current_token < tokens.length)
+				if(current_token == tokens.length - 1) //last token
 				{
-					menu = menu[current_pos].children;
+					return menu[ current_pos ];
+				}
+				else
+				{
+					menu = menu[ current_pos ].children;
 					current_pos = 0;
 					current_token++;
 					continue;
 				}
-				else //last token
-				{
-					return menu[current_pos];
-				}
 			}
+
+			//check next entry in this menu
 			current_pos++;
 		}
 		return null;
@@ -140,7 +164,7 @@
 	{
 		var that = this;
 
-		$(this.content).empty();
+		this.content.innerHTML = "";
 		for(var i in this.menu)
 		{
 			var element = document.createElement("li");
@@ -150,7 +174,7 @@
 			this.menu[i].element = element;
 
 			/* ON CLICK TOP MAIN MENU ITEM */
-			$(element).bind("click", function(e) {
+			element.addEventListener("click", function(e) {
 				var item = this.data;
 
 				if(item.data && item.data.callback && typeof(item.data.callback) == "function")
@@ -169,7 +193,7 @@
 				}
 			});
 
-			$(element).bind("mouseover", function(e) {
+			element.addEventListener("mouseover", function(e) {
 				that.hidePanels();
 				if(that.is_open)
 					that.showMenu( this.data, e, this );
@@ -178,10 +202,11 @@
 	}
 
 	Menubar.prototype.hidePanels = function() {
-		if(!this.panels.length) return;
+		if(!this.panels.length)
+			return;
 
 		for(var i in this.panels)
-			$(this.panels[i]).remove();
+			LiteGUI.remove(this.panels[i]);
 		this.panels = [];
 	}
 
@@ -191,9 +216,11 @@
 		if(!is_submenu)
 			this.hidePanels();
 
-		if(!menu.children || !menu.children.length) return;
+		if(!menu.children || !menu.children.length)
+			return;
 		var that = this;
-		if(that.closing_by_leave) clearInterval(that.closing_by_leave);
+		if(that.closing_by_leave)
+			clearInterval(that.closing_by_leave);
 
 		var element = document.createElement("div");
 		element.className = "litemenubar-panel";
@@ -243,7 +270,7 @@
 			}
 
 			/* ON CLICK SUBMENU ITEM */
-			$(item).bind("click",function(){
+			item.addEventListener("click",function(){
 				var item = this.data;
 				if(item.data)
 				{
@@ -257,9 +284,9 @@
 						{
 							item.data.instance[item.data.property] = !item.data.instance[item.data.property];
 							if(	item.data.instance[item.data.property] )
-								$(this).addClass("checked");
+								this.classList.add("checked");
 							else
-								$(this).removeClass("checked");
+								this.classList.remove("checked");
 						}
 						else if( item.data.hasOwnProperty("value") )
 						{
@@ -272,9 +299,9 @@
 					{
 						item.data.checkbox = !item.data.checkbox;
 						if(	item.data.checkbox )
-							$(this).addClass("checked");
+							this.classList.add("checked");
 						else
-							$(this).removeClass("checked");
+							this.classList.remove("checked");
 					}
 
 					//execute a function
@@ -293,10 +320,10 @@
 					that.hidePanels();
 				}
 			});
-			$(element).append(item);
+			element.appendChild( item );
 		}
 
-		$(element).bind("mouseleave",function(e){
+		element.addEventListener("mouseleave",function(e){
 			//if( $(e.target).hasClass("litemenubar-panel") || $(e.target).parents().hasClass("litemenubar-panel") ) 	return;
 			
 			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
@@ -306,7 +333,7 @@
 			},LiteGUI.Menubar.closing_time);
 		});
 
-		$(element).bind("mouseenter",function(e){
+		element.addEventListener("mouseenter",function(e){
 			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
 			that.closing_by_leave = null;
 		});
@@ -316,7 +343,7 @@
 		element.style.top = jQ.offset().top + jQ.height() + ( is_submenu ? -20 : 2 ) + "px";
 
 		this.panels.push(element);
-		$(document.body).append(element);
+		document.body.appendChild( element );
 		$(element).hide().show();
 	}
 

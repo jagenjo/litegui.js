@@ -306,12 +306,11 @@
 	* @param {Array} values
 	* @param {Object} options
 	*/
-	function List(id,items,options)
+	function List( id, items, options )
 	{
 		options = options || {};
 
-		var root = document.createElement("ul");
-		this.root = root;
+		var root = this.root = document.createElement("ul");
 		root.id = id;
 		root.className = "litelist";
 		this.items = [];
@@ -325,6 +324,7 @@
 			var item = document.createElement("li");
 			item.className = "list-item";
 			item.data = items[i];
+			item.dataset["value"] = items[i];
 
 			var content = "";
 			if(typeof(items[i]) == "string")
@@ -332,28 +332,49 @@
 			else
 			{
 				content = (items[i].name || items[i].title || "") + "<span class='arrow'></span>";
-				if(items[i].id)	item.id = items[i].id;
+				if(items[i].id)
+					item.id = items[i].id;
 			}
 			item.innerHTML = content;
+
+			item.addEventListener("click", function() {
+
+				$(root).find(".list-item.selected").removeClass("selected");
+				this.classList.add("selected");
+				$(that.root).trigger("wchanged", this);
+				if(that.callback)
+					that.callback( this.data  );
+			});
 
 			root.appendChild(item);
 		}
 
-		$(root).find(".list-item").click( function() {
-			$(root).find(".list-item.selected").removeClass("selected");
-			$(this).addClass("selected");
-
-			$(that.root).trigger("wchanged", this);
-			if(that.callback)
-				that.callback( this.data  );
-		});
 
 		if(options.parent)
 		{
 			if(options.parent.root)
-				$(options.parent.root).append(root);
+				options.parent.root.appendChild( root );
 			else
-				$(options.parent).append(root);
+				options.parent.appendChild( root );
+		}
+	}
+
+	List.prototype.getSelectedItem = function()
+	{
+		return this.root.querySelector(".list-item.selected");
+	}
+
+	List.prototype.setSelectedItem = function( name )
+	{
+		var items = this.root.querySelectorAll(".list-item");
+		for(var i = 0; i < items.length; i++)
+		{
+			var item = items[i];
+			if(item.data == name)
+			{
+				LiteGUI.trigger( item, "click" );
+				break;
+			}
 		}
 	}
 

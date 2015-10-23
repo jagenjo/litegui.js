@@ -3,12 +3,22 @@
 
 
 /**
-* To create interactive trees (useful for folders or hierarchies)
-* data should be in the next structure:
+* To create interactive trees (useful for folders or hierarchies).
+* Options are:
+*	+ allow_multiselection: allow to select multiple elements using the shift key
+*	+ allow_rename: double click to rename items in the tree
+*	+ allow_drag: drag elements around
+*	+ height
+* Item data should be in the next format:
 * {
 *    id: unique_identifier,
 *    content: what to show in the HTML (if omited id will be shown)
 *	 children: []  array with another object with the same structure
+*	 className: class
+*    precontent: HTML inserted before the content
+*	 visible: boolean, to hide it
+*	 dataset: dataset for the element
+*	 onDragData: callback in case the user drags this item somewhere else
 * }
 *
 * @class Tree
@@ -26,7 +36,7 @@
 		root.className = "litetree";
 		this.tree = data;
 		var that = this;
-		options = options || {allow_rename: false, drag: false, allow_multiselection: false};
+		options = options || {allow_rename: false, allow_drag: true, allow_multiselection: false};
 		this.options = options;
 
 		if(options.height)
@@ -143,7 +153,7 @@
 
 		this._updateListBox( element );
 
-		if(options.selected)
+		if(options && options.selected)
 			this.markAsSelected( element, true );
 
 		return element;
@@ -316,6 +326,9 @@
 		root.appendChild(title_element);
 		root.title_element = title_element;
 
+		if(data.visible === false)
+			root.style.display = "none";
+
 		//var row = root.querySelector(".ltreeitemtitle .incontent");
 		var row = root;
 		row.addEventListener("click", onNodeSelected );
@@ -428,74 +441,86 @@
 		}
 
 		//dragging tree
-		var draggable_element = title_element;
-		draggable_element.draggable = true;
-
-		//starts dragging this element
-		draggable_element.addEventListener("dragstart", function(ev) {
-			//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
-			//ev.dataTransfer.setData("node-id", this.parentNode.id);
-			ev.dataTransfer.setData("item_id", this.parentNode.dataset["item_id"]);
-		});
-
-		//something being dragged entered
-		draggable_element.addEventListener("dragenter", function (ev)
+		if(this.options.allow_drag)
 		{
-			ev.preventDefault();
-			if(data.skipdrag)
-				return false;
+			var draggable_element = title_element;
+			draggable_element.draggable = true;
 
-			title_element.classList.add("dragover");
-		});
+			//starts dragging this element
+			draggable_element.addEventListener("dragstart", function(ev) {
+				//this.removeEventListener("dragover", on_drag_over ); //avoid being drag on top of himself
+				//ev.dataTransfer.setData("node-id", this.parentNode.id);
+				ev.dataTransfer.setData("item_id", this.parentNode.dataset["item_id"]);
+				if(!data.onDragData)
+					return;
 
-		draggable_element.addEventListener("dragleave", function (ev)
-		{
-			ev.preventDefault();
-			//console.log(data.id);
-			title_element.classList.remove("dragover");
-			//if(ev.srcElement == this) return;
-		});
-
-		//test if allows to drag stuff on top?
-		draggable_element.addEventListener("dragover", on_drag_over );
-		function on_drag_over(ev)
-		{
-			ev.preventDefault();
-		}
-
-		draggable_element.addEventListener("drop", function (ev)
-		{
-			$(title_element).removeClass("dragover");
-			ev.preventDefault();
-			if(data.skipdrag)
-				return false;
-
-			var item_id = ev.dataTransfer.getData("item_id");
-
-			//var data = ev.dataTransfer.getData("Text");
-			if(!item_id)
-			{
-				LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
-				return;
-			}
-
-			//try
-			{
-				var parent_id = this.parentNode.dataset["item_id"];
-
-				if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+				var drag_data =	data.onDragData();
+				if(drag_data)
 				{
-					if( that.moveItem( item_id, parent_id ) )
-						LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+					for(var i in drag_data)
+						ev.dataTransfer.setData(i,drag_data[i]);
 				}
-			}
-			/*
-			catch (err)
+			});
+
+			//something being dragged entered
+			draggable_element.addEventListener("dragenter", function (ev)
 			{
-				console.error("Error: " + err );
+				ev.preventDefault();
+				if(data.skipdrag)
+					return false;
+
+				title_element.classList.add("dragover");
+			});
+
+			draggable_element.addEventListener("dragleave", function (ev)
+			{
+				ev.preventDefault();
+				//console.log(data.id);
+				title_element.classList.remove("dragover");
+				//if(ev.srcElement == this) return;
+			});
+
+			//test if allows to drag stuff on top?
+			draggable_element.addEventListener("dragover", on_drag_over );
+			function on_drag_over(ev)
+			{
+				ev.preventDefault();
 			}
-			*/
-		});
+
+			draggable_element.addEventListener("drop", function (ev)
+			{
+				title_element.classList.remove("dragover");
+				ev.preventDefault();
+				if(data.skipdrag)
+					return false;
+
+				var item_id = ev.dataTransfer.getData("item_id");
+
+				//var data = ev.dataTransfer.getData("Text");
+				if(!item_id)
+				{
+					LiteGUI.trigger( that.root, "drop_on_item", { item: this, event: ev });
+					return;
+				}
+
+				//try
+				{
+					var parent_id = this.parentNode.dataset["item_id"];
+
+					if( !that.onMoveItem || (that.onMoveItem && that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+					{
+						if( that.moveItem( item_id, parent_id ) )
+							LiteGUI.trigger( that.root, "item_moved", { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+					}
+				}
+				/*
+				catch (err)
+				{
+					console.error("Error: " + err );
+				}
+				*/
+			});
+		} //allow drag
 
 		return root;
 	}
@@ -504,7 +529,7 @@
 	{
 		for(var i = 0; i < this.root.childNodes.length; ++i)
 		{
-			var childNode = this.root.childNodes[i];
+			var childNode = this.root.childNodes[i]; //ltreeitem
 			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
 				continue;
 
@@ -516,7 +541,8 @@
 
 			if(!name || str.indexOf( name.toLowerCase() ) != -1)
 			{
-				childNode.style.display = null;
+				if( childNode.data && childNode.data.visible !== false )
+					childNode.style.display = null;
 				var indent = childNode.querySelector(".indentblock");
 				if(indent)
 				{

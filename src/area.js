@@ -3,7 +3,7 @@
 
 	
 	/****************** AREA **************/
-	/**
+	/** An Area is am streched container.
 	* Areas can be split several times horizontally or vertically to fit different colums or rows
 	*
 	* @class Area
@@ -13,10 +13,14 @@
 	{
 		options = options || {};
 		/* the root element containing all sections */
-		var element = document.createElement("div");
-		element.className = "litearea";
-		if(id) element.id = id;
-		this.root = element;
+		var root = document.createElement("div");
+		root.className = "litearea";
+		if(id)
+			root.id = id;
+		if(options.className)
+			root.className += options.className;
+
+		this.root = root;
 		this.root.litearea = this; //dbl link
 
 		var width = options.width || "100%";
@@ -27,16 +31,17 @@
 		if( height < 0 )
 			height = 'calc( 100% - '+ Math.abs(height)+'px)';
 
-		element.style.width = width;
-		element.style.height = height;
+		root.style.width = width;
+		root.style.height = height;
 
 		this.options = options;
 
 		var that = this;
-		window.addEventListener("resize",function(e) { that.resize(e); });
+		//window.addEventListener("resize",function(e) { that.onResize(e); });
 		//$(this).bind("resize",function(e) { that.resize(e); });
 
-		this._computed_size = [ $(this.root).width(), $(this.root).height() ];
+		//this._computed_size = [ $(this.root).width(), $(this.root).height() ];
+		this._computed_size = [ this.root.offsetWidth, this.root.offserHeight ];
 
 		var content = document.createElement("div");
 		if(options.content_id)
@@ -44,15 +49,15 @@
 		content.className = "liteareacontent";
 		content.style.width = "100%";
 		content.style.height = "100%";
-		this.root.appendChild(content);
+		this.root.appendChild( content );
 		this.content = content;
 
 		this.split_direction = "none";
 		this.sections = [];
 
 		if(options.autoresize)
-			$(LiteGUI).bind("resized", function() { 
-				that.resize(); 
+			LiteGUI.bind( LiteGUI, "resized", function() { 
+				that.onResize(); 
 			});
 	}
 
@@ -67,13 +72,61 @@
 		return null;
 	}
 
-	Area.prototype.resize = function(e)
+	Area.prototype.onResize = function(e)
 	{
-		var computed_size = [ $(this.root).width(), $(this.root).height() ];
+		//this._computed_size = [ $(this.root).width(), $(this.root).height() ];
+		var computed_size = [ this.root.offsetWidth, this.root.offsetHeight ];
 		if( e && this._computed_size && computed_size[0] == this._computed_size[0] && computed_size[1] == this._computed_size[1])
 			return;
 
 		this.sendResizeEvent(e);
+	}
+
+	//sends the resize event to all the sections
+	Area.prototype.sendResizeEvent = function(e)
+	{
+		if(this.sections.length)
+			for(var i in this.sections)
+			{
+				var section = this.sections[i];
+				section.onResize(e);
+				//$(section).trigger("resize"); //it is a LiteArea
+				//$(section.root).trigger("resize");
+				/*
+				for (var j = 0; j < section.root.childNodes.length; j++)
+					$(section.root.childNodes[j]).trigger("resize");
+				*/
+			}
+		else //send it to the children
+		{
+			for (var j = 0; j < this.root.childNodes.length; j++)
+			{
+				var element = this.root.childNodes[j];
+				if(element.litearea)
+					element.litearea.onResize();
+				else
+					LiteGUI.trigger( element, "resize" );
+			}
+		}
+
+		//inner callback
+		if( this.onresize )
+			this.onresize();
+	}
+
+	Area.prototype.getWidth = function()
+	{
+		return this.root.offsetWidth;
+	}
+
+	Area.prototype.getHeight = function()
+	{
+		return this.root.offsetHeight;
+	}
+
+	Area.prototype.isVisible = function()
+	{
+		return this.root.style.display != "none";	
 	}
 
 	Area.prototype.adjustHeight = function()
@@ -92,36 +145,6 @@
 
 		//adjust height
 		this.root.style.height = "calc( 100% - " + y + "px )";
-	}
-
-	Area.prototype.sendResizeEvent = function(e)
-	{
-		if(this.sections.length)
-			for(var i in this.sections)
-			{
-				var section = this.sections[i];
-				section.resize(e);
-				//$(section).trigger("resize"); //it is a LiteArea
-				//$(section.root).trigger("resize");
-				/*
-				for (var j = 0; j < section.root.childNodes.length; j++)
-					$(section.root.childNodes[j]).trigger("resize");
-				*/
-			}
-		else //send it to the children
-		{
-			for (var j = 0; j < this.root.childNodes.length; j++)
-			{
-				var element = this.root.childNodes[j];
-				if(element.litearea)
-					element.litearea.resize();
-				else
-					$(element).trigger("resize");
-			}
-		}
-
-		if( this.onresize )
-			this.onresize();
 	}
 
 	Area.prototype.split = function(direction, sizes, editable)
@@ -290,7 +313,7 @@
 			e.stopPropagation();
 			e.preventDefault();
 			if(that.options.inmediateResize)
-				that.resize();
+				that.onResize();
 		}
 
 		function inner_mouseup(e)
@@ -298,7 +321,7 @@
 			var doc = that.root.ownerDocument;
 			doc.removeEventListener("mousemove",inner_mousemove);
 			doc.removeEventListener("mouseup",inner_mouseup);
-			that.resize();
+			that.onResize();
 		}
 	}
 
@@ -377,47 +400,62 @@
 		var area2 = this.sections[1];
 		var splitinfo = " - "+ Area.splitbar_size +"px";
 
+		var min_size = this.options.minSplitSize || 10;
+
 		if(this.direction == "horizontal")
 		{
 
 			if (this.dynamic_section == area1)
 			{
-				var size = ($(area2.root).width() + delta) + "px";
-				area1.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.width = "calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = size;
+				//var size = ($(area2.root).width() + delta) + "px";
+				var size = (area2.root.offsetWidth + delta);
+				if(size < min_size)
+					size = min_size;
+				area1.root.style.width = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.width = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.width = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.width = size + "px"; //other split
 			}
 			else
 			{
-				var size = ($(area1.root).width() - delta) + "px";
-				area1.root.style.width = size;
-				area2.root.style.width = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.width = "calc( 100% - " + size + splitinfo + " )";
+				//var size = ($(area1.root).width() - delta) + "px";
+				var size = (area1.root.offsetWidth - delta);
+				if(size < min_size)
+					size = min_size;
+				area2.root.style.width = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.width = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.width = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.width = size + "px"; //other split
 			}
 		}
 		else if(this.direction == "vertical")
 		{
 			if (this.dynamic_section == area1)
 			{
-				var size = ($(area2.root).height() - delta) + "px";
-				area1.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area1.root.style.height = "calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = size;
+				//var size = ($(area2.root).height() - delta) + "px";
+				var size = (area2.root.offsetHeight - delta);
+				if(size < min_size)
+					size = min_size;
+				area1.root.style.height = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.height = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.height = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.height = size + "px"; //other split
 			}
 			else
 			{
-				var size = ($(area1.root).height() + delta) + "px";
-				area1.root.style.height = size;
-				area2.root.style.height = "-moz-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = "-webkit-calc( 100% - " + size + splitinfo + " )";
-				area2.root.style.height = "calc( 100% - " + size + splitinfo + " )";
+				//var size = ($(area1.root).height() + delta) + "px";
+				var size = (area1.root.offsetHeight + delta);
+				if(size < min_size)
+					size = min_size;
+				area2.root.style.height = "-moz-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.height = "-webkit-calc( 100% - " + size + "px " + splitinfo + " )";
+				area2.root.style.height = "calc( 100% - " + size + "px " + splitinfo + " )";
+				area1.root.style.height = size + "px"; //other split
 			}
 		}
 
 		LiteGUI.trigger( this.root, "split_moved");
+		//trigger split_moved event in all areas inside this area
 		var areas = this.root.querySelectorAll(".litearea");
 		for(var i = 0; i < areas.length; ++i)
 			LiteGUI.trigger( areas[i], "split_moved" );
@@ -463,7 +501,7 @@
 
 		this.sections = [];
 		this._computed_size = null;
-		this.resize();
+		this.onResize();
 	}
 
 	Area.prototype.add = function(v)

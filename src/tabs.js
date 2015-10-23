@@ -1,6 +1,13 @@
 /**************  ***************************/
 (function(){
 	
+
+	/**
+	* Widget that contains several tabs and their content
+	*
+	* @class Tabs
+	* @constructor
+	*/
 	function Tabs(id,options)
 	{
 		options = options || {};
@@ -74,6 +81,12 @@
 		this.root.style.display = "none";
 	}
 
+
+	/**
+	* Returns the currently selected tab in the form of a tab object
+	* @method getCurrentTab
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
 	Tabs.prototype.getCurrentTab = function()
 	{
 		if(!this.current_tab)
@@ -86,7 +99,11 @@
 		return this.current_tab[0];
 	}
 
-	//used to know from which tab we come
+	/**
+	* Returns the last tab pressed before this one. used to know from which tab we come
+	* @method getCurrentTab
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
 	Tabs.prototype.getPreviousTab = function()
 	{
 		if(!this.previous_tab)
@@ -94,7 +111,7 @@
 		return this.tabs[ this.previous_tab[0] ];
 	}
 
-	Tabs.prototype.appendTo = function(parent,at_front)
+	Tabs.prototype.appendTo = function(parent, at_front)
 	{
 		if(at_front)
 			$(parent).prepend(this.root);
@@ -102,11 +119,22 @@
 			$(parent).append(this.root);
 	}
 
+	/**
+	* Returns a tab 
+	* @method getTab
+	* @param {String} id tab id
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
 	Tabs.prototype.getTab = function(id)
 	{
 		return this.tabs[id];
 	}
 
+	/**
+	* Returns how many tabs there is
+	* @method getNumOfTabs
+	* @return {number} number of tabs
+	*/
 	Tabs.prototype.getNumOfTabs = function()
 	{
 		var num = 0;
@@ -115,6 +143,12 @@
 		return num;
 	}
 
+	/**
+	* Returns the content HTML element of a tab
+	* @method getTabContent
+	* @param {String} id
+	* @return {HTMLEntity} content
+	*/
 	Tabs.prototype.getTabContent = function(id)
 	{
 		var tab = this.tabs[id];
@@ -122,6 +156,12 @@
 			return tab.content;
 	}
 
+	/**
+	* Returns the index of a tab (the position in the tabs list)
+	* @method getTabIndex
+	* @param {String} id
+	* @return {number} index
+	*/
 	Tabs.prototype.getTabIndex = function(id)
 	{
 		var tab = this.tabs[id];
@@ -134,7 +174,14 @@
 	}
 
 
-	//create a new tab, where name is a unique identifier
+	/**
+	* Create a new tab, where id is a unique identifier
+	* @method addTab
+	* @param {String} id
+	* @param {Object} options { title: tab text, callback: called when selected, callback_leave: callback when leaving, content: HTML content, closable: if it can be closed (callback is onclose), tab_width: size of the tab, tab_className: classes for the tab element, id: content id, size: full means all, mode: "vertical" or "horizontal", button: if it is a button tab, not a selectable tab}
+	* @param {bool} skip_event prevent dispatching events
+	* @return {Object} an object containing { id, tab, content }
+	*/
 	Tabs.prototype.addTab = function( id, options, skip_event )
 	{
 		options = options || {};
@@ -202,6 +249,7 @@
 				content.style.overflow = "auto";
 				if(options.size == "full")
 				{
+					content.style.width = "100%";
 					content.style.height = "calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
 					content.style.height = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
 					content.style.height = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_height+"px )"; //minus title
@@ -218,6 +266,7 @@
 				content.style.overflow = "auto";
 				if(options.size == "full")
 				{
+					content.style.height = "100%";
 					content.style.width = "calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
 					content.style.width = "-moz-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
 					content.style.width = "-webkit-calc( 100% - "+LiteGUI.Tabs.tabs_width+"px )"; //minus title
@@ -393,6 +442,11 @@
 		}
 
 		this.tabs = {};
+	}
+
+	Tabs.prototype.clear = function()
+	{
+		this.removeAllTabs();
 	}
 
 	Tabs.prototype.hideTab = function(id)

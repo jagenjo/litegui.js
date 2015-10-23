@@ -35,7 +35,8 @@
 		this.footer = this.root.querySelector(".panel-footer");
 
 		//if(options.scroll == false)	this.content.style.overflow = "hidden";
-		if(options.scroll == true)	this.content.style.overflow = "auto";
+		if(options.scroll == true)
+			this.content.style.overflow = "auto";
 	}
 
 	Panel.prototype.add = function( litegui_item )
@@ -193,8 +194,6 @@
 		if(options.resizable)
 			this.setResizable();
 
-		//$(panel).bind("click",function(){});
-
 		var parent = null;
 		if(options.parent)
 			parent = typeof(options.parent) == "string" ? document.querySelector(options.parent) : options.parent;
@@ -208,7 +207,8 @@
 
 	Dialog.prototype.setResizable = function()
 	{
-		if(this.resizable) return;
+		if(this.resizable)
+			return;
 
 		var root = this.root;
 		this.resizable = true;
@@ -345,10 +345,12 @@
 	* @method close
 	*/
 	Dialog.prototype.close = function() {
-		$(this.root).remove();
-		$(this).trigger("closed");
+		LiteGUI.remove( this );
+		LiteGUI.trigger( this, "closed", this);
 		if(this.on_close)
 			this.on_close();
+		if(this.onclose)
+			console.warn("Dialog: Do not use onclose, use on_close instead");
 	}
 
 	Dialog.prototype.highlight = function(time)
@@ -380,7 +382,7 @@
 
 		this.root.style.width = LiteGUI.Dialog.MINIMIZED_WIDTH + "px";
 
-		$(this).bind("closed", function() {
+		LiteGUI.bind( this, "closed", function() {
 			LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
 			LiteGUI.Dialog.arrangeMinimized();
 		});
@@ -388,7 +390,7 @@
 		LiteGUI.Dialog.minimized.push( this );
 		LiteGUI.Dialog.arrangeMinimized();
 
-		$(this).trigger("minimizing");
+		LiteGUI.trigger( this,"minimizing" );
 	}
 
 	Dialog.arrangeMinimized = function()
@@ -421,7 +423,7 @@
 
 		LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
 		LiteGUI.Dialog.arrangeMinimized();
-		$(this).trigger("maximizing");
+		LiteGUI.trigger( this, "maximizing" );
 	}
 
 	Dialog.prototype.makeModal = function()
@@ -432,7 +434,7 @@
 		this.show();
 		this.center();
 
-		$(this).bind("closed", inner );
+		LiteGUI.bind( this, "closed", inner );
 
 		function inner(e)
 		{
@@ -458,7 +460,7 @@
 
 		//$(this.root).show(v,null,100,callback);
 		this.root.style.display = null;
-		$(this).trigger("shown");
+		LiteGUI.trigger( this, "shown" );
 	}
 
 	/**
@@ -467,9 +469,8 @@
 	*/
 	Dialog.prototype.hide = function(v,callback)
 	{
-		//$(this.root).hide(v,null,100,callback);
 		this.root.style.display = "none";
-		$(this).trigger("hidden");
+		LiteGUI.trigger(this, "hidden");
 	}
 
 	Dialog.prototype.setPosition = function(x,y)

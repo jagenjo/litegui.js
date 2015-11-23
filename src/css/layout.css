@@ -49,6 +49,7 @@ div {
 
 .litedialog {
 	position: absolute;
+	z-index: 10;
 }
 
 .litepanel, .litedialog {
@@ -121,6 +122,18 @@ div {
 
 .litedialog .panel-footer.resizable {
 	cursor: s-resize;
+}
+
+.litedialog  .resizable-corner {
+	display: inline-block;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	width: 10px;
+	height: 10px;
+	cursor: se-resize;
+	opacity: 0;
+	background-color: red;
 }
 
 .litedialog .panel-footer button {

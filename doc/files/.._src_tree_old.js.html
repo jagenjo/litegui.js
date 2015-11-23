@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>../src/tree_old.js</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+            
+                <h1><img src="../assets/css/logo.png" title=""></h1>
+            
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+    <h2 class="off-left">APIs</h2>
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Classes</a></li>
+            <li><a href="#api-modules">Modules</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a href="../classes/Area.html">Area</a></li>
+            
+                <li><a href="../classes/ContextualMenu.html">ContextualMenu</a></li>
+            
+                <li><a href="../classes/Dialog.html">Dialog</a></li>
+            
+                <li><a href="../classes/Inspector.html">Inspector</a></li>
+            
+                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
+            
+                <li><a href="../classes/List.html">List</a></li>
+            
+                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
+            
+                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
+            
+                <li><a href="../classes/Slider.html">Slider</a></li>
+            
+                <li><a href="../classes/Split.html">Split</a></li>
+            
+                <li><a href="../classes/Tabs.html">Tabs</a></li>
+            
+                <li><a href="../classes/Tree.html">Tree</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+        Show:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited" checked>
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+                        <h1 class="file-heading">File: ../src/tree_old.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+//enclose in a scope
+(function(){
+
+	/*********** LiteTree *****************************/
+	function Tree(id, data, options)
+	{
+		var root = document.createElement(&quot;div&quot;);
+		this.root = root;
+		if(id)
+			root.id = id;
+
+		root.className = &quot;litetree&quot;;
+		this.tree = data;
+		var that = this;
+		options = options || {allow_rename: true, drag: true};
+		this.options = options;
+
+		//bg click
+		root.addEventListener(&quot;click&quot;, function(e){
+			if(e.srcElement != that.root)
+				return;
+
+			if(that.onBackgroundClicked)
+				that.onBackgroundClicked(e,that);
+		});
+
+		var root_item = this.createTreeItem(data,options);
+		root_item.className += &quot; root_item&quot;;
+		this.root.appendChild(root_item);
+		this.root_item = root_item;
+	}
+
+	Tree.prototype.updateTree = function(data)
+	{
+		if(this.root_item)
+			$(this.root_item).remove();
+		if(!data) return;
+
+		var root_item = this.createTreeItem(data,this.options);
+		root_item.className += &quot; root_item&quot;;
+		this.root.appendChild(root_item);
+		this.root_item = root_item;
+	}
+
+	Tree.prototype.createTreeItem = function(data,options)
+	{
+		var root = document.createElement(&quot;li&quot;);
+		root.className = &quot;ltreeitem&quot;;
+		//if(data.id) root.id = data.id;
+		if(data.id)
+		{
+			var safe_id = data.id.replace(/\s/g,&quot;_&quot;);
+			root.className += &quot; ltreeitem-&quot; + safe_id;
+			root.dataset[&quot;item_id&quot;] = data.id;
+		}
+		root.data = data;
+		data.DOM = root;
+		options = options || this.options;
+
+		var title_element = document.createElement(&quot;div&quot;);
+		title_element.className = &quot;ltreeitemtitle&quot;;
+		if(data.className)
+			title_element.className += &quot; &quot; + data.className;
+
+		var content = data.content || data.id || &quot;&quot;;
+		title_element.innerHTML = &quot;&lt;span class=&#x27;precontent&#x27;&gt;&lt;/span&gt;&lt;span class=&#x27;incontent&#x27;&gt;&quot; + content + &quot;&lt;/span&gt;&lt;span class=&#x27;postcontent&#x27;&gt;&lt;/span&gt;&quot;;
+
+		if(data.dataset)
+			for(var i in data.dataset)
+				root.dataset[i] = data.dataset[i];
+
+		root.appendChild(title_element);
+		root.title_element = title_element;
+
+		var incontent = root.querySelector(&quot;.ltreeitemtitle .incontent&quot;);
+		incontent.addEventListener(&quot;click&quot;,onNodeSelected);
+		incontent.addEventListener(&quot;dblclick&quot;,onNodeDblClicked);
+		//incontent[0].addEventListener(&quot;mousedown&quot;, onMouseDown ); //for right click
+		incontent.addEventListener(&quot;contextmenu&quot;, function(e) { 
+			var title = this.parentNode;
+			var item = title.parentNode;
+			if(that.onContextMenu) 
+				onContextMenu(e, { item: item, data: item.data} );
+			e.preventDefault(); 
+			return false;
+		});
+
+		var list = document.createElement(&quot;ul&quot;);
+		list.className = &quot;ltreeitemchildren&quot;;
+		//list.style.display = &quot;none&quot;;
+		root.children_element = list;
+		root.list = list;
+		if(data.children)
+		{
+			for(var i in data.children)
+			{
+				var item = data.children[i];
+				var element = this.createTreeItem(item, options);
+				list.appendChild(element);
+			}
+		}
+		root.appendChild(list);
+		this.updateListBox(root);
+
+		var that = this;
+		function onNodeSelected(e)
+		{
+			var title = this.parentNode;
+			var item = title.parentNode;
+
+			if(title._editing) 
+				return;
+
+			//mark as selected
+			that.markAsSelected(item);
+			
+			LiteGUI.trigger(that.root, &quot;item_selected&quot;, { item: item, data: item.data} );
+
+			var r = false;
+			if(data.callback) 
+				r = data.callback.call(that,item);
+
+			if(!r &amp;&amp; that.onItemSelected)
+				that.onItemSelected(item.data, item);
+
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		function onNodeDblClicked(e)
+		{
+			var item = this.parentNode;
+			LiteGUI.trigger( that.root, &quot;item_dblclicked&quot;, item );
+
+			if(!this._editing &amp;&amp; that.options.allow_rename)
+			{
+				this._editing = true;
+				this._old_name = this.innerHTML;
+				var that2 = this;
+				this.innerHTML = &quot;&lt;input type=&#x27;text&#x27; value=&#x27;&quot; + this.innerHTML + &quot;&#x27; /&gt;&quot;;
+				var input = this.querySelector(&quot;input&quot;);
+
+				//loose focus
+				$(input).blur(function(e) { 
+					var new_name = e.target.value;
+					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
+					//item.node_name = new_name;
+					delete that2._editing;
+					LiteGUI.trigger( that.root, &quot;item_renamed&quot;, { old_name: that2._old_name, new_name: new_name, item: item, data: item.data } );
+					delete that2._old_name;
+				});
+
+				//finishes renaming
+				input.addEventListener(&quot;keydown&quot;, function(e) {
+					if(e.keyCode != 13)
+						return;
+					$(this).blur();
+				});
+
+				//set on focus
+				$(input).focus();
+
+				e.preventDefault();
+			}
+			
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		function onContextMenu(e, item_info)
+		{
+			if(e.button != 2) //right button
+				return;
+
+			if(that.onContextMenu)
+				return that.onContextMenu(e, item_info);
+		}
+
+		//dragging tree
+		var draggable_element = title_element;
+		draggable_element.draggable = true;
+
+		//starts dragging this element
+		draggable_element.addEventListener(&quot;dragstart&quot;, function(ev) {
+			//this.removeEventListener(&quot;dragover&quot;, on_drag_over ); //avoid being drag on top of himself
+			//ev.dataTransfer.setData(&quot;node-id&quot;, this.parentNode.id);
+			ev.dataTransfer.setData(&quot;item_id&quot;, this.parentNode.dataset[&quot;item_id&quot;]);
+		});
+
+		//something being dragged entered
+		draggable_element.addEventListener(&quot;dragenter&quot;, function (ev)
+		{
+			ev.preventDefault();
+			if(data.skipdrag)
+				return false;
+
+			title_element.classList.add(&quot;dragover&quot;);
+		});
+
+		draggable_element.addEventListener(&quot;dragleave&quot;, function (ev)
+		{
+			ev.preventDefault();
+			//console.log(data.id);
+			title_element.classList.remove(&quot;dragover&quot;);
+			//if(ev.srcElement == this) return;
+		});
+
+		//test if allows to drag stuff on top?
+		draggable_element.addEventListener(&quot;dragover&quot;, on_drag_over );
+		function on_drag_over(ev)
+		{
+			ev.preventDefault();
+		}
+
+		draggable_element.addEventListener(&quot;drop&quot;, function (ev)
+		{
+			$(title_element).removeClass(&quot;dragover&quot;);
+			ev.preventDefault();
+			if(data.skipdrag)
+				return false;
+
+			var item_id = ev.dataTransfer.getData(&quot;item_id&quot;);
+
+			//var data = ev.dataTransfer.getData(&quot;Text&quot;);
+			if(item_id != &quot;&quot;)
+			{
+				try
+				{
+					var parent_id = this.parentNode.dataset[&quot;item_id&quot;];
+
+					if( !that.onMoveItem || (that.onMoveItem &amp;&amp; that.onMoveItem( that.getItem( item_id ), that.getItem( parent_id ) ) != false))
+					{
+						if( that.moveItem( item_id, parent_id ) )
+							LiteGUI.trigger( that.root, &quot;item_moved&quot;, { item: that.getItem( item_id ), parent_item: that.getItem( parent_id ) } );
+					}
+				}
+				catch (err)
+				{
+					console.error(&quot;Error: &quot; + err );
+				}
+			}
+			else
+			{
+				LiteGUI.trigger( that.root, &quot;drop_on_item&quot;, { item: this, event: ev });
+			}
+		});
+
+
+		return root;
+	}
+
+	Tree.prototype.filterByName = function(name)
+	{
+		var all = this.root.querySelectorAll(&quot;.ltreeitemtitle .incontent&quot;);
+		for(var i = 0; i &lt; all.length; i++)
+		{
+			var element = all[i];
+			if(!element) continue;
+			var str = element.innerHTML;
+			var parent = element.parentNode;
+			if(!name || str.indexOf(name) != -1)
+			{
+				parent.style.display = &quot;block&quot;
+				parent.parentNode.style.paddingLeft = null;
+			}
+			else
+			{
+				parent.style.display = &quot;none&quot;
+				parent.parentNode.style.paddingLeft = 0;
+			}
+		}
+	}	
+
+	Tree.onClickBox = function(e)
+	{
+		var list = this.children_element;
+		if(list.style.display == &quot;none&quot;)
+			list.style.display = &quot;block&quot;;
+		else
+			list.style.display = &quot;none&quot;;
+	}
+
+	Tree.prototype.getItem = function( id )
+	{
+		var safe_id = id.replace(/\s/g,&quot;_&quot;);
+		var node = this.root.querySelector(&quot;.ltreeitem-&quot;+safe_id);
+		if(!node) 
+			return null;
+		if( !node.classList.contains(&quot;ltreeitem&quot;) )
+			throw(&quot;this node is not a tree item&quot;);
+		return node;
+	}
+
+	Tree.prototype.expandItem = function(id)
+	{
+		var item = this.getItem(id);
+		if(!item) return;
+
+		if(!item.listbox) return;
+		listbox.setValue(true);
+	}
+
+	Tree.prototype.contractItem = function(id)
+	{
+		var item = this.getItem(id);
+		if(!item) return;
+
+		if(!item.listbox) return;
+		listbox.setValue(false);
+	}
+
+	Tree.prototype.setSelectedItem = function(id)
+	{
+		if(!id)
+		{
+			//clear selection
+			this.root.classList.remove(&quot;selected&quot;);
+			var sel = this.root.querySelector(&quot;.ltreeitemtitle.selected&quot;);
+			if(sel)
+				sel.classList.remove(&quot;selected&quot;);
+			var semiselected = this.root.querySelectorAll(&quot;.ltreeitemtitle.semiselected&quot;);
+			for(var i = 0; i &lt; semiselected.length; i++)
+				semiselected[i].classList.remove(&quot;semiselected&quot;);
+			return;
+		}
+
+		var node = this.getItem(id);
+		if(!node) //not found
+			return null;
+
+		this.markAsSelected(node);
+		return node;
+	}
+
+	Tree.prototype.markAsSelected = function(node)
+	{
+		//already selected
+		if( node.classList.contains(&quot;selected&quot;) ) 
+			return;
+
+		//clear old selection
+		this.root.classList.remove(&quot;selected&quot;);
+		var selected = this.root.querySelector(&quot;.ltreeitemtitle.selected&quot;);
+		if(selected)
+			selected.classList.remove(&quot;selected&quot;);
+		var semiselected = this.root.querySelectorAll(&quot;.ltreeitemtitle.semiselected&quot;);
+		for(var i = 0; i &lt; semiselected.length; i++)
+			semiselected[i].classList.remove(&quot;semiselected&quot;);
+
+		//mark as selected
+		node.title_element.classList.add(&quot;selected&quot;);
+
+		//go up and semiselect
+		var parent = node.parentNode.parentNode; //two elements per level
+		while(parent &amp;&amp; parent.classList.contains(&quot;ltreeitem&quot;))
+		{
+			parent.title_element.classList.add(&quot;semiselected&quot;);
+			parent = parent.parentNode.parentNode;
+		}
+	}
+
+	Tree.prototype.getSelectedItem = function()
+	{
+		var node = this.root.querySelector(&quot;.ltreeitemtitle.selected&quot;);
+		return node;
+	}
+
+	Tree.prototype.insertItem = function(data, id_parent, position, options)
+	{
+		var parent = this.root_item;
+		if(id_parent)
+		{
+			if(typeof(id_parent) == &quot;string&quot;)
+				parent = this.getItem( id_parent );
+			else
+				parent = id_parent;
+			if(!parent)
+				return null; //not found
+		}
+		if( !parent.classList.contains(&quot;ltreeitem&quot;) )
+			throw(&quot;this node is not a tree item&quot;);
+
+		var element = this.createTreeItem(data, options);
+		if(position == undefined)
+			parent.list.appendChild( element );
+		else
+		{
+			parent.list.insertBefore(element, parent.list.childNodes[position]);
+		}
+
+		this.updateListBox(parent);
+
+		return element;
+	}
+
+	Tree.prototype.updateListBox = function(node)
+	{
+
+		if(!node.listbox)
+		{
+			var pre = node.title_element.querySelector(&quot;.precontent&quot;);
+			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
+			box.setEmpty(true);
+			pre.appendChild(box);
+			node.listbox = box;
+		}
+
+		var child_elements = this.getChildren(node);
+		if(!child_elements) return; //null
+
+		if(child_elements.length)
+			node.listbox.setEmpty(false);
+		else
+			node.listbox.setEmpty(true);
+
+		/*
+		var child_elements = this.getChildren(node);
+		if(!child_elements) return; //null
+
+		if(child_elements.length &amp;&amp; !node.listbox)
+		{
+			var pre = node.title_element.querySelector(&quot;.precontent&quot;);
+			var box = LiteGUI.createLitebox(true, Tree.onClickBox.bind(node) );
+			pre.appendChild(box);
+			node.listbox = box;
+			return;
+		}
+
+		if(!child_elements.length &amp;&amp; node.listbox)
+		{
+			node.listbox.parentNode.removeChild(node.listbox);
+			node.listbox = null;
+		}
+		*/
+	}
+
+	Tree.prototype.getChildren = function(id_or_node)
+	{
+		var node = id_or_node;
+		if(typeof(id_or_node) == &quot;string&quot;)
+			this.getItem(id_or_node);
+
+		if(!node)
+			return null;
+		if(!node.list) //this is not a itemTree
+			return null;
+
+		var childs = node.list.childNodes;
+		var child_elements = [];
+		for(var i in childs)
+		{
+			var c = childs[i];
+			if(c.localName == &quot;li&quot; &amp;&amp; c.classList.contains(&quot;ltreeitem&quot;))
+				child_elements.push(c);
+		}
+
+		return child_elements;
+	}
+
+	Tree.prototype.getParent = function(id_or_node)
+	{
+		var node = id_or_node;
+		if(typeof(id_or_node) == &quot;string&quot;)
+			this.getItem(id_or_node);
+		if(!node)
+			return null;
+
+		var aux = node.parentNode;
+		while(aux)
+		{
+			if( aux.classList.contains(&quot;ltreeitem&quot;) )
+				return aux;
+			aux = aux.parentNode;
+		}
+		return null;
+	}
+
+	Tree.prototype.moveItem = function(id, id_parent)
+	{
+		var parent = this.getItem(id_parent);
+		var node = this.getItem(id);
+		var old_parent = this.getParent(node);
+
+		if(!parent || !node)
+			return false;
+
+		if(parent == old_parent)
+			return;
+
+		parent.list.appendChild( node );
+		this.updateListBox(parent);
+
+		if(old_parent)
+			this.updateListBox(old_parent);
+
+		return true;
+	}
+
+	Tree.prototype.removeItem = function(id_or_node)
+	{
+		var node = id_or_node;
+		if(typeof(id_or_node) == &quot;string&quot;)
+			node = this.getItem(id_or_node);
+		if(!node)
+			return null;
+
+		var parent = this.getParent(node);
+		if(!parent || !parent.list) return;
+
+		parent.list.removeChild( node );
+
+		if(parent)
+			this.updateListBox(parent);
+	}
+
+	Tree.prototype.updateItem = function(id, data)
+	{
+		var node = this.getItem(id);
+		if(!node) return;
+
+		node.data = data;
+		if(data.id)
+			node.id = data.id;
+		if(data.content)
+		{
+			//node.title_element.innerHTML = &quot;&lt;span class=&#x27;precontent&#x27;&gt;&lt;/span&gt;&lt;span class=&#x27;incontent&#x27;&gt;&quot; +  + &quot;&lt;/span&gt;&lt;span class=&#x27;postcontent&#x27;&gt;&lt;/span&gt;&quot;;
+			var incontent = node.title_element.querySelector(&quot;.incontent&quot;);
+			incontent.innerHTML = data.content;
+		}
+	}
+
+	Tree.prototype.clear = function(keep_root)
+	{
+		$(keep_root ? this.root_item : this.root).find(&quot;.ltreeitem&quot;).remove();
+	}
+
+	LiteGUI.Tree = Tree;
+})();
+    </pre>
+</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

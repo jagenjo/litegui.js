@@ -46,6 +46,10 @@
 			}
 		}
 
+		if(options.width)
+			this.root.style.width = options.width.constructor === Number ? options.width.toFixed(0) + "px" : options.width;
+		if(options.height)
+			this.root.style.height = options.height.constructor === Number ? options.height.toFixed(0) + "px" : options.height;
 
 		//container of tab elements
 		var list = document.createElement("UL");

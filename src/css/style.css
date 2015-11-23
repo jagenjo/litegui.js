@@ -397,11 +397,11 @@ li.ltreeitem div.ltreeitemtitle .incontent:hover {
 	color: white;
 }
 
-li.ltreeitem div.ltreeitemtitle.selected .incontent {
+li.ltreeitem.selected  div.ltreeitemtitle .incontent {
 	color: #EC6;
 }
 
-li.ltreeitem div.ltreeitemtitle.semiselected .incontent {
+li.ltreeitem.semiselected div.ltreeitemtitle .incontent {
 	color: #A96;
 }
 
@@ -668,4 +668,24 @@ textarea.textfield {
 .tinybox.ok {
 	background-color: #33FF99;	
 	opacity: 1;
+}
+
+
+.litepad {
+	position: relative;
+	background-color: #222;
+	cursor: pointer;
+}
+
+.litepad .litepad-handler {
+	position: absolute;
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	background-color: #660;
+	border: 2px solid #AAF;
+	border-radius: 10px;
+	top: 0;
+	left: 0;
+	pointer-events: none;
 }

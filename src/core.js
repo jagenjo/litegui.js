@@ -12,6 +12,7 @@ var LiteGUI = {
 	content: null,
 
 	panels: {},
+	windows: [], //windows opened by the GUI (we need to know about them to close them once the app closes)
 
 	//undo
 	undo_steps: [],
@@ -76,6 +77,12 @@ var LiteGUI = {
 				LiteGUI.maximizeWindow();
 			});
 		}
+
+		window.addEventListener("beforeunload", function(e) {
+			for(var i in LiteGUI.windows)
+				LiteGUI.windows[i].close();
+			LiteGUI.windows = [];
+		});
 	},
 
 	/**
@@ -452,11 +459,15 @@ var LiteGUI = {
 	**/
 	requireScript: function(url, on_complete, on_error, on_progress )
 	{
-		if(typeof(url)=="string")
+		if(!url)
+			throw("invalid URL");
+
+		if( url.constructor === String )
 			url = [url];
 
 		var total = url.length;
 		var size = total;
+
 		for(var i in url)
 		{
 			var script = document.createElement('script');
@@ -522,23 +533,45 @@ var LiteGUI = {
 	* Request script and inserts it in the DOM
 	* @method createElement
 	* @param {String} tag
-	* @param {String} id
+	* @param {String} id_class string containing id and classes, example: "myid .someclass .anotherclass"
 	* @param {String} content
 	* @param {Object} style
 	**/
-	createElement: function(tag, id, content, style)
+	createElement: function(tag, id_class, content, style, events)
 	{
 		var elem = document.createElement( tag );
-		if(id)
-			elem.id = id;
+		if(id_class)
+		{
+			var t = id_class.split(" ");
+			for(var i = 0; i < t.length; i++)
+			{
+				if(t[i][0] == ".")
+					elem.classList.add( t[i].substr(1) );
+				else if(t[i][0] == "#")
+					elem.id = t[i].substr(1);
+				else
+					elem.id = t[i];
+			}
+		}
 		elem.root = elem;
 		if(content)
 			elem.innerHTML = content;
 		elem.add = function(v) { this.appendChild( v.root || v ); };
 
 		if(style)
-			for(var i in style)
-				elem.style[i] = style[i];
+		{
+			if(style.constructor === String)
+				elem.setAttribute("style",style);
+			else
+				for(var i in style)
+					elem.style[i] = style[i];
+		}
+
+		if(events)
+		{
+			for(var i in events)
+				elem.addEventListener(i, events[i]);
+		}
 		return elem;
 	},
 
@@ -554,6 +587,7 @@ var LiteGUI = {
 		var elem = document.createElement("button");
 		elem.id = id;
 		elem.root = elem;
+		elem.className = "litegui button";
 		if(content !== undefined)
 			elem.innerHTML = content;
 		if(callback)
@@ -646,14 +680,15 @@ var LiteGUI = {
 	{
 		options = options || {};
 
+		
 		options.className = "alert";
-		options.title = "Alert";
-		options.width = 280;
-		options.height = 140;
+		options.title = options.title || "Alert";
+		options.width = options.width || 280;
+		options.height = options.height || 140;
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
 		$(".litepanel.alert").remove(); //kill other panels
-		return this.showMessage(content,options);
+		return LiteGUI.showMessage(content,options);
 	},
 
 	/**
@@ -667,8 +702,8 @@ var LiteGUI = {
 	{
 		options = options || {};
 		options.className = "alert";
-		options.title = "Confirm";
-		options.width = 280;
+		options.title = options.title || "Confirm";
+		options.width = options.width || 280;
 		//options.height = 100;
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
@@ -703,8 +738,9 @@ var LiteGUI = {
 	{
 		options = options || {};
 		options.className = "alert";
-		options.title = "Prompt" || options.title;
-		options.width = 280;
+		options.title = options.title || "Prompt";
+		options.width = options.width || 280;
+
 		//options.height = 140 + (options.textarea ? 40 : 0);
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";

@@ -11,14 +11,15 @@ $(window).bind("load", function() {
 	LiteGUI.add( mainarea );
 	//$(window).resize(function() { $(LiteGUI.mainarea).trigger("resize"); });
 
-
+ 
 	//create main canvas to test redraw
 	var canvas = document.createElement("canvas");
 	canvas.width = canvas.height = 100;
 	canvas.times = 0;
 	canvas.redraw = function() {
-		canvas.width = $(canvas).parent().width();
-		canvas.height = $(canvas).parent().height();
+		var rect = canvas.parentNode.getClientRects()[0];
+		canvas.width = rect.width;
+		canvas.height = rect.height;
 		var ctx = canvas.getContext("2d");
 		ctx.clearRect(0,0,this.width,this.height);
 		ctx.lineWidth = 1;
@@ -29,16 +30,19 @@ $(window).bind("load", function() {
 	}
 	mainarea.onresize = function() { canvas.redraw(); };
 	mainarea.content.appendChild(canvas);
-	canvas.redraw();
 
 	//split mainarea
 	createSidePanel();
 
 	mainarea.getSection(0).split("vertical",[null,"100px"],true);
+	mainarea.getSection(0).onresize = function() {
+		canvas.redraw();
+	};
+
 	var docked_bottom = new LiteGUI.Panel("bottom_panel", {title:'Docked panel',hide:true});
 	mainarea.getSection(0).getSection(1).add( docked_bottom );
 	$(docked_bottom).trigger("closed",function() { LiteGUI.mainarea.getSection(0).merge() });
-	mainarea.resize();
+	//mainarea.resize();
 
 	var dialog = createWidgetsDialog();
 
@@ -73,11 +77,13 @@ $(window).bind("load", function() {
 		dialog.addButton("Accept",{ close: true });
 		dialog.addButton("Cancel",{ close: 'fade' });
 	}});
+
+	canvas.redraw();
 });
 
 function createSidePanel()
 {
-	mainarea.split("horizontal",[null,"240px"],true);
+	mainarea.split("horizontal",[null,240],true);
 
 	var docked = new LiteGUI.Panel("right_panel", {title:'Docked panel', close: true});
 
@@ -157,10 +163,11 @@ function updateSidePanel( root )
 	widgets.addButton(null,"Save");
 	widgets.addSeparator();
 	widgets.addColor("Color",[0,1,0]);
+	widgets.addPad("Pad",[0.5,0.5], function(v){ console.log(v); });
 	widgets.addFile("File","test.png");
 	widgets.addLine("Line",[[0.5,1],[0.75,0.25]],{defaulty:0,width:120}); 
 
-	mainarea.resize();
+	//mainarea.resize();
 }
 
 function createWidgetsDialog()

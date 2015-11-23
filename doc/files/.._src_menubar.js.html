@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>../src/menubar.js</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+            
+                <h1><img src="../assets/css/logo.png" title=""></h1>
+            
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+    <h2 class="off-left">APIs</h2>
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Classes</a></li>
+            <li><a href="#api-modules">Modules</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a href="../classes/Area.html">Area</a></li>
+            
+                <li><a href="../classes/ContextualMenu.html">ContextualMenu</a></li>
+            
+                <li><a href="../classes/Dialog.html">Dialog</a></li>
+            
+                <li><a href="../classes/Inspector.html">Inspector</a></li>
+            
+                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
+            
+                <li><a href="../classes/List.html">List</a></li>
+            
+                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
+            
+                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
+            
+                <li><a href="../classes/Slider.html">Slider</a></li>
+            
+                <li><a href="../classes/Split.html">Split</a></li>
+            
+                <li><a href="../classes/Tabs.html">Tabs</a></li>
+            
+                <li><a href="../classes/Tree.html">Tree</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+        Show:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited" checked>
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+                        <h1 class="file-heading">File: ../src/menubar.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+(function(){
+
+	/************** MENUBAR ************************/
+	function Menubar(id)
+	{
+		this.menu = [];
+		this.panels = [];
+
+		this.root = document.createElement(&quot;div&quot;);
+		this.root.id = id;
+		this.root.className = &quot;litemenubar&quot;;
+
+		this.content = document.createElement(&quot;ul&quot;);
+		this.root.appendChild( this.content );
+
+		this.is_open = false;
+	}
+
+	Menubar.closing_time = 500;
+
+	Menubar.prototype.clear = function()
+	{
+		this.content.innerHTML = &quot;&quot;;
+		this.menu = [];
+		this.panels = [];
+	}
+
+	Menubar.prototype.attachToPanel = function(panel)
+	{
+		$(panel.content).prepend(this.root);
+	}
+
+	Menubar.prototype.add = function( path, data )
+	{
+		data = data || {};
+
+		if( typeof(data) == &quot;function&quot; )
+			data = { callback: data };
+
+		var prev_length = this.menu.length;
+
+		var tokens = path.split(&quot;/&quot;);
+		var current_token = 0;
+		var current_pos = 0;
+		var menu = this.menu;
+		var last_item = null;
+
+		while( menu )
+		{
+			if(current_token &gt; 5)
+				throw(&quot;Error: Menubar too deep&quot;);
+			//token not found in this menu, create it
+			if( menu.length == current_pos )
+			{
+				var v = { parent: last_item, children: [] };
+				last_item = v;
+				if(current_token == tokens.length - 1)
+					v.data = data;
+
+				v.disable = function() { if( this.data ) this.data.disabled = true; }
+				v.enable = function() { if( this.data ) delete this.data.disabled; }
+
+				v.name = tokens[ current_token ];
+				menu.push( v );
+				current_token++;
+				if( current_token == tokens.length )
+					break;
+				v.children = [];
+				menu = v.children;
+				current_pos = 0;
+				continue;
+			}
+
+			//token found in this menu, get inside for next token
+			if( menu[ current_pos ] &amp;&amp; tokens[ current_token ] == menu[ current_pos ].name )
+			{
+				if(current_token &lt; tokens.length - 1)
+				{
+					last_item = menu[ current_pos ];
+					menu = menu[ current_pos ].children;
+					current_pos = 0;
+					current_token++;
+					continue;
+				}
+				else //last token
+				{
+					console.warn(&quot;Warning: Adding menu that already exists: &quot; + path );
+					break;
+				}
+			}
+			current_pos++;
+		}
+
+		if(prev_length != this.menu.length)
+			this.updateMenu();
+	};
+
+	Menubar.prototype.remove = function( path )
+	{
+		var menu = this.findMenu( path );
+		if(!menu)
+			return;
+		if(!menu.parent || !menu.parent.children)
+			return console.warn(&quot;menu without parent?&quot;);
+		
+		var index = menu.parent.children.indexOf( menu );
+		if(index != -1)
+			menu.parent.children.splice( index, 1 );
+	},
+
+	Menubar.prototype.separator = function( path, order )
+	{
+		var menu = this.findMenu( path );
+		if(!menu)
+			return;
+		menu.children.push( {separator: true, order: order || 10 } );
+	}
+
+	//returns the menu entry that matches this path
+	Menubar.prototype.findMenu = function( path )
+	{
+		var tokens = path.split(&quot;/&quot;);
+		var current_token = 0;
+		var current_pos = 0;
+		var menu = this.menu;
+
+		while( menu )
+		{
+			//no more tokens, return last found menu
+			if(current_token == tokens.length)
+				return menu;
+
+			//this menu doesnt have more entries
+			if(menu.length &lt;= current_pos)
+				return null;
+
+			if(tokens[ current_token ] == &quot;*&quot;)
+				return menu[ current_pos ].children;
+
+			//token found in this menu, get inside for next token
+			if( tokens[ current_token ] == menu[ current_pos ].name )
+			{
+				if(current_token == tokens.length - 1) //last token
+				{
+					return menu[ current_pos ];
+				}
+				else
+				{
+					menu = menu[ current_pos ].children;
+					current_pos = 0;
+					current_token++;
+					continue;
+				}
+			}
+
+			//check next entry in this menu
+			current_pos++;
+		}
+		return null;
+	}
+
+	//update top main menu
+	Menubar.prototype.updateMenu = function()
+	{
+		var that = this;
+
+		this.content.innerHTML = &quot;&quot;;
+		for(var i in this.menu)
+		{
+			var element = document.createElement(&quot;li&quot;);
+			element.innerHTML = &quot;&lt;span class=&#x27;icon&#x27;&gt;&lt;/span&gt;&lt;span class=&#x27;name&#x27;&gt;&quot; + this.menu[i].name + &quot;&lt;/span&gt;&quot;;
+			this.content.appendChild(element);
+			element.data = this.menu[i];
+			this.menu[i].element = element;
+
+			/* ON CLICK TOP MAIN MENU ITEM */
+			element.addEventListener(&quot;click&quot;, function(e) {
+				var item = this.data;
+
+				if(item.data &amp;&amp; item.data.callback &amp;&amp; typeof(item.data.callback) == &quot;function&quot;)
+					item.data.callback(item.data);
+
+				if(!that.is_open)
+				{
+					//$(document).bind(&quot;click&quot;,inner_outside);
+					that.is_open = true;
+					that.showMenu( item, e, this );
+				}
+				else
+				{
+					that.is_open = false;
+					that.hidePanels();
+				}
+			});
+
+			element.addEventListener(&quot;mouseover&quot;, function(e) {
+				that.hidePanels();
+				if(that.is_open)
+					that.showMenu( this.data, e, this );
+			});
+		}
+	}
+
+	Menubar.prototype.hidePanels = function() {
+		if(!this.panels.length)
+			return;
+
+		for(var i in this.panels)
+			LiteGUI.remove(this.panels[i]);
+		this.panels = [];
+	}
+
+	//Create the panel with the drop menu
+	Menubar.prototype.showMenu = function(menu, e, root, is_submenu) {
+
+		if(!is_submenu)
+			this.hidePanels();
+
+		if(!menu.children || !menu.children.length)
+			return;
+		var that = this;
+		if(that.closing_by_leave)
+			clearInterval(that.closing_by_leave);
+
+		var element = document.createElement(&quot;div&quot;);
+		element.className = &quot;litemenubar-panel&quot;;
+
+		var sorted_entries = [];
+		for(var i in menu.children)
+			sorted_entries.push(menu.children[i]);
+
+		sorted_entries.sort(function(a,b) {
+			var a_order = 10;
+			var b_order = 10;
+			if(a &amp;&amp; a.data &amp;&amp; a.data.order != null) a_order = a.data.order;
+			if(a &amp;&amp; a.separator &amp;&amp; a.order != null) a_order = a.order;
+			if(b &amp;&amp; b.data &amp;&amp; b.data.order != null) b_order = b.data.order;
+			if(b &amp;&amp; b.separator &amp;&amp; b.order != null) b_order = b.order;
+			return a_order - b_order;
+		});
+
+		for(var i in sorted_entries)
+		{
+			var item = document.createElement(&quot;p&quot;);
+			var menu_item = sorted_entries[i];
+
+			item.className = &#x27;litemenu-entry &#x27; + ( item.children ? &quot; submenu&quot; : &quot;&quot; );
+			if(menu_item &amp;&amp; menu_item.name)
+				item.innerHTML = &quot;&lt;span class=&#x27;icon&#x27;&gt;&lt;/span&gt;&lt;span class=&#x27;name&#x27;&gt;&quot; + menu_item.name + (menu_item.children &amp;&amp; menu_item.children.length ? &quot;&lt;span class=&#x27;more&#x27;&gt;+&lt;/span&gt;&quot;:&quot;&quot;) + &quot;&lt;/span&gt;&quot;;
+			else
+				item.innerHTML = &quot;&lt;span class=&#x27;separator&#x27;&gt;&lt;/span&gt;&quot;;
+
+			item.data = menu_item;
+
+			//check if it has to show the item being &#x27;checked&#x27;
+			if( item.data.data )
+			{
+				var data = item.data.data;
+
+				var checked = (data.type == &quot;checkbox&quot; &amp;&amp; data.instance &amp;&amp; data.property &amp;&amp; data.instance[ data.property ] == true) || 
+					data.checkbox == true ||
+					(data.instance &amp;&amp; data.property &amp;&amp; data.hasOwnProperty(&quot;value&quot;) &amp;&amp; data.instance[data.property] == data.value) ||
+					(typeof( data.isChecked ) == &quot;function&quot; &amp;&amp; data.isChecked.call(data.instance, data) );
+
+				if(checked)
+					item.className += &quot; checked&quot;;
+
+				if(data.disabled)
+					item.className += &quot; disabled&quot;;
+			}
+
+			/* ON CLICK SUBMENU ITEM */
+			item.addEventListener(&quot;click&quot;,function(){
+				var item = this.data;
+				if(item.data)
+				{
+					if(item.data.disabled)
+						return;
+
+					//to change variables directly
+					if(item.data.instance &amp;&amp; item.data.property)
+					{
+						if( item.data.type == &quot;checkbox&quot; )
+						{
+							item.data.instance[item.data.property] = !item.data.instance[item.data.property];
+							if(	item.data.instance[item.data.property] )
+								this.classList.add(&quot;checked&quot;);
+							else
+								this.classList.remove(&quot;checked&quot;);
+						}
+						else if( item.data.hasOwnProperty(&quot;value&quot;) )
+						{
+							item.data.instance[item.data.property] = item.data.value;
+						}
+					}
+
+					//to have a checkbox behaviour
+					if(item.data.checkbox != null)
+					{
+						item.data.checkbox = !item.data.checkbox;
+						if(	item.data.checkbox )
+							this.classList.add(&quot;checked&quot;);
+						else
+							this.classList.remove(&quot;checked&quot;);
+					}
+
+					//execute a function
+					if(item.data.callback &amp;&amp; typeof(item.data.callback) == &quot;function&quot;)
+						item.data.callback(item.data);
+				}
+
+				//more menus
+				if(item.children &amp;&amp; item.children.length)
+				{
+					that.showMenu( item, e, this, true );
+				}
+				else
+				{
+					that.is_open = false;
+					that.hidePanels();
+				}
+			});
+			element.appendChild( item );
+		}
+
+		element.addEventListener(&quot;mouseleave&quot;,function(e){
+			//if( $(e.target).hasClass(&quot;litemenubar-panel&quot;) || $(e.target).parents().hasClass(&quot;litemenubar-panel&quot;) ) 	return;
+			
+			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
+			that.closing_by_leave = setTimeout( function() { 
+				that.is_open = false;
+				that.hidePanels();
+			},LiteGUI.Menubar.closing_time);
+		});
+
+		element.addEventListener(&quot;mouseenter&quot;,function(e){
+			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
+			that.closing_by_leave = null;
+		});
+
+		var jQ = $(root); //$(menu.element);
+		element.style.left = jQ.offset().left + ( is_submenu ? 200 : 0 ) + &quot;px&quot;;
+		element.style.top = jQ.offset().top + jQ.height() + ( is_submenu ? -20 : 2 ) + &quot;px&quot;;
+
+		this.panels.push(element);
+		document.body.appendChild( element );
+		$(element).hide().show();
+	}
+
+	LiteGUI.Menubar = Menubar;
+})();
+    </pre>
+</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

@@ -1,0 +1,2047 @@
+{
+    "project": {},
+    "files": {
+        "../src/area.js": {
+            "name": "../src/area.js",
+            "modules": {},
+            "classes": {
+                "Area": 1,
+                "Split": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/core.js": {
+            "name": "../src/core.js",
+            "modules": {},
+            "classes": {
+                "LiteGUI": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/dragger.js": {
+            "name": "../src/dragger.js",
+            "modules": {},
+            "classes": {},
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/inspector.js": {
+            "name": "../src/inspector.js",
+            "modules": {},
+            "classes": {
+                "Inspector": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/menubar.js": {
+            "name": "../src/menubar.js",
+            "modules": {},
+            "classes": {},
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/panel.js": {
+            "name": "../src/panel.js",
+            "modules": {},
+            "classes": {
+                "Dialog": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/tabs.js": {
+            "name": "../src/tabs.js",
+            "modules": {},
+            "classes": {
+                "Tabs": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/tree.js": {
+            "name": "../src/tree.js",
+            "modules": {},
+            "classes": {
+                "Tree": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/tree_old.js": {
+            "name": "../src/tree_old.js",
+            "modules": {},
+            "classes": {},
+            "fors": {},
+            "namespaces": {}
+        },
+        "../src/widgets.js": {
+            "name": "../src/widgets.js",
+            "modules": {},
+            "classes": {
+                "SearchBox": 1,
+                "ContextualMenu": 1,
+                "List": 1,
+                "Slider": 1,
+                "LineEditor": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        }
+    },
+    "modules": {},
+    "classes": {
+        "Area": {
+            "name": "Area",
+            "shortname": "Area",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/area.js",
+            "line": 6,
+            "description": "Areas can be split several times horizontally or vertically to fit different colums or rows",
+            "is_constructor": 1
+        },
+        "Split": {
+            "name": "Split",
+            "shortname": "Split",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/area.js",
+            "line": 528,
+            "description": "Split",
+            "is_constructor": 1
+        },
+        "LiteGUI": {
+            "name": "LiteGUI",
+            "shortname": "LiteGUI",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/core.js",
+            "line": 2,
+            "description": "Core namespace of LiteGUI library, it holds some useful functions",
+            "is_constructor": 1
+        },
+        "Inspector": {
+            "name": "Inspector",
+            "shortname": "Inspector",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/inspector.js",
+            "line": 20,
+            "description": "Inspector allows to create a list of widgets easily",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "object with a set of options { \n\twidth: total width\n\twidgets_width: width of every widget (used mostly in horizontal inspectors)\n\tname_width: width of the name part of widgets\n\tfull: set to true if you want the inspector to use all the parent width and height\n\twidgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes)\n\tone_line: widgets are place one next to the other horizontaly\n\tonchange: callback to call when something changes\n  }",
+                    "type": "Object"
+                }
+            ],
+            "is_constructor": 1
+        },
+        "Dialog": {
+            "name": "Dialog",
+            "shortname": "Dialog",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/panel.js",
+            "line": 48,
+            "description": "Dialog",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "useful options are { title, width, height, closable, on_close, }",
+                    "type": "Object"
+                }
+            ],
+            "is_constructor": 1
+        },
+        "Tabs": {
+            "name": "Tabs",
+            "shortname": "Tabs",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/tabs.js",
+            "line": 5,
+            "description": "Widget that contains several tabs and their content",
+            "is_constructor": 1
+        },
+        "Tree": {
+            "name": "Tree",
+            "shortname": "Tree",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/tree.js",
+            "line": 5,
+            "description": "To create interactive trees (useful for folders or hierarchies).\nOptions are:\n\t+ allow_multiselection: allow to select multiple elements using the shift key\n\t+ allow_rename: double click to rename items in the tree\n\t+ allow_drag: drag elements around\n\t+ height\nItem data should be in the next format:\n{\n   id: unique_identifier,\n   content: what to show in the HTML (if omited id will be shown)\n\t children: []  array with another object with the same structure\n\t className: class\n   precontent: HTML inserted before the content\n\t visible: boolean, to hide it\n\t dataset: dataset for the element\n\t onDragData: callback in case the user drags this item somewhere else\n}",
+            "is_constructor": 1
+        },
+        "SearchBox": {
+            "name": "SearchBox",
+            "shortname": "SearchBox",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/widgets.js",
+            "line": 35,
+            "description": "SearchBox",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "*"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                }
+            ]
+        },
+        "ContextualMenu": {
+            "name": "ContextualMenu",
+            "shortname": "ContextualMenu",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/widgets.js",
+            "line": 68,
+            "description": "ContextualMenu",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "values",
+                    "description": "(allows object { title: \"Nice text\", callback: function ... })",
+                    "type": "Array"
+                }
+            ]
+        },
+        "List": {
+            "name": "List",
+            "shortname": "List",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/widgets.js",
+            "line": 306,
+            "description": "List",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "values",
+                    "description": "",
+                    "type": "Array"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                }
+            ]
+        },
+        "Slider": {
+            "name": "Slider",
+            "shortname": "Slider",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/widgets.js",
+            "line": 389,
+            "description": "Slider",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                }
+            ]
+        },
+        "LineEditor": {
+            "name": "LineEditor",
+            "shortname": "LineEditor",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/widgets.js",
+            "line": 476,
+            "description": "LineEditor",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                }
+            ]
+        }
+    },
+    "classitems": [
+        {
+            "file": "../src/area.js",
+            "line": 5,
+            "class": "Area"
+        },
+        {
+            "file": "../src/area.js",
+            "line": 526,
+            "class": "Area"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 26,
+            "description": "initializes the lib, must be called",
+            "itemtype": "method",
+            "name": "init",
+            "params": [
+                {
+                    "name": "options",
+                    "description": "some options are container, menubar,",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 88,
+            "description": "Triggers a simple event in an object (similar to jQuery.trigger)",
+            "itemtype": "method",
+            "name": "trigger",
+            "params": [
+                {
+                    "name": "element",
+                    "description": "could be an HTMLEntity or a regular object",
+                    "type": "Object"
+                },
+                {
+                    "name": "element",
+                    "description": "could be an HTMLEntity or a regular object",
+                    "type": "Object"
+                },
+                {
+                    "name": "element",
+                    "description": "could be an HTMLEntity or a regular object",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 107,
+            "description": "Binds an event in an object (similar to jQuery.bind)\nIf the element is not an HTML entity a new one is created, attached to the object (as non-enumerable, called __events) and used",
+            "itemtype": "method",
+            "name": "trigger",
+            "params": [
+                {
+                    "name": "element",
+                    "description": "could be an HTMLEntity or a regular object",
+                    "type": "Object"
+                },
+                {
+                    "name": "event",
+                    "description": "the string defining the event",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "where to call",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 139,
+            "description": "Unbinds an event in an object (similar to jQuery.unbind)",
+            "itemtype": "method",
+            "name": "unbind",
+            "params": [
+                {
+                    "name": "element",
+                    "description": "could be an HTMLEntity or a regular object",
+                    "type": "Object"
+                },
+                {
+                    "name": "event",
+                    "description": "the string defining the event",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "where to call",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 154,
+            "description": "Appends litegui widget to the global interface",
+            "itemtype": "method",
+            "name": "add",
+            "params": [
+                {
+                    "name": "litegui_element",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 164,
+            "description": "Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.",
+            "itemtype": "method",
+            "name": "remove",
+            "params": [
+                {
+                    "name": "litegui_element",
+                    "description": "it also supports HTMLentity or selector string",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 187,
+            "description": "wrapper of document.getElementById",
+            "itemtype": "method",
+            "name": "getById",
+            "params": [
+                {
+                    "name": "id!~YUIDOC_LINE~!return",
+                    "description": "{HTMLEntity}",
+                    "type": "String"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 226,
+            "description": "Change cursor",
+            "itemtype": "method",
+            "name": "setCursor",
+            "params": [
+                {
+                    "name": "cursor",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 236,
+            "description": "Copy a string to the clipboard (it needs to be invoqued from a click event)",
+            "itemtype": "method",
+            "name": "toClipboard",
+            "params": [
+                {
+                    "name": "data",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 270,
+            "description": "Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)",
+            "itemtype": "method",
+            "name": "getClipboard",
+            "return": {
+                "description": "clipboard",
+                "type": "String"
+            },
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 285,
+            "description": "Insert some CSS code to the website",
+            "itemtype": "method",
+            "name": "addCSS",
+            "params": [
+                {
+                    "name": "code",
+                    "description": "it could be a string with CSS rules, or an object with the style syntax.",
+                    "type": "String|Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 310,
+            "description": "Requires a new CSS",
+            "itemtype": "method",
+            "name": "requireCSS",
+            "params": [
+                {
+                    "name": "url",
+                    "description": "string with url or an array with several urls",
+                    "type": "String"
+                },
+                {
+                    "name": "on_complete",
+                    "description": "",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 336,
+            "description": "Request file from url (it could be a binary, text, etc.). If you want a simplied version use",
+            "itemtype": "method",
+            "name": "request",
+            "params": [
+                {
+                    "name": "request",
+                    "description": "object with all the parameters like data (for sending forms), dataType, success, error",
+                    "type": "Object"
+                },
+                {
+                    "name": "on_complete",
+                    "description": "",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 415,
+            "description": "Request file from url",
+            "itemtype": "method",
+            "name": "requestText",
+            "params": [
+                {
+                    "name": "url",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "on_complete",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "on_error",
+                    "description": "",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 427,
+            "description": "Request file from url",
+            "itemtype": "method",
+            "name": "requestJSON",
+            "params": [
+                {
+                    "name": "url",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "on_complete",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "on_error",
+                    "description": "",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 439,
+            "description": "Request binary file from url",
+            "itemtype": "method",
+            "name": "requestBinary",
+            "params": [
+                {
+                    "name": "url",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "on_complete",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "on_error",
+                    "description": "",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 452,
+            "description": "Request script and inserts it in the DOM",
+            "itemtype": "method",
+            "name": "requireScript",
+            "params": [
+                {
+                    "name": "url",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "on_complete",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "on_error",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "on_progress",
+                    "description": "(if several files are required, on_progress is called after every file is added to the DOM)",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 532,
+            "description": "Request script and inserts it in the DOM",
+            "itemtype": "method",
+            "name": "createElement",
+            "params": [
+                {
+                    "name": "tag",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "id_class",
+                    "description": "string containing id and classes, example: \"myid .someclass .anotherclass\"",
+                    "type": "String"
+                },
+                {
+                    "name": "content",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "style",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 578,
+            "description": "Request script and inserts it in the DOM",
+            "itemtype": "method",
+            "name": "createButton",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "content",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "when the button is pressed",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 648,
+            "description": "Shows a dialog with a message",
+            "itemtype": "method",
+            "name": "popup",
+            "params": [
+                {
+                    "name": "content",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "( min_height, content, noclose )",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 673,
+            "description": "Shows an alert dialog with a message",
+            "itemtype": "method",
+            "name": "alert",
+            "params": [
+                {
+                    "name": "content",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "( title, width, height, content, noclose )",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 694,
+            "description": "Shows a confirm dialog with a message",
+            "itemtype": "method",
+            "name": "confirm",
+            "params": [
+                {
+                    "name": "content",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "options",
+                    "description": "( title, width, height, content, noclose )",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 730,
+            "description": "Shows a prompt dialog with a message",
+            "itemtype": "method",
+            "name": "prompt",
+            "params": [
+                {
+                    "name": "content",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "options",
+                    "description": "( title, width, height, content, noclose )",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 788,
+            "description": "Returns the URL vars ( ?foo=faa&foo2=etc )",
+            "itemtype": "method",
+            "name": "getUrlVars",
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 813,
+            "description": "Makes one element draggable",
+            "itemtype": "method",
+            "name": "draggable",
+            "params": [
+                {
+                    "name": "container",
+                    "description": "the element that will be dragged",
+                    "type": "HTMLEntity"
+                },
+                {
+                    "name": "dragger",
+                    "description": "the area to start the dragging",
+                    "type": "HTMLEntity"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 876,
+            "description": "Clones object content",
+            "itemtype": "method",
+            "name": "cloneObject",
+            "params": [
+                {
+                    "name": "object",
+                    "description": "",
+                    "type": "Object"
+                },
+                {
+                    "name": "target",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/dragger.js",
+            "line": 3,
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 78,
+            "description": "Removes all the widgets inside the inspector",
+            "itemtype": "method",
+            "name": "clear",
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 96,
+            "description": "Tryes to refresh (calls on_refresh)",
+            "itemtype": "method",
+            "name": "refresh",
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 152,
+            "itemtype": "method",
+            "name": "inspectInstance",
+            "params": [
+                {
+                    "name": "instance",
+                    "description": "the instance that you want to inspect, attributes will be collected from this object",
+                    "type": "Object"
+                },
+                {
+                    "name": "properties",
+                    "description": "an array with all the names of the properties you want to inspect, \n\t\t  if not specified then it calls getProperties, othewise collect them and tries to guess the type",
+                    "type": "Array"
+                },
+                {
+                    "name": "properties_info_example",
+                    "description": "it overwrites the info about properties found in the object (in case the automaticaly guessed type is wrong)",
+                    "type": "Object"
+                },
+                {
+                    "name": "properties_to_skip",
+                    "description": "this properties will be ignored",
+                    "type": "Array"
+                }
+            ],
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 244,
+            "itemtype": "method",
+            "name": "collectPropertier",
+            "params": [
+                {
+                    "name": "instance",
+                    "description": "extract enumerable and public (name do not start with '_' ) properties from an object\n return {Object} object with \"name\" : value for every property",
+                    "type": "Object"
+                }
+            ],
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 267,
+            "itemtype": "method",
+            "name": "showProperties",
+            "params": [
+                {
+                    "name": "instance",
+                    "description": "the instance that you want to inspect",
+                    "type": "Object"
+                },
+                {
+                    "name": "properties_info",
+                    "description": "object containing   \"property_name\" :{ type: value, widget:..., min:..., max:... }  or just \"property\":\"type\"",
+                    "type": "Object"
+                },
+                {
+                    "name": "properties_to_skip",
+                    "description": "this properties will be ignored",
+                    "type": "Array"
+                }
+            ],
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 315,
+            "description": "Tryes to assigns a value to the instance stored in this.instance",
+            "itemtype": "method",
+            "name": "assignValue",
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 339,
+            "description": "Used by all widgets to create the container of one widget",
+            "itemtype": "method",
+            "name": "createWidget",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "the string to show at the left side of the widget, if null this element wont be created and the value part will use the full width",
+                    "type": "String"
+                },
+                {
+                    "name": "content",
+                    "description": "the string with the html of the elements that conform the interactive part of the widget",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "some generic options that any widget could have:\n- width: the width of the widget (if omited it will use the Inspector widgets_width, otherwise 100%\n- name_width: the width of the name part of the widget, if not specified it will use Inspector name_width, otherwise css default\n- pre_title: string to append to the left side of the name, this is helpful if you want to add icons with behaviour when clicked\n- title: string to replace the name, sometimes you want to supply a different name than the one you want to show (this is helpful to retrieve values from an inspector)",
+                    "type": "Object"
+                }
+            ],
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 480,
+            "description": "Adds a widgete to the inspector, its a way to provide the widget type from a string",
+            "itemtype": "method",
+            "name": "add",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "string specifying the name of the widget to use (check Inspector.widget_constructors for a complete list)",
+                    "type": "String"
+                },
+                {
+                    "name": "name",
+                    "description": "the string to show at the left side of the widget, if null this element wont be created and the value part will use the full width",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "the value to assign to the widget",
+                    "type": "String"
+                },
+                {
+                    "name": "options:",
+                    "description": "some generic options that any widget could have:\n- type: overwrites the type\n- callback: function to call when the user interacts with the widget and changes the value\n[For a bigger list check createWidget and every widget in particular]",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 681,
+            "description": "Creates a title bar in the widgets list to help separate widgets",
+            "itemtype": "method",
+            "name": "addTitle",
+            "params": [
+                {
+                    "name": "title",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 707,
+            "description": "Creates a line",
+            "itemtype": "method",
+            "name": "addSeparator",
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 720,
+            "description": "Widget to edit strings",
+            "itemtype": "method",
+            "name": "addString",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- focus: true if you want the cursor to be here\n- password: true if you want to hide the string \n- immediate: calls the callback once every keystroke\n- disabled: shows the widget disabled\n- callback: function to call when the widget changes",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 768,
+            "description": "Widget to edit strings, but it adds a button behind (useful to search values somewhere in case the user do not remember the name)",
+            "itemtype": "method",
+            "name": "addStringButton",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "the string to show",
+                    "type": "String"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- disabled: shows the widget disabled\n- button: string to show inside the button, default is \"...\"\n- callback: function to call when the string is edited\n- callback_button: function to call when the button is pressed",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 812,
+            "description": "Widget to edit strings with multiline support",
+            "itemtype": "method",
+            "name": "addTextarea",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- focus: true if you want the cursor to be here\n- password: true if you want to hide the string \n- immediate: calls the callback once every keystroke\n- disabled: shows the widget disabled\n- callback: function to call when the widget changes",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 849,
+            "description": "Widget to edit numbers (it adds a dragging mini widget in the right side)",
+            "itemtype": "method",
+            "name": "addNumber",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- disabled: shows the widget disabled\n- callback: function to call when the string is edited\n- precision: number of digits after the colon\n- units: string to show after the number\n- min: minimum value accepted\n- max: maximum value accepted\n- step: increments when draggin the mouse (default is 0.1)",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 928,
+            "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
+            "itemtype": "method",
+            "name": "addVector2",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Vec2"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- callback: function to call once the value changes\n- disabled: shows the widget disabled\n- callback: function to call when the string is edited\n- precision: number of digits after the colon\n- units: string to show after the number\n- min: minimum value accepted\n- max: maximum value accepted\n- step: increments when draggin the mouse (default is 0.1)",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1020,
+            "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
+            "itemtype": "method",
+            "name": "addVector3",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Vec3"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- callback: function to call once the value changes\n- disabled: shows the widget disabled\n- callback: function to call when the string is edited\n- precision: number of digits after the colon\n- units: string to show after the number\n- min: minimum value accepted\n- max: maximum value accepted\n- step: increments when draggin the mouse (default is 0.1)",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1117,
+            "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
+            "itemtype": "method",
+            "name": "addVector4",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Vec4"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- callback: function to call once the value changes\n- disabled: shows the widget disabled\n- callback: function to call when the string is edited\n- precision: number of digits after the colon\n- units: string to show after the number\n- min: minimum value accepted\n- max: maximum value accepted\n- step: increments when draggin the mouse (default is 0.1)",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1203,
+            "description": "Widget to edit two numbers using a rectangular pad where you can drag horizontaly and verticaly a handler",
+            "itemtype": "method",
+            "name": "addPad",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Vec2"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- callback: function to call once the value changes\n- disabled: shows the widget disabled\n- callback: function to call when the string is edited\n- precision: number of digits after the colon\n- units: string to show after the number\n- min: minimum value accepted\n- minx: minimum x value accepted\n- miny: minimum y value accepted\n- max: maximum value accepted\n- maxx: maximum x value accepted\n- maxy: maximum y value accepted\n- step: increments when draggin the mouse (default is 0.1)\n- background: url of image to use as background (it will be streched)",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1344,
+            "description": "Widget to show plain information in HTML (not interactive)",
+            "itemtype": "method",
+            "name": "addInfo",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "HTML code",
+                    "type": "String"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- className: to specify a classname of the content\n- height: to specify a height",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1391,
+            "description": "Widget to edit a number using a slider",
+            "itemtype": "method",
+            "name": "addSlider",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- min: min value\n- max: max value\n- step: increments when dragging\n- callback: function to call once the value changes",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1448,
+            "description": "Widget to edit a boolean value using a checkbox",
+            "itemtype": "method",
+            "name": "addCheckbox",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Boolean"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- label: text to show, otherwise it shows on/off\n- label_on: text to show when on\n- label_off: text to show when off\n- callback: function to call once the value changes",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1504,
+            "description": "Widget to edit a set of boolean values using checkboxes",
+            "itemtype": "method",
+            "name": "addFlags",
+            "params": [
+                {
+                    "name": "value",
+                    "description": "object that contains all the booleans",
+                    "type": "Object"
+                },
+                {
+                    "name": "optional",
+                    "description": "object with extra flags to insert",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1532,
+            "description": "Widget to edit an enumeration using a combobox",
+            "itemtype": "method",
+            "name": "addCombo",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "*"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- values: a list with all the possible values, it could be an array, or an object, in case of an object, the key is the string to show, the value is the value to assign\n- disabled: true to disable\n- callback: function to call once an items is clicked",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 1695,
+            "description": "Widget to select from a list of items",
+            "itemtype": "method",
+            "name": "addList",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "[Array or Object]",
+                    "type": "*"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- multiselection: allow multiple selection\n- callback: function to call once an items is clicked",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/menubar.js",
+            "line": 3,
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/panel.js",
+            "line": 4,
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/panel.js",
+            "line": 47,
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/panel.js",
+            "line": 155,
+            "description": "add widget or html to the content of the dialog",
+            "itemtype": "method",
+            "name": "add",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/panel.js",
+            "line": 369,
+            "description": "destroys the dialog",
+            "itemtype": "method",
+            "name": "close",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/panel.js",
+            "line": 483,
+            "description": "shows a hidden dialog",
+            "itemtype": "method",
+            "name": "show",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/panel.js",
+            "line": 500,
+            "description": "hides the dialog",
+            "itemtype": "method",
+            "name": "hide",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/panel.js",
+            "line": 544,
+            "description": "Adjust the size of the dialog to the size of the content",
+            "itemtype": "method",
+            "name": "adjustSize",
+            "params": [
+                {
+                    "name": "margin",
+                    "description": "",
+                    "type": "Number"
+                }
+            ],
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 1,
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 89,
+            "description": "Returns the currently selected tab in the form of a tab object",
+            "itemtype": "method",
+            "name": "getCurrentTab",
+            "return": {
+                "description": "the tab in the form of an object with {id,tab,content}",
+                "type": "Object"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 106,
+            "description": "Returns the last tab pressed before this one. used to know from which tab we come",
+            "itemtype": "method",
+            "name": "getCurrentTab",
+            "return": {
+                "description": "the tab in the form of an object with {id,tab,content}",
+                "type": "Object"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 126,
+            "description": "Returns a tab",
+            "itemtype": "method",
+            "name": "getTab",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "tab id",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "the tab in the form of an object with {id,tab,content}",
+                "type": "Object"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 137,
+            "description": "Returns how many tabs there is",
+            "itemtype": "method",
+            "name": "getNumOfTabs",
+            "return": {
+                "description": "number of tabs",
+                "type": "Number"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 150,
+            "description": "Returns the content HTML element of a tab",
+            "itemtype": "method",
+            "name": "getTabContent",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "content",
+                "type": "HTMLEntity"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 163,
+            "description": "Returns the index of a tab (the position in the tabs list)",
+            "itemtype": "method",
+            "name": "getTabIndex",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "index",
+                "type": "Number"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 181,
+            "description": "Create a new tab, where id is a unique identifier",
+            "itemtype": "method",
+            "name": "addTab",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "{ title: tab text, callback: called when selected, callback_leave: callback when leaving, content: HTML content, closable: if it can be closed (callback is onclose), tab_width: size of the tab, tab_className: classes for the tab element, id: content id, size: full means all, mode: \"vertical\" or \"horizontal\", button: if it is a button tab, not a selectable tab}",
+                    "type": "Object"
+                },
+                {
+                    "name": "skip_event",
+                    "description": "prevent dispatching events",
+                    "type": "Bool"
+                }
+            ],
+            "return": {
+                "description": "an object containing { id, tab, content }",
+                "type": "Object"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 28,
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 75,
+            "description": "update tree with new data (old data will be thrown away)",
+            "itemtype": "method",
+            "name": "updateTree",
+            "params": [
+                {
+                    "name": "data",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 94,
+            "description": "update tree with new data (old data will be thrown away)",
+            "itemtype": "method",
+            "name": "insertItem",
+            "params": [
+                {
+                    "name": "data",
+                    "description": "",
+                    "type": "Object"
+                },
+                {
+                    "name": "parent_id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "position",
+                    "description": "index in case you want to add it before the last position",
+                    "type": "Number"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "DIVElement"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 615,
+            "description": "get the item with that id, returns the HTML element",
+            "itemtype": "method",
+            "name": "getItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "Object"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 652,
+            "description": "in case an item is collapsed, it expands it to show children",
+            "itemtype": "method",
+            "name": "expandItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 669,
+            "description": "in case an item is expanded, it collapses it to hide children",
+            "itemtype": "method",
+            "name": "collapseItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 687,
+            "description": "Tells you if the item its out of the view due to the scrolling",
+            "itemtype": "method",
+            "name": "isInsideArea",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 710,
+            "description": "Scrolls to center this item",
+            "itemtype": "method",
+            "name": "scrollToItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 735,
+            "description": "mark item as selected",
+            "itemtype": "method",
+            "name": "setSelectedItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 767,
+            "description": "adds item to selection (multiple selection)",
+            "itemtype": "method",
+            "name": "addItemToSelection",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 785,
+            "description": "remove item from selection (multiple selection)",
+            "itemtype": "method",
+            "name": "removeItemFromSelection",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 800,
+            "description": "returns the first selected item (its HTML element)",
+            "itemtype": "method",
+            "name": "getSelectedItem",
+            "return": {
+                "description": "",
+                "type": "HTML"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 810,
+            "description": "returns an array with the selected items (its HTML elements)",
+            "itemtype": "method",
+            "name": "getSelectedItems",
+            "return": {
+                "description": "",
+                "type": "HTML"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 820,
+            "description": "returns if an item is selected",
+            "itemtype": "method",
+            "name": "isItemSelected",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "Bool"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 834,
+            "description": "returns the children of an item",
+            "itemtype": "method",
+            "name": "getChildren",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "only_direct",
+                    "description": "to get only direct children",
+                    "type": "Bool",
+                    "optional": true,
+                    "optdefault": "false"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "Array"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 846,
+            "description": "returns the parent of a item",
+            "itemtype": "method",
+            "name": "getParent",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "HTML"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 860,
+            "description": "move item with id to be child of parent_id",
+            "itemtype": "method",
+            "name": "moveItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "parent_id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "Bool"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 923,
+            "description": "remove item with given id",
+            "itemtype": "method",
+            "name": "removeItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "Bool"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 945,
+            "description": "update a given item with new data",
+            "itemtype": "method",
+            "name": "updateItem",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "data",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 968,
+            "description": "clears all the items",
+            "itemtype": "method",
+            "name": "clear",
+            "params": [
+                {
+                    "name": "keep_root",
+                    "description": "if you want to keep the root item",
+                    "type": "Bool"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree_old.js",
+            "line": 4,
+            "class": "SearchBox"
+        }
+    ],
+    "warnings": [
+        {
+            "message": "Missing item type",
+            "line": " ../src/area.js:5"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/area.js:526"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/dragger.js:3"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/menubar.js:3"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/panel.js:4"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/panel.js:47"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/tabs.js:1"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/tree.js:28"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/tree_old.js:4"
+        }
+    ]
+}

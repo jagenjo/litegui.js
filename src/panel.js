@@ -71,6 +71,7 @@
 
 	Dialog.prototype._ctor = function(id, options)
 	{
+		var that = this;
 		this.width = options.width;
 		this.height = options.height;
 		this.minWidth = options.minWidth || 150;
@@ -95,6 +96,8 @@
 			}
 			if(options.hide)
 				code += "<button class='mini-button hide-button'></button>";
+			if(options.detachable)
+				code += "<button class='mini-button detach-button'></button>";
 			
 			if(options.close || options.closable)
 				code += "<button class='mini-button close-button'>"+ LiteGUI.special_codes.close +"</button>";
@@ -112,7 +115,7 @@
 		if(options.fullcontent)
 		{
 			this.content.style.width = "100%";		
-			this.content.style.height = "100%";		
+			this.content.style.height = options.title ? "calc( 100% - "+Dialog.title_height+" )" : "100%";
 		}
 
 		if(options.buttons)
@@ -141,6 +144,10 @@
 		var hide_button = panel.querySelector(".hide-button");
 		if(hide_button)
 			hide_button.addEventListener("click", this.hide.bind(this) );
+
+		var detach_button = panel.querySelector(".detach-button");
+		if(detach_button)
+			detach_button.addEventListener("click", function() { that.detachWindow(); });
 
 		this.makeDialog(options);
 	}
@@ -216,25 +223,42 @@
 		footer.style.minHeight = "4px";
 		footer.classList.add("resizable");
 
+		var corner = document.createElement("div");
+		corner.className = "resizable-corner";
+		this.root.appendChild( corner );
+
 		footer.addEventListener("mousedown", inner_mouse);
+		corner.addEventListener("mousedown", inner_mouse, true);
 
 		var mouse = [0,0];
 		var that = this;
 
+		var is_corner = false;
+
 		function inner_mouse(e)
 		{
+			//console.log( getTime(), is_corner );
+
 			if(e.type == "mousedown")
 			{
 				document.body.addEventListener("mousemove", inner_mouse);
 				document.body.addEventListener("mouseup", inner_mouse);
+				is_corner = this == corner;
 				mouse[0] = e.pageX;
 				mouse[1] = e.pageY;
 			}
 			else if(e.type == "mousemove")
 			{
+				var w = $(root).width();
+				var neww = w - (mouse[0] - e.pageX);
+	
 				var h = $(root).height();
 				var newh = h - (mouse[1] - e.pageY);
+
+				if(is_corner)
+					$(root).width(neww + "px");
 				$(root).height(newh + "px");
+
 				mouse[0] = e.pageX;
 				mouse[1] = e.pageY;
 				that.content.style.height = "calc( 100% - 24px )";
@@ -243,8 +267,10 @@
 			{
 				document.body.removeEventListener("mousemove", inner_mouse);
 				document.body.removeEventListener("mouseup", inner_mouse);
+				is_corner = false;
 			}
 			e.preventDefault();
+			e.stopPropagation();
 			return false;
 		}
 	}
@@ -351,6 +377,11 @@
 			this.on_close();
 		if(this.onclose)
 			console.warn("Dialog: Do not use onclose, use on_close instead");
+		if(this.dialog_window)
+		{
+			this.dialog_window.close();
+			this.dialog_window = null;
+		}
 	}
 
 	Dialog.prototype.highlight = function(time)
@@ -459,8 +490,11 @@
 			LiteGUI.add( this );
 
 		//$(this.root).show(v,null,100,callback);
-		this.root.style.display = null;
-		LiteGUI.trigger( this, "shown" );
+		if(!this.detach_window)
+		{
+			this.root.style.display = null;
+			LiteGUI.trigger( this, "shown" );
+		}
 	}
 
 	/**
@@ -535,6 +569,71 @@
 		this.content.innerHTML = "";
 	}
 
+	Dialog.prototype.detachWindow = function( on_complete, on_close )
+	{
+		if(this.dialog_window)
+			return;
+
+		//create window
+		var rect = this.root.getClientRects()[0];
+		var w = rect.width;
+		var h = rect.height;
+		var title = "Window";
+		var header = this.root.querySelector(".panel-header");
+		if(header)
+			title = header.textContent;
+
+		var dialog_window = window.open("","","width="+w+", height="+h+", location=no, status=no, menubar=no, titlebar=no, fullscreen=yes");
+		dialog_window.document.write( "<head><title>"+title+"</title>" );
+		this.dialog_window = dialog_window;
+
+		//transfer style
+		var styles = document.querySelectorAll("link[rel='stylesheet'],style");
+		for(var i = 0; i < styles.length; i++)
+			dialog_window.document.write( styles[i].outerHTML );
+		dialog_window.document.write( "</head><body></body>" );
+		dialog_window.document.close();
+
+		var that = this;
+
+		//closing event
+		dialog_window.onbeforeunload = function(){
+			var index = LiteGUI.windows.indexOf( dialog_window );
+			if(index != -1)
+				LiteGUI.windows.splice( index, 1 );
+			if(on_close)
+				on_close();
+		}
+
+		//move the content there
+		dialog_window.document.body.appendChild( this.content );
+		this.root.style.display = "none"; //hide
+
+		LiteGUI.windows.push( dialog_window );
+
+		if(on_complete)
+			on_complete();
+
+		return dialog_window;		
+	}
+
+	Dialog.prototype.reattachWindow = function( on_complete )
+	{
+		if(!this.dialog_window)
+			return;
+
+		this.root.appendChild( this.content );
+		this.root.style.display = null; //show
+		this.dialog_window.close();
+		var index = LiteGUI.windows.indexOf( this.dialog_window );
+		if(index != -1)
+			LiteGUI.windows.splice( index, 1 );
+		this.dialog_window = null;
+	}
+
+
+	//*********************************************
+
 	Dialog.showAll = function()
 	{
 		var dialogs = document.body.querySelectorAll("litedialog");
@@ -564,7 +663,6 @@
 			dialog.dialog.close();
 		}
 	}
-
 
 	LiteGUI.Panel = Panel;
 	LiteGUI.Dialog = Dialog;

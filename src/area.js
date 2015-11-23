@@ -18,7 +18,7 @@
 		if(id)
 			root.id = id;
 		if(options.className)
-			root.className += options.className;
+			root.className +=  " " + options.className;
 
 		this.root = root;
 		this.root.litearea = this; //dbl link

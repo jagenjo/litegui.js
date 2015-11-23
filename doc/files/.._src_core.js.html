@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>../src/core.js</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+            
+                <h1><img src="../assets/css/logo.png" title=""></h1>
+            
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+    <h2 class="off-left">APIs</h2>
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Classes</a></li>
+            <li><a href="#api-modules">Modules</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a href="../classes/Area.html">Area</a></li>
+            
+                <li><a href="../classes/ContextualMenu.html">ContextualMenu</a></li>
+            
+                <li><a href="../classes/Dialog.html">Dialog</a></li>
+            
+                <li><a href="../classes/Inspector.html">Inspector</a></li>
+            
+                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
+            
+                <li><a href="../classes/List.html">List</a></li>
+            
+                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
+            
+                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
+            
+                <li><a href="../classes/Slider.html">Slider</a></li>
+            
+                <li><a href="../classes/Split.html">Split</a></li>
+            
+                <li><a href="../classes/Tabs.html">Tabs</a></li>
+            
+                <li><a href="../classes/Tree.html">Tree</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+        Show:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited" checked>
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+                        <h1 class="file-heading">File: ../src/core.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+
+/**
+* Core namespace of LiteGUI library, it holds some useful functions
+*
+* @class LiteGUI
+* @constructor
+*/
+
+
+var LiteGUI = {
+	root: null,
+	content: null,
+
+	panels: {},
+	windows: [], //windows opened by the GUI (we need to know about them to close them once the app closes)
+
+	//undo
+	undo_steps: [],
+
+	//used for blacken when a modal dialog is shown
+	modalbg_div: null,
+
+	//the top menu
+	mainmenu: null,
+
+	/**
+	* initializes the lib, must be called
+	* @method init
+	* @param {object} options some options are container, menubar, 
+	*/
+	init: function(options)
+	{
+		options = options || {};
+
+		if(options.width &amp;&amp; options.height)
+			this.setWindowSize(options.width,options.height);
+
+		//choose main container
+		this.container = null;
+		if( options.container )
+			this.container = document.getElementById(options.container);
+		if(!this.container )
+			this.container = document.body;
+
+		//create litegui root element
+		var root = document.createElement(&quot;div&quot;);
+		root.className = &quot;litegui-wrap fullscreen&quot;;
+		root.style.position = &quot;relative&quot;;
+		root.style.overflow = &quot;hidden&quot;;
+		this.root = root;
+		this.container.appendChild( root );
+
+		//create modal dialogs container
+		var modalbg = this.modalbg_div = document.createElement(&quot;div&quot;);
+		this.modalbg_div.className = &quot;litemodalbg&quot;;
+		this.root.appendChild(this.modalbg_div);
+		modalbg.style.display = &quot;none&quot;;
+
+		//content: the main container for everything
+		var content = document.createElement(&quot;div&quot;);
+		content.className = &quot;litegui-maincontent&quot;;
+		this.content = content;
+		this.root.appendChild(content);
+
+		//create menubar
+		if(options.menubar)
+			this.createMenubar();
+
+		//called before anything
+		if(options.gui_callback)
+			options.gui_callback();
+
+		//maximize
+		if( this.root.classList.contains(&quot;fullscreen&quot;) )
+		{
+			window.addEventListener(&quot;resize&quot;, function(e) { 
+				LiteGUI.maximizeWindow();
+			});
+		}
+
+		window.addEventListener(&quot;beforeunload&quot;, function(e) {
+			for(var i in LiteGUI.windows)
+				LiteGUI.windows[i].close();
+			LiteGUI.windows = [];
+		});
+	},
+
+	/**
+	* Triggers a simple event in an object (similar to jQuery.trigger)
+	* @method trigger
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {Object} element could be an HTMLEntity or a regular object
+	*/
+	trigger: function(element, event_name, params)
+	{
+		var evt = document.createEvent( &#x27;CustomEvent&#x27; );
+		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
+		if( element.dispatchEvent )
+			element.dispatchEvent( evt );
+		else if( element.__events )
+			element.__events.dispatchEvent( evt );
+		//else nothing seems binded here so nothing to do
+		return evt;
+	},
+
+	/**
+	* Binds an event in an object (similar to jQuery.bind)
+	* If the element is not an HTML entity a new one is created, attached to the object (as non-enumerable, called __events) and used
+	* @method trigger
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {String} event the string defining the event
+	* @param {Function} callback where to call
+	*/
+	bind: function( element, event, callback )
+	{
+		if(!callback)
+			throw(&quot;bind callback missing&quot;);
+		if(element.addEventListener)
+			element.addEventListener(event, callback);
+		else if(element.__events)
+			element.__events.addEventListener( event, callback );
+		else
+		{
+			//create a dummy HTMLentity so we can use it to bind HTML events
+			var dummy = document.createElement(&quot;span&quot;);
+			dummy.widget = element; //double link
+			Object.defineProperty( element, &quot;__events&quot;, {
+				enumerable: false,
+				configurable: false,
+				writable: false,
+				value: dummy
+			});
+
+			element.__events.addEventListener( event, callback );
+		}
+	},
+
+	/**
+	* Unbinds an event in an object (similar to jQuery.unbind)
+	* @method unbind
+	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {String} event the string defining the event
+	* @param {Function} callback where to call
+	*/
+	unbind: function(element, event, callback)
+	{
+		if( element.removeEventListener )
+			element.removeEventListener( event, callback );
+		else if( element.__events &amp;&amp; element.__events.removeEventListener )
+			element.__events.removeEventListener( event, callback );
+	},
+
+	/**
+	* Appends litegui widget to the global interface
+	* @method add
+	* @param {Object} litegui_element
+	*/
+	add: function( litegui_element )
+	{
+		this.content.appendChild( litegui_element.root || litegui_element );
+	},
+
+	/**
+	* Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.
+	* @method remove
+	* @param {Object} litegui_element it also supports HTMLentity or selector string
+	*/
+	remove: function( element )
+	{
+		if(element &amp;&amp; element.constructor === String) //selector
+		{
+			var elements = document.querySelectorAll( element );
+			for(var i = 0; i &lt; elements.length; ++i)
+			{
+				var element = elements[i];
+				if(element &amp;&amp; element.parentNode)
+					element.parentNode.removeChild(element);
+			}
+		}
+		else if( element.root &amp;&amp; element.root.parentNode ) //ltiegui widget
+			element.root.parentNode.removeChild( element.root );
+		else if( element.parentNode ) //regular HTML entity
+			element.parentNode.removeChild( element );
+	},
+
+	/**
+	* wrapper of document.getElementById
+	* @method getById
+	* @param {String} id
+	* return {HTMLEntity}
+	**/
+	getById: function(id)
+	{
+		return document.getElementById(id);
+	},
+
+	createMenubar: function()
+	{
+		this.menubar = new LiteGUI.Menubar(&quot;mainmenubar&quot;);
+		this.add( this.menubar );
+	},
+
+	setWindowSize: function(w,h)
+	{
+		if(w &amp;&amp; h)
+		{
+			$(this.root).css( {width: w+&quot;px&quot;, height: h + &quot;px&quot;, &quot;box-shadow&quot;:&quot;0 0 4px black&quot;}).removeClass(&quot;fullscreen&quot;);
+
+		}
+		else
+		{
+			if( $(this.root).hasClass(&quot;fullscreen&quot;) )
+				return;
+			$(this.root).addClass(&quot;fullscreen&quot;);
+			$(this.root).css( {width: &quot;100%&quot;, height: &quot;100%&quot;, &quot;box-shadow&quot;:&quot;0 0 0&quot;});
+		}
+		$(LiteGUI).trigger(&quot;resized&quot;);
+	},
+
+	maximizeWindow: function()
+	{
+		this.setWindowSize();
+	},
+
+	/**
+	* Change cursor
+	* @method setCursor
+	* @param {String} cursor
+	**/
+	setCursor: function( name )
+	{
+		this.root.style.cursor = name;
+	},
+
+	/**
+	* Copy a string to the clipboard (it needs to be invoqued from a click event)
+	* @method toClipboard
+	* @param {String} data
+	**/
+	toClipboard: function( object )
+	{
+		if(object &amp;&amp; object.constructor !== String )
+			object = JSON.stringify( object );
+
+		var input = null;
+		var in_clipboard = false;
+		try
+		{
+			var copySupported = document.queryCommandSupported(&#x27;copy&#x27;);
+			input = document.createElement(&quot;input&quot;);
+			input.type = &quot;text&quot;;
+			input.style.opacity = 0;
+			input.value = object;
+			document.body.appendChild( input );
+			input.select();
+			in_clipboard = document.execCommand(&#x27;copy&#x27;);
+			console.log( in_clipboard ? &quot;saved to clipboard&quot; : &quot;problem saving to clipboard&quot;);
+			document.body.removeChild( input );
+		} catch (err) {
+			if(input)
+				document.body.removeChild( input );
+			console.log(&#x27;Oops, unable to copy using the true clipboard&#x27;);
+		}
+
+		//old system
+		localStorage.setItem(&quot;litegui_clipboard&quot;, object );
+	},
+
+	/**
+	* Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)
+	* @method getClipboard
+	* @return {String} clipboard
+	**/
+	getClipboard: function()
+	{
+		var data = localStorage.getItem(&quot;litegui_clipboard&quot;);
+		if(!data) 
+			return null;
+		if(data[0] == &quot;{&quot;)
+			return JSON.parse( data );
+		return data;
+	},
+
+	/**
+	* Insert some CSS code to the website
+	* @method addCSS
+	* @param {String|Object} code it could be a string with CSS rules, or an object with the style syntax.
+	**/
+	addCSS: function(code)
+	{
+		if(!code)
+			return;
+
+		if(code.constructor === String)
+		{
+			var style = document.createElement(&#x27;style&#x27;);
+			style.type = &#x27;text/css&#x27;;
+			style.innerHTML = code;
+			document.getElementsByTagName(&#x27;head&#x27;)[0].appendChild(style);
+			return;
+		}
+		else
+		{
+			for(var i in code)
+			document.body.style[i] = code[i];
+		}
+	},
+
+	/**
+	* Requires a new CSS
+	* @method requireCSS
+	* @param {String} url string with url or an array with several urls
+	* @param {Function} on_complete
+	**/
+	requireCSS: function(url, on_complete)
+	{
+		if(typeof(url)==&quot;string&quot;)
+			url = [url];
+
+		while(url.length)
+		{
+			var link  = document.createElement(&#x27;link&#x27;);
+			//link.id   = cssId;
+			link.rel  = &#x27;stylesheet&#x27;;
+			link.type = &#x27;text/css&#x27;;
+			link.href = url.shift(1);
+			link.media = &#x27;all&#x27;;
+			var head = document.getElementsByTagName(&#x27;head&#x27;)[0];
+			head.appendChild(link);
+			if(url.length == 0)
+				link.onload = on_complete;
+		}
+	},
+
+	/**
+	* Request file from url (it could be a binary, text, etc.). If you want a simplied version use 
+	* @method request
+	* @param {Object} request object with all the parameters like data (for sending forms), dataType, success, error
+	* @param {Function} on_complete
+	**/
+	request: function(request)
+	{
+		var dataType = request.dataType || &quot;text&quot;;
+		if(dataType == &quot;json&quot;) //parse it locally
+			dataType = &quot;text&quot;;
+		else if(dataType == &quot;xml&quot;) //parse it locally
+			dataType = &quot;text&quot;;
+		else if (dataType == &quot;binary&quot;)
+		{
+			//request.mimeType = &quot;text/plain; charset=x-user-defined&quot;;
+			dataType = &quot;arraybuffer&quot;;
+			request.mimeType = &quot;application/octet-stream&quot;;
+		}	
+
+		//regular case, use AJAX call
+        var xhr = new XMLHttpRequest();
+        xhr.open(request.data ? &#x27;POST&#x27; : &#x27;GET&#x27;, request.url, true);
+        if(dataType)
+            xhr.responseType = dataType;
+        if (request.mimeType)
+            xhr.overrideMimeType( request.mimeType );
+        xhr.onload = function(load)
+		{
+			var response = this.response;
+			if(this.status != 200)
+			{
+				var err = &quot;Error &quot; + this.status;
+				if(request.error)
+					request.error(err);
+				LEvent.trigger(xhr,&quot;fail&quot;, this.status);
+				return;
+			}
+
+			if(request.dataType == &quot;json&quot;) //chrome doesnt support json format
+			{
+				try
+				{
+					response = JSON.parse(response);
+				}
+				catch (err)
+				{
+					if(request.error)
+						request.error(err);
+					else
+						throw err;
+				}
+			}
+			else if(request.dataType == &quot;xml&quot;)
+			{
+				try
+				{
+					var xmlparser = new DOMParser();
+					response = xmlparser.parseFromString(response,&quot;text/xml&quot;);
+				}
+				catch (err)
+				{
+					if(request.error)
+						request.error(err);
+					else
+						throw err;
+				}
+			}
+			if(request.success)
+				request.success.call(this, response, this);
+		};
+        xhr.onerror = function(err) {
+			if(request.error)
+				request.error(err);
+		}
+        xhr.send(request.data);
+		return xhr;
+	},	
+
+	/**
+	* Request file from url
+	* @method requestText
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestText: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:&quot;text&quot;, success: on_complete, error: on_error });
+	},
+
+	/**
+	* Request file from url
+	* @method requestJSON
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestJSON: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:&quot;json&quot;, success: on_complete, error: on_error });
+	},
+
+	/**
+	* Request binary file from url
+	* @method requestBinary
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	**/
+	requestBinary: function(url, on_complete, on_error )
+	{
+		return this.request({ url: url, dataType:&quot;binary&quot;, success: on_complete, error: on_error });
+	},
+	
+	
+	/**
+	* Request script and inserts it in the DOM
+	* @method requireScript
+	* @param {String} url
+	* @param {Function} on_complete
+	* @param {Function} on_error
+	* @param {Function} on_progress (if several files are required, on_progress is called after every file is added to the DOM)
+	**/
+	requireScript: function(url, on_complete, on_error, on_progress )
+	{
+		if(!url)
+			throw(&quot;invalid URL&quot;);
+
+		if( url.constructor === String )
+			url = [url];
+
+		var total = url.length;
+		var size = total;
+
+		for(var i in url)
+		{
+			var script = document.createElement(&#x27;script&#x27;);
+			script.num = i;
+			script.type = &#x27;text/javascript&#x27;;
+			script.src = url[i];
+			script.async = false;
+			script.onload = function(e) { 
+				total--;
+				if(total)
+				{
+					if(on_progress)
+						on_progress(this.src, this.num);
+				}
+				else if(on_complete)
+					on_complete();
+			};
+			if(on_error)
+				script.onerror = function(err) { 
+					on_error(err, this.src, this.num );
+				}
+			document.getElementsByTagName(&#x27;head&#x27;)[0].appendChild(script);
+		}
+	},
+
+
+	//old version, it loads one by one, so it is slower
+	requireScriptSerial: function(url, on_complete, on_progress )
+	{
+		if(typeof(url)==&quot;string&quot;)
+			url = [url];
+
+		function addScript()
+		{
+			var script = document.createElement(&#x27;script&#x27;);
+			script.type = &#x27;text/javascript&#x27;;
+			script.src = url.shift(1);
+			script.onload = function(e) { 
+				if(url.length)
+				{
+					if(on_progress)
+						on_progress(url[0], url.length);
+
+					addScript();
+					return;
+				}
+				
+				if(on_complete)
+					on_complete();
+			};
+			document.getElementsByTagName(&#x27;head&#x27;)[0].appendChild(script);
+		}
+
+		addScript();
+	},
+
+	newDiv: function(id, code)
+	{
+		return this.createElement(&quot;div&quot;,id,code);
+	},
+
+	/**
+	* Request script and inserts it in the DOM
+	* @method createElement
+	* @param {String} tag
+	* @param {String} id_class string containing id and classes, example: &quot;myid .someclass .anotherclass&quot;
+	* @param {String} content
+	* @param {Object} style
+	**/
+	createElement: function(tag, id_class, content, style, events)
+	{
+		var elem = document.createElement( tag );
+		if(id_class)
+		{
+			var t = id_class.split(&quot; &quot;);
+			for(var i = 0; i &lt; t.length; i++)
+			{
+				if(t[i][0] == &quot;.&quot;)
+					elem.classList.add( t[i].substr(1) );
+				else if(t[i][0] == &quot;#&quot;)
+					elem.id = t[i].substr(1);
+				else
+					elem.id = t[i];
+			}
+		}
+		elem.root = elem;
+		if(content)
+			elem.innerHTML = content;
+		elem.add = function(v) { this.appendChild( v.root || v ); };
+
+		if(style)
+		{
+			if(style.constructor === String)
+				elem.setAttribute(&quot;style&quot;,style);
+			else
+				for(var i in style)
+					elem.style[i] = style[i];
+		}
+
+		if(events)
+		{
+			for(var i in events)
+				elem.addEventListener(i, events[i]);
+		}
+		return elem;
+	},
+
+	/**
+	* Request script and inserts it in the DOM
+	* @method createButton
+	* @param {String} id
+	* @param {String} content
+	* @param {Function} callback when the button is pressed
+	**/
+	createButton: function( id, content, callback )
+	{
+		var elem = document.createElement(&quot;button&quot;);
+		elem.id = id;
+		elem.root = elem;
+		elem.className = &quot;litegui button&quot;;
+		if(content !== undefined)
+			elem.innerHTML = content;
+		if(callback)
+			elem.addEventListener(&quot;click&quot;, callback );
+		return elem;
+	},
+
+	//used to create a window that retains all the CSS info or the scripts.
+	newWindow: function(title, width, height, options)
+	{
+		options = options || {};
+		var new_window = window.open(&quot;&quot;,&quot;&quot;,&quot;width=&quot;+width+&quot;, height=&quot;+height+&quot;, location=no, status=no, menubar=no, titlebar=no, fullscreen=yes&quot;);
+		new_window.document.write( &quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;&quot;+title+&quot;&lt;/title&gt;&quot; );
+
+		//transfer style
+		var styles = document.querySelectorAll(&quot;link[rel=&#x27;stylesheet&#x27;],style&quot;);
+		for(var i = 0; i &lt; styles.length; i++)
+			new_window.document.write( styles[i].outerHTML );
+
+		//transfer scripts (optional because it can produce some errors)
+		if(options.scripts)
+		{
+			var scripts = document.querySelectorAll(&quot;script&quot;);
+			for(var i = 0; i &lt; scripts.length; i++)
+			{
+				if(scripts[i].src) //avoid inline scripts, otherwise a cloned website would be created
+					new_window.document.write( scripts[i].outerHTML );
+			}
+		}
+
+
+		var content = options.content || &quot;&quot;;
+		new_window.document.write( &quot;&lt;/head&gt;&lt;body&gt;&quot;+content+&quot;&lt;/body&gt;&lt;/html&gt;&quot; );
+		new_window.document.close();
+		return new_window;
+	},
+
+	//* DIALOGS *******************
+	showModalBackground: function(v)
+	{
+		LiteGUI.modalbg_div.style.display = v ? &quot;block&quot; : &quot;none&quot;;
+	},
+
+	showMessage: function(content, options)
+	{
+		options = options || {};
+		
+		options.title = options.title || &quot;Attention&quot;;
+		options.content = content;
+		options.close = &#x27;fade&#x27;;
+		var dialog = new LiteGUI.Dialog(null,options);
+		if(!options.noclose)
+			dialog.addButton(&quot;Close&quot;,{ close: true });
+		dialog.makeModal(&#x27;fade&#x27;);
+		return dialog;
+	},
+
+	/**
+	* Shows a dialog with a message
+	* @method popup
+	* @param {String} content
+	* @param {Object} options ( min_height, content, noclose )
+	**/
+	popup: function( content, options )
+	{
+		options = options || {};
+
+		options.min_height = 140;
+		if (typeof(content) == &quot;string&quot;)
+			content = &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;;
+
+		options.content = content;
+		options.close = &#x27;fade&#x27;;
+
+		var dialog = new LiteGUI.Dialog(&quot;info_message&quot;,options);
+		if(!options.noclose)
+			dialog.addButton(&quot;Close&quot;,{ close: true });
+		dialog.show();
+		return dialog;
+	},
+
+
+	/**
+	* Shows an alert dialog with a message
+	* @method alert
+	* @param {String} content
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	alert: function( content, options )
+	{
+		options = options || {};
+
+		
+		options.className = &quot;alert&quot;;
+		options.title = options.title || &quot;Alert&quot;;
+		options.width = options.width || 280;
+		options.height = options.height || 140;
+		if (typeof(content) == &quot;string&quot;)
+			content = &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;;
+		$(&quot;.litepanel.alert&quot;).remove(); //kill other panels
+		return LiteGUI.showMessage(content,options);
+	},
+
+	/**
+	* Shows a confirm dialog with a message
+	* @method confirm
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	confirm: function(content, callback, options)
+	{
+		options = options || {};
+		options.className = &quot;alert&quot;;
+		options.title = options.title || &quot;Confirm&quot;;
+		options.width = options.width || 280;
+		//options.height = 100;
+		if (typeof(content) == &quot;string&quot;)
+			content = &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;;
+
+		content +=&quot;&lt;button data-value=&#x27;yes&#x27; style=&#x27;width:45%; margin-left: 10px&#x27;&gt;Yes&lt;/button&gt;&lt;button data-value=&#x27;no&#x27; style=&#x27;width:45%&#x27;&gt;No&lt;/button&gt;&quot;;
+		options.noclose = true;
+
+		var dialog = this.showMessage(content,options);
+		dialog.content.style.paddingBottom = &quot;10px&quot;;
+		var buttons = dialog.content.querySelectorAll(&quot;button&quot;);
+		for(var i = 0; i &lt; buttons.length; i++)
+			buttons[i].addEventListener(&quot;click&quot;, inner);
+
+		function inner(v) {
+			var v = this.dataset[&quot;value&quot;] == &quot;yes&quot;;
+			dialog.close(); //close before callback
+			if(callback) 
+				callback(v);
+		}
+
+		return dialog;
+	},
+
+	/**
+	* Shows a prompt dialog with a message
+	* @method prompt
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	prompt: function( content, callback, options )
+	{
+		options = options || {};
+		options.className = &quot;alert&quot;;
+		options.title = options.title || &quot;Prompt&quot;;
+		options.width = options.width || 280;
+
+		//options.height = 140 + (options.textarea ? 40 : 0);
+		if (typeof(content) == &quot;string&quot;)
+			content = &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;;
+
+		var value = options.value || &quot;&quot;;
+		var textinput = &quot;&lt;input type=&#x27;text&#x27; value=&#x27;&quot;+value+&quot;&#x27;/&gt;&quot;;
+		if (options.textarea)
+			textinput = &quot;&lt;textarea class=&#x27;textfield&#x27; style=&#x27;width:95%&#x27;&gt;&quot;+value+&quot;&lt;/textarea&gt;&quot;;
+
+		content +=&quot;&lt;p&gt;&quot;+textinput+&quot;&lt;/p&gt;&lt;button data-value=&#x27;accept&#x27; style=&#x27;width:45%; margin-left: 10px; margin-bottom: 10px&#x27;&gt;Accept&lt;/button&gt;&lt;button data-value=&#x27;cancel&#x27; style=&#x27;width:45%&#x27;&gt;Cancel&lt;/button&gt;&quot;;
+		options.noclose = true;
+		var dialog = this.showMessage( content, options );
+
+		var buttons = dialog.content.querySelectorAll(&quot;button&quot;);
+		for(var i = 0; i &lt; buttons.length; i++)
+			buttons[i].addEventListener(&quot;click&quot;, inner);
+
+		var input = dialog.content.querySelector(&quot;input,textarea&quot;);
+		input.addEventListener(&quot;keydown&quot;, inner_key, true);
+
+		function inner() {
+			var value = input.value;
+			if(this.dataset &amp;&amp; this.dataset[&quot;value&quot;] == &quot;cancel&quot;)
+				value = null;
+			dialog.close(); //close before callback
+			if(callback)
+				callback( value );
+		};
+
+		function inner_key(e)
+		{
+			if (!e)
+				e = window.event;
+			var keyCode = e.keyCode || e.which;
+			if (keyCode == &#x27;13&#x27;){
+				inner();
+				return false;
+			}		
+		};
+
+		input.focus();
+		return dialog;
+	},
+
+	/**
+	* Returns the URL vars ( ?foo=faa&amp;foo2=etc )
+	* @method getUrlVars
+	**/
+	getUrlVars: function(){
+		var vars = [], hash;
+		var hashes = window.location.href.slice(window.location.href.indexOf(&#x27;?&#x27;) + 1).split(&#x27;&amp;&#x27;);
+		for(var i = 0; i &lt; hashes.length; i++)
+		{
+		  hash = hashes[i].split(&#x27;=&#x27;);
+		  vars.push(hash[0]);
+		  vars[hash[0]] = hash[1];
+		}
+		return vars;
+	},
+
+	getUrlVar: function(name) {
+		return LiteGUI.getUrlVars()[name];
+	},
+
+	focus: function( element )
+	{
+		element.focus();
+	},
+
+	/**
+	* Makes one element draggable
+	* @method draggable
+	* @param {HTMLEntity} container the element that will be dragged
+	* @param {HTMLEntity} dragger the area to start the dragging
+	**/
+	draggable: function(container, dragger)
+	{
+		dragger = dragger || container;
+		dragger.addEventListener(&quot;mousedown&quot;, inner_mouse);
+		dragger.style.cursor = &quot;move&quot;;
+		var prev_x = 0;
+		var prev_y = 0;
+
+		var rect = container.getClientRects()[0];
+		var x = rect ? rect.left : 0;
+		var y = rect ? rect.top : 0;
+
+		container.style.position = &quot;absolute&quot;;
+		container.style.left = x + &quot;px&quot;;
+		container.style.top = y + &quot;px&quot;;
+
+		function inner_mouse(e)
+		{
+			if(e.type == &quot;mousedown&quot;)
+			{
+				if(!rect)
+				{
+					rect = container.getClientRects()[0];
+					x = rect ? rect.left : 0;
+					y = rect ? rect.top : 0;
+				}
+
+				prev_x = e.clientX;
+				prev_y = e.clientY;
+				document.addEventListener(&quot;mousemove&quot;,inner_mouse);
+				document.addEventListener(&quot;mouseup&quot;,inner_mouse);
+				e.stopPropagation();
+				e.preventDefault();
+				return false;
+			}
+
+			if(e.type == &quot;mouseup&quot;)
+			{
+				document.removeEventListener(&quot;mousemove&quot;,inner_mouse);
+				document.removeEventListener(&quot;mouseup&quot;,inner_mouse);
+				return;
+			}
+
+			if(e.type == &quot;mousemove&quot;)
+			{
+				var deltax = e.clientX - prev_x;
+				var deltay = e.clientY - prev_y;
+				prev_x = e.clientX;
+				prev_y = e.clientY;
+				x += deltax;
+				y += deltay;
+				container.style.left = x + &quot;px&quot;;
+				container.style.top = y + &quot;px&quot;;
+			}
+		}
+	},
+
+	/**
+	* Clones object content
+	* @method cloneObject
+	* @param {Object} object
+	* @param {Object} target
+	**/
+	cloneObject: function(object, target)
+	{
+		var o = target || {};
+		for(var i in object)
+		{
+			if(i[0] == &quot;_&quot; || i.substr(0,6) == &quot;jQuery&quot;) //skip vars with _ (they are private)
+				continue;
+
+			var v = object[i];
+			if(v == null)
+				o[i] = null;			
+			else if ( isFunction(v) )
+				continue;
+			else if (typeof(v) == &quot;number&quot; || typeof(v) == &quot;string&quot;)
+				o[i] = v;
+			else if( v.constructor == Float32Array ) //typed arrays are ugly when serialized
+				o[i] = Array.apply( [], v ); //clone
+			else if ( isArray(v) )
+			{
+				if( o[i] &amp;&amp; o[i].constructor == Float32Array ) //reuse old container
+					o[i].set(v);
+				else
+					o[i] = JSON.parse( JSON.stringify(v) ); //v.slice(0); //not safe using slice because it doesnt clone content, only container
+			}
+			else //slow but safe
+			{
+				try
+				{
+					//prevent circular recursions
+					o[i] = JSON.parse( JSON.stringify(v) );
+				}
+				catch (err)
+				{
+					console.error(err);
+				}
+			}
+		}
+		return o;
+	},
+
+	special_codes: {
+		close: &quot;&amp;#10005;&quot;
+	}
+};
+
+
+function purgeElement(d, skip) {
+    var a = d.attributes, i, l, n;
+
+    if (a) {
+        for (i = a.length - 1; i &gt;= 0; i -= 1) {
+            n = a[i].name;
+            if (typeof d[n] === &#x27;function&#x27;) {
+                d[n] = null;
+            }
+        }
+    }
+
+    a = d.childNodes;
+    if (a) {
+        l = a.length;
+        for (i = 0; i &lt; l; i += 1) {
+            purgeElement(d.childNodes[i]);
+        }
+    }
+
+	/*
+	if(!skip)
+	{
+		for (i in d) {
+			if (typeof d[i] === &#x27;function&#x27;) {
+				d[i] = null;
+			}
+		}
+	}
+	*/
+}
+
+//useful functions
+
+//from stackoverflow http://stackoverflow.com/questions/1354064/how-to-convert-characters-to-html-entities-using-plain-javascript
+
+if(typeof escapeHtmlEntities == &#x27;undefined&#x27;) {
+        escapeHtmlEntities = function (text) {
+            return text.replace(/[\u00A0-\u2666&lt;&gt;\&amp;]/g, function(c) {
+                return &#x27;&amp;&#x27; + 
+                (escapeHtmlEntities.entityTable[c.charCodeAt(0)] || &#x27;#&#x27;+c.charCodeAt(0)) + &#x27;;&#x27;;
+            });
+        };
+
+        // all HTML4 entities as defined here: http://www.w3.org/TR/html4/sgml/entities.html
+        // added: amp, lt, gt, quot and apos
+        escapeHtmlEntities.entityTable = {
+            34 : &#x27;quot&#x27;, 
+            38 : &#x27;amp&#x27;, 
+            39 : &#x27;apos&#x27;, 
+            60 : &#x27;lt&#x27;, 
+            62 : &#x27;gt&#x27;, 
+            160 : &#x27;nbsp&#x27;, 
+            161 : &#x27;iexcl&#x27;, 
+            162 : &#x27;cent&#x27;, 
+            163 : &#x27;pound&#x27;, 
+            164 : &#x27;curren&#x27;, 
+            165 : &#x27;yen&#x27;, 
+            166 : &#x27;brvbar&#x27;, 
+            167 : &#x27;sect&#x27;, 
+            168 : &#x27;uml&#x27;, 
+            169 : &#x27;copy&#x27;, 
+            170 : &#x27;ordf&#x27;, 
+            171 : &#x27;laquo&#x27;, 
+            172 : &#x27;not&#x27;, 
+            173 : &#x27;shy&#x27;, 
+            174 : &#x27;reg&#x27;, 
+            175 : &#x27;macr&#x27;, 
+            176 : &#x27;deg&#x27;, 
+            177 : &#x27;plusmn&#x27;, 
+            178 : &#x27;sup2&#x27;, 
+            179 : &#x27;sup3&#x27;, 
+            180 : &#x27;acute&#x27;, 
+            181 : &#x27;micro&#x27;, 
+            182 : &#x27;para&#x27;, 
+            183 : &#x27;middot&#x27;, 
+            184 : &#x27;cedil&#x27;, 
+            185 : &#x27;sup1&#x27;, 
+            186 : &#x27;ordm&#x27;, 
+            187 : &#x27;raquo&#x27;, 
+            188 : &#x27;frac14&#x27;, 
+            189 : &#x27;frac12&#x27;, 
+            190 : &#x27;frac34&#x27;, 
+            191 : &#x27;iquest&#x27;, 
+            192 : &#x27;Agrave&#x27;, 
+            193 : &#x27;Aacute&#x27;, 
+            194 : &#x27;Acirc&#x27;, 
+            195 : &#x27;Atilde&#x27;, 
+            196 : &#x27;Auml&#x27;, 
+            197 : &#x27;Aring&#x27;, 
+            198 : &#x27;AElig&#x27;, 
+            199 : &#x27;Ccedil&#x27;, 
+            200 : &#x27;Egrave&#x27;, 
+            201 : &#x27;Eacute&#x27;, 
+            202 : &#x27;Ecirc&#x27;, 
+            203 : &#x27;Euml&#x27;, 
+            204 : &#x27;Igrave&#x27;, 
+            205 : &#x27;Iacute&#x27;, 
+            206 : &#x27;Icirc&#x27;, 
+            207 : &#x27;Iuml&#x27;, 
+            208 : &#x27;ETH&#x27;, 
+            209 : &#x27;Ntilde&#x27;, 
+            210 : &#x27;Ograve&#x27;, 
+            211 : &#x27;Oacute&#x27;, 
+            212 : &#x27;Ocirc&#x27;, 
+            213 : &#x27;Otilde&#x27;, 
+            214 : &#x27;Ouml&#x27;, 
+            215 : &#x27;times&#x27;, 
+            216 : &#x27;Oslash&#x27;, 
+            217 : &#x27;Ugrave&#x27;, 
+            218 : &#x27;Uacute&#x27;, 
+            219 : &#x27;Ucirc&#x27;, 
+            220 : &#x27;Uuml&#x27;, 
+            221 : &#x27;Yacute&#x27;, 
+            222 : &#x27;THORN&#x27;, 
+            223 : &#x27;szlig&#x27;, 
+            224 : &#x27;agrave&#x27;, 
+            225 : &#x27;aacute&#x27;, 
+            226 : &#x27;acirc&#x27;, 
+            227 : &#x27;atilde&#x27;, 
+            228 : &#x27;auml&#x27;, 
+            229 : &#x27;aring&#x27;, 
+            230 : &#x27;aelig&#x27;, 
+            231 : &#x27;ccedil&#x27;, 
+            232 : &#x27;egrave&#x27;, 
+            233 : &#x27;eacute&#x27;, 
+            234 : &#x27;ecirc&#x27;, 
+            235 : &#x27;euml&#x27;, 
+            236 : &#x27;igrave&#x27;, 
+            237 : &#x27;iacute&#x27;, 
+            238 : &#x27;icirc&#x27;, 
+            239 : &#x27;iuml&#x27;, 
+            240 : &#x27;eth&#x27;, 
+            241 : &#x27;ntilde&#x27;, 
+            242 : &#x27;ograve&#x27;, 
+            243 : &#x27;oacute&#x27;, 
+            244 : &#x27;ocirc&#x27;, 
+            245 : &#x27;otilde&#x27;, 
+            246 : &#x27;ouml&#x27;, 
+            247 : &#x27;divide&#x27;, 
+            248 : &#x27;oslash&#x27;, 
+            249 : &#x27;ugrave&#x27;, 
+            250 : &#x27;uacute&#x27;, 
+            251 : &#x27;ucirc&#x27;, 
+            252 : &#x27;uuml&#x27;, 
+            253 : &#x27;yacute&#x27;, 
+            254 : &#x27;thorn&#x27;, 
+            255 : &#x27;yuml&#x27;, 
+            402 : &#x27;fnof&#x27;, 
+            913 : &#x27;Alpha&#x27;, 
+            914 : &#x27;Beta&#x27;, 
+            915 : &#x27;Gamma&#x27;, 
+            916 : &#x27;Delta&#x27;, 
+            917 : &#x27;Epsilon&#x27;, 
+            918 : &#x27;Zeta&#x27;, 
+            919 : &#x27;Eta&#x27;, 
+            920 : &#x27;Theta&#x27;, 
+            921 : &#x27;Iota&#x27;, 
+            922 : &#x27;Kappa&#x27;, 
+            923 : &#x27;Lambda&#x27;, 
+            924 : &#x27;Mu&#x27;, 
+            925 : &#x27;Nu&#x27;, 
+            926 : &#x27;Xi&#x27;, 
+            927 : &#x27;Omicron&#x27;, 
+            928 : &#x27;Pi&#x27;, 
+            929 : &#x27;Rho&#x27;, 
+            931 : &#x27;Sigma&#x27;, 
+            932 : &#x27;Tau&#x27;, 
+            933 : &#x27;Upsilon&#x27;, 
+            934 : &#x27;Phi&#x27;, 
+            935 : &#x27;Chi&#x27;, 
+            936 : &#x27;Psi&#x27;, 
+            937 : &#x27;Omega&#x27;, 
+            945 : &#x27;alpha&#x27;, 
+            946 : &#x27;beta&#x27;, 
+            947 : &#x27;gamma&#x27;, 
+            948 : &#x27;delta&#x27;, 
+            949 : &#x27;epsilon&#x27;, 
+            950 : &#x27;zeta&#x27;, 
+            951 : &#x27;eta&#x27;, 
+            952 : &#x27;theta&#x27;, 
+            953 : &#x27;iota&#x27;, 
+            954 : &#x27;kappa&#x27;, 
+            955 : &#x27;lambda&#x27;, 
+            956 : &#x27;mu&#x27;, 
+            957 : &#x27;nu&#x27;, 
+            958 : &#x27;xi&#x27;, 
+            959 : &#x27;omicron&#x27;, 
+            960 : &#x27;pi&#x27;, 
+            961 : &#x27;rho&#x27;, 
+            962 : &#x27;sigmaf&#x27;, 
+            963 : &#x27;sigma&#x27;, 
+            964 : &#x27;tau&#x27;, 
+            965 : &#x27;upsilon&#x27;, 
+            966 : &#x27;phi&#x27;, 
+            967 : &#x27;chi&#x27;, 
+            968 : &#x27;psi&#x27;, 
+            969 : &#x27;omega&#x27;, 
+            977 : &#x27;thetasym&#x27;, 
+            978 : &#x27;upsih&#x27;, 
+            982 : &#x27;piv&#x27;, 
+            8226 : &#x27;bull&#x27;, 
+            8230 : &#x27;hellip&#x27;, 
+            8242 : &#x27;prime&#x27;, 
+            8243 : &#x27;Prime&#x27;, 
+            8254 : &#x27;oline&#x27;, 
+            8260 : &#x27;frasl&#x27;, 
+            8472 : &#x27;weierp&#x27;, 
+            8465 : &#x27;image&#x27;, 
+            8476 : &#x27;real&#x27;, 
+            8482 : &#x27;trade&#x27;, 
+            8501 : &#x27;alefsym&#x27;, 
+            8592 : &#x27;larr&#x27;, 
+            8593 : &#x27;uarr&#x27;, 
+            8594 : &#x27;rarr&#x27;, 
+            8595 : &#x27;darr&#x27;, 
+            8596 : &#x27;harr&#x27;, 
+            8629 : &#x27;crarr&#x27;, 
+            8656 : &#x27;lArr&#x27;, 
+            8657 : &#x27;uArr&#x27;, 
+            8658 : &#x27;rArr&#x27;, 
+            8659 : &#x27;dArr&#x27;, 
+            8660 : &#x27;hArr&#x27;, 
+            8704 : &#x27;forall&#x27;, 
+            8706 : &#x27;part&#x27;, 
+            8707 : &#x27;exist&#x27;, 
+            8709 : &#x27;empty&#x27;, 
+            8711 : &#x27;nabla&#x27;, 
+            8712 : &#x27;isin&#x27;, 
+            8713 : &#x27;notin&#x27;, 
+            8715 : &#x27;ni&#x27;, 
+            8719 : &#x27;prod&#x27;, 
+            8721 : &#x27;sum&#x27;, 
+            8722 : &#x27;minus&#x27;, 
+            8727 : &#x27;lowast&#x27;, 
+            8730 : &#x27;radic&#x27;, 
+            8733 : &#x27;prop&#x27;, 
+            8734 : &#x27;infin&#x27;, 
+            8736 : &#x27;ang&#x27;, 
+            8743 : &#x27;and&#x27;, 
+            8744 : &#x27;or&#x27;, 
+            8745 : &#x27;cap&#x27;, 
+            8746 : &#x27;cup&#x27;, 
+            8747 : &#x27;int&#x27;, 
+            8756 : &#x27;there4&#x27;, 
+            8764 : &#x27;sim&#x27;, 
+            8773 : &#x27;cong&#x27;, 
+            8776 : &#x27;asymp&#x27;, 
+            8800 : &#x27;ne&#x27;, 
+            8801 : &#x27;equiv&#x27;, 
+            8804 : &#x27;le&#x27;, 
+            8805 : &#x27;ge&#x27;, 
+            8834 : &#x27;sub&#x27;, 
+            8835 : &#x27;sup&#x27;, 
+            8836 : &#x27;nsub&#x27;, 
+            8838 : &#x27;sube&#x27;, 
+            8839 : &#x27;supe&#x27;, 
+            8853 : &#x27;oplus&#x27;, 
+            8855 : &#x27;otimes&#x27;, 
+            8869 : &#x27;perp&#x27;, 
+            8901 : &#x27;sdot&#x27;, 
+            8968 : &#x27;lceil&#x27;, 
+            8969 : &#x27;rceil&#x27;, 
+            8970 : &#x27;lfloor&#x27;, 
+            8971 : &#x27;rfloor&#x27;, 
+            9001 : &#x27;lang&#x27;, 
+            9002 : &#x27;rang&#x27;, 
+            9674 : &#x27;loz&#x27;, 
+            9824 : &#x27;spades&#x27;, 
+            9827 : &#x27;clubs&#x27;, 
+            9829 : &#x27;hearts&#x27;, 
+            9830 : &#x27;diams&#x27;, 
+            338 : &#x27;OElig&#x27;, 
+            339 : &#x27;oelig&#x27;, 
+            352 : &#x27;Scaron&#x27;, 
+            353 : &#x27;scaron&#x27;, 
+            376 : &#x27;Yuml&#x27;, 
+            710 : &#x27;circ&#x27;, 
+            732 : &#x27;tilde&#x27;, 
+            8194 : &#x27;ensp&#x27;, 
+            8195 : &#x27;emsp&#x27;, 
+            8201 : &#x27;thinsp&#x27;, 
+            8204 : &#x27;zwnj&#x27;, 
+            8205 : &#x27;zwj&#x27;, 
+            8206 : &#x27;lrm&#x27;, 
+            8207 : &#x27;rlm&#x27;, 
+            8211 : &#x27;ndash&#x27;, 
+            8212 : &#x27;mdash&#x27;, 
+            8216 : &#x27;lsquo&#x27;, 
+            8217 : &#x27;rsquo&#x27;, 
+            8218 : &#x27;sbquo&#x27;, 
+            8220 : &#x27;ldquo&#x27;, 
+            8221 : &#x27;rdquo&#x27;, 
+            8222 : &#x27;bdquo&#x27;, 
+            8224 : &#x27;dagger&#x27;, 
+            8225 : &#x27;Dagger&#x27;, 
+            8240 : &#x27;permil&#x27;, 
+            8249 : &#x27;lsaquo&#x27;, 
+            8250 : &#x27;rsaquo&#x27;, 
+            8364 : &#x27;euro&#x27;
+        };
+    }
+
+function beautifyCode( code, reserved, skip_css )
+{
+	reserved = reserved || [&quot;abstract&quot;, &quot;else&quot;, &quot;instanceof&quot;, &quot;super&quot;, &quot;boolean&quot;, &quot;enum&quot;, &quot;int&quot;, &quot;switch&quot;, &quot;break&quot;, &quot;export&quot;, &quot;interface&quot;, &quot;synchronized&quot;, &quot;byte&quot;, &quot;extends&quot;, &quot;let&quot;, &quot;this&quot;, &quot;case&quot;, &quot;false&quot;, &quot;long&quot;, &quot;throw&quot;, &quot;catch&quot;, &quot;final&quot;, &quot;native&quot;, &quot;throws&quot;, &quot;char&quot;, &quot;finally&quot;, &quot;new&quot;, &quot;transient&quot;, &quot;class&quot;, &quot;float&quot;, &quot;null&quot;, &quot;true&quot;, &quot;const&quot;, &quot;for&quot;, &quot;package&quot;, &quot;try&quot;, &quot;continue&quot;, &quot;function&quot;, &quot;private&quot;, &quot;typeof&quot;, &quot;debugger&quot;, &quot;goto&quot;, &quot;protected&quot;, &quot;var&quot;, &quot;default&quot;, &quot;if&quot;, &quot;public&quot;, &quot;void&quot;, &quot;delete&quot;, &quot;implements&quot;, &quot;return&quot;, &quot;volatile&quot;, &quot;do&quot;, &quot;import&quot;, &quot;short&quot;, &quot;while&quot;, &quot;double&quot;, &quot;in&quot;, &quot;static&quot;, &quot;with&quot;];
+
+	//reserved words
+	code = code.replace(/(\w+)/g, function(v) {
+		if(reserved.indexOf(v) != -1)
+			return &quot;&lt;span class=&#x27;rsv&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+		return v;
+	});
+
+	//numbers
+	code = code.replace(/([0-9]+)/g, function(v) {
+		return &quot;&lt;span class=&#x27;num&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+	});
+
+	//obj.method
+	code = code.replace(/(\w+\.\w+)/g, function(v) {
+		var t = v.split(&quot;.&quot;);
+		return &quot;&lt;span class=&#x27;obj&#x27;&gt;&quot; + t[0] + &quot;&lt;/span&gt;.&lt;span class=&#x27;prop&#x27;&gt;&quot; + t[1] + &quot;&lt;/span&gt;&quot;;
+	});
+
+	//function
+	code = code.replace(/(\w+)\(/g, function(v) {
+		return &quot;&lt;span class=&#x27;prop&#x27;&gt;&quot; + v.substr(0, v.length - 1) + &quot;&lt;/span&gt;(&quot;;
+	});
+
+	//strings
+	code = code.replace(/(\&quot;(\\.|[^\&quot;])*\&quot;)/g, function(v) {
+		return &quot;&lt;span class=&#x27;str&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+	});
+
+	//comments
+	code = code.replace(/(\/\/[a-zA-Z0-9\?\!\(\)_ ]*)/g, function(v) {
+		return &quot;&lt;span class=&#x27;cmnt&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+	});
+
+	if(!skip_css)
+		code = &quot;&lt;style&gt;.obj { color: #79B; } .prop { color: #B97; }	.str,.num { color: #A79; } .cmnt { color: #798; } .rsv { color: #9AB; } &lt;/style&gt;&quot; + code;
+
+	return code;
+}
+
+function beautifyJSON( code, skip_css )
+{
+	if(typeof(code) == &quot;object&quot;)
+		code = JSON.stringify(code);
+
+	var reserved = [&quot;false&quot;, &quot;true&quot;, &quot;null&quot;];
+
+	//reserved words
+	code = code.replace(/(\w+)/g, function(v) {
+		if(reserved.indexOf(v) != -1)
+			return &quot;&lt;span class=&#x27;rsv&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+		return v;
+	});
+
+
+	//numbers
+	code = code.replace(/([0-9]+)/g, function(v) {
+		return &quot;&lt;span class=&#x27;num&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+	});
+
+	//obj.method
+	code = code.replace(/(\w+\.\w+)/g, function(v) {
+		var t = v.split(&quot;.&quot;);
+		return &quot;&lt;span class=&#x27;obj&#x27;&gt;&quot; + t[0] + &quot;&lt;/span&gt;.&lt;span class=&#x27;prop&#x27;&gt;&quot; + t[1] + &quot;&lt;/span&gt;&quot;;
+	});
+
+	//strings
+	code = code.replace(/(\&quot;(\\.|[^\&quot;])*\&quot;)/g, function(v) {
+		return &quot;&lt;span class=&#x27;str&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+	});
+
+	//comments
+	code = code.replace(/(\/\/[a-zA-Z0-9\?\!\(\)_ ]*)/g, function(v) {
+		return &quot;&lt;span class=&#x27;cmnt&#x27;&gt;&quot; + v + &quot;&lt;/span&gt;&quot;;
+	});
+
+	if(!skip_css)
+		code = &quot;&lt;style&gt;.obj { color: #79B; } .prop { color: #B97; }	.str { color: #A79; } .num { color: #B97; } .cmnt { color: #798; } .rsv { color: #9AB; } &lt;/style&gt;&quot; + code;
+
+	return code;
+}
+    </pre>
+</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

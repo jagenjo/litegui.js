@@ -72,7 +72,7 @@
 	* @constructor
 	* @param {Array} values (allows object { title: "Nice text", callback: function ... })
 	*/
-	function ContextualMenu(values,options)
+	function ContextualMenu( values, options )
 	{
 		options = options || {};
 		this.options = options;
@@ -83,7 +83,7 @@
 		root.style.minWidth = 100;
 		root.style.minHeight = 100;
 		root.style.pointerEvents = "none";
-		setTimeout(function() { root.style.pointerEvents = "auto"; },100); //delay so the mouse up event is not caugh by this element
+		setTimeout( function() { root.style.pointerEvents = "auto"; },100); //delay so the mouse up event is not caugh by this element
 
 		//this prevents the default contextual browser menu to open in case this menu was created when pressing right button 
 		root.addEventListener("mouseup", function(e){ 
@@ -161,7 +161,13 @@
 		});
 
 		//insert before checking position
-		document.body.appendChild(root);
+		var root_document = document;
+		if(options.event)
+			root_document = options.event.target.ownerDocument; 
+
+		if(!root_document)
+			root_document = document;
+		root_document.body.appendChild(root);
 
 		var left = options.left || 0;
 		var top = options.top || 0;

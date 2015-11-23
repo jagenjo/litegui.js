@@ -5783,13 +5783,10 @@ Inspector.assignValue = function(value)
 		instance[this.name] = parseFloat(value);
 	else if(typeof(current_value) == "string")
 		instance[this.name] = value;
-	else if(value && value.length)
+	else if( value && value.length && current_value && current_value.length && !Object.getOwnPropertyDescriptor( instance, this.name ).set )
 	{
-		if( current_value && current_value.length && !Object.getOwnPropertyDescriptor( instance, this.name ).set )
-		{
-			for(var i = 0; i < value.length; ++i)
-				current_value[i] = value[i];
-		}
+		for(var i = 0; i < value.length; ++i)
+			current_value[i] = value[i];
 	}
 	else
 		instance[this.name] = value;

@@ -218,6 +218,7 @@
 		}
 
 		//entries
+		var num = 0;
 		for(var i in values)
 		{
 			var element = document.createElement(&quot;div&quot;);
@@ -253,7 +254,11 @@
 
 			root.appendChild(element);
 			element.addEventListener(&quot;click&quot;, inner_onclick);
+			num++;
 		}
+
+		//if(num == 0)
+		//	return;
 
 		//option clicked
 		function inner_onclick(e) {

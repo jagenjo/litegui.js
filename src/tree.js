@@ -3,23 +3,23 @@
 
 
 /**
-* To create interactive trees (useful for folders or hierarchies).
-* Options are:
-*	+ allow_multiselection: allow to select multiple elements using the shift key
-*	+ allow_rename: double click to rename items in the tree
-*	+ allow_drag: drag elements around
-*	+ height
-* Item data should be in the next format:
-* {
-*    id: unique_identifier,
-*    content: what to show in the HTML (if omited id will be shown)
-*	 children: []  array with another object with the same structure
-*	 className: class
-*    precontent: HTML inserted before the content
-*	 visible: boolean, to hide it
-*	 dataset: dataset for the element
-*	 onDragData: callback in case the user drags this item somewhere else
-* }
+* To create interactive trees (useful for folders or hierarchies).<br>
+* Options are:<br>
+*	+ allow_multiselection: allow to select multiple elements using the shift key<br>
+*	+ allow_rename: double click to rename items in the tree<br>
+*	+ allow_drag: drag elements around<br>
+*	+ height<br>
+* Item data should be in the next format:<br>
+* {<br>
+*    id: unique_identifier,<br>
+*    content: what to show in the HTML (if omited id will be shown)<br>
+*	 children: []  array with another object with the same structure<br>
+*	 className: class<br>
+*    precontent: HTML inserted before the content<br>
+*	 visible: boolean, to hide it<br>
+*	 dataset: dataset for the element<br>
+*	 onDragData: callback in case the user drags this item somewhere else<br>
+* }<br>
 *
 * @class Tree
 * @constructor

@@ -71,6 +71,11 @@
 	* @class ContextualMenu
 	* @constructor
 	* @param {Array} values (allows object { title: "Nice text", callback: function ... })
+	* @param {Object} options [optional] Some options:\
+	* - title: title to show on top of the menu
+	* - callback: function to call when an option is clicked, it receives the item information
+	* - ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback 
+	* - event: you can pass a MouseEvent, this way the ContextualMenu appears in that position
 	*/
 	function ContextualMenu( values, options )
 	{
@@ -108,6 +113,7 @@
 		}
 
 		//entries
+		var num = 0;
 		for(var i in values)
 		{
 			var element = document.createElement("div");
@@ -134,7 +140,7 @@
 				}
 				else if(typeof(value) == "object")
 				{
-					if(value.callback)
+					if(value.callback && !options.ignore_item_callbacks)
 						element.addEventListener("click", function(e) { this.value.callback.apply( this, this.value ); });
 				}
 				else
@@ -143,13 +149,17 @@
 
 			root.appendChild(element);
 			element.addEventListener("click", inner_onclick);
+			num++;
 		}
+
+		//if(num == 0)
+		//	return;
 
 		//option clicked
 		function inner_onclick(e) {
 			var value = this.value;
 			if(options.callback)
-				options.callback.call(that, value, options );
+				options.callback.call(that, value, options, e );
 			if(root.parentNode)
 				root.parentNode.removeChild( root );
 		}
@@ -408,7 +418,7 @@
 		var that = this;
 		this.value = value;
 
-		this.setValue = function(value)
+		this.setValue = function(value, skip_event)
 		{
 			//var width = canvas.getClientRects()[0].width;
 			var ctx = canvas.getContext("2d");
@@ -427,7 +437,8 @@
 			if(value != this.value)
 			{
 				this.value = value;
-				$(this.root).trigger("change", value );
+				if(!skip_event)
+					LiteGUI.trigger(this.root, "change", value );
 			}
 		}
 

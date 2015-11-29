@@ -134,6 +134,7 @@ jQuery.fn.wclick = function(callback) {
 * @param {string} id
 * @param {Object} options object with a set of options { 
 	width: total width
+	height: total height
 	widgets_width: width of every widget (used mostly in horizontal inspectors)
 	name_width: width of the name part of widgets
 	full: set to true if you want the inspector to use all the parent width and height
@@ -161,9 +162,19 @@ function Inspector(id,options)
 	this.values = {};
 	this.sections = [];
 	this.widgets = {};
+	this.row_number = 0; //used to detect if element is even (cannot use CSS, special cases everywhere)
 
 	this.addSection();
 	this.tab_index = Math.floor(Math.random() * 10000);
+
+	if(options.width)
+		this.root.style.width = LiteGUI.sizeToCSS( options.width );
+	if(options.height)
+	{
+		this.root.style.height = LiteGUI.sizeToCSS( options.height );
+		if(!options.one_line)
+			this.root.style.overflow = &quot;auto&quot;;
+	}
 
 	if(options.name_width)
 		this.name_width = options.name_width;
@@ -173,7 +184,9 @@ function Inspector(id,options)
 	if(options.onchange)
 		this.onchange = options.onchange;
 
-	if(options.parent) this.appendTo(options.parent);
+	if(options.parent)
+		this.appendTo(options.parent);
+
 	this.widgets_per_row = options.widgets_per_row || 1;
 }
 
@@ -192,7 +205,9 @@ Inspector.prototype.appendTo = function(parent, at_front)
 Inspector.prototype.clear = function()
 {
 	purgeElement( this.root, true ); //hack, but doesnt seem to work
-	this.root.innerHTML = &quot;&quot;;
+
+	while(this.root.hasChildNodes())
+		this.root.removeChild( this.root.firstChild );
 
 	this.sections = [];
 	this.values = {};
@@ -437,7 +452,9 @@ Inspector.assignValue = function(value)
 		instance[this.name] = parseFloat(value);
 	else if(typeof(current_value) == &quot;string&quot;)
 		instance[this.name] = value;
-	else if(value &amp;&amp; value.length &amp;&amp; current_value &amp;&amp; current_value.length)
+	else if( value &amp;&amp; value.length &amp;&amp; current_value &amp;&amp; current_value.length &amp;&amp; 
+		( !Object.getOwnPropertyDescriptor( instance, this.name ) || !Object.getOwnPropertyDescriptor( instance, this.name ).set ) &amp;&amp;  //no setters
+		( !Object.getOwnPropertyDescriptor( instance.__proto__, this.name ) || !Object.getOwnPropertyDescriptor( instance.__proto__, this.name ).set ) ) 
 	{
 		for(var i = 0; i &lt; value.length; ++i)
 			current_value[i] = value[i];
@@ -466,6 +483,10 @@ Inspector.prototype.createWidget = function(name, content, options)
 	element.inspector = this;
 	element.options = options;
 	element.name = name;
+	
+	this.row_number += this.widgets_per_row;
+	if(this.row_number % 2 == 0)
+		element.className += &quot; even&quot;;
 
 	var width = options.width || this.widgets_width;
 	if(width)
@@ -497,7 +518,7 @@ Inspector.prototype.createWidget = function(name, content, options)
 
 	var code = &quot;&quot;;
 	var pretitle = &quot;&quot;;
-	var filling = this.one_line ? &quot;&quot; : &quot;&lt;span class=&#x27;filling&#x27;&gt;....................&lt;/span&gt;&quot;;
+	var filling = this.one_line ? &quot;&quot; : &quot;&lt;span class=&#x27;filling&#x27;&gt;&lt;/span&gt;&quot;;
 
 	if(options.pretitle)
 		pretitle = options.pretitle;
@@ -528,7 +549,7 @@ Inspector.prototype.createWidget = function(name, content, options)
 //calls callback, triggers wchange, calls onchange in Inspector
 Inspector.onWidgetChange = function( element, name, value, options, expand_value )
 {
-	this.values[name] = value;
+	this.values[ name ] = value;
 	//LiteGUI.trigger( this.current_section, &quot;wchange&quot;, value );
 	$(this.current_section).trigger(&quot;wchange&quot;,value); //used for undo //TODO: REMOVE
 	var r = undefined;
@@ -599,9 +620,10 @@ Inspector.registerWidget = function(name, callback)
 * [For a bigger list check createWidget and every widget in particular]
 * @return {HTMLElement} the widget in the form of the DOM element that contains it
 **/
-Inspector.prototype.add = function(type,name,value,options)
+Inspector.prototype.add = function( type, name, value, options )
 {
-	if(typeof(type) == &quot;object&quot; &amp;&amp; arguments.length == 1)
+	//type could be an object with every parameter contained inside
+	if( arguments.length == 1 &amp;&amp; typeof(type) == &quot;object&quot; )
 	{
 		options = type;
 		type = options.type;
@@ -609,21 +631,23 @@ Inspector.prototype.add = function(type,name,value,options)
 		value = options.value;
 	}
 
-	var func = Inspector.widget_constructors[type];
+	var func = LiteGUI.Inspector.widget_constructors[type];
 	if(!func){
 		console.warn(&quot;LiteGUI.Inspector do not have a widget called&quot;,type);
 		return;
 	}
 
-	if(typeof(func) == &quot;string&quot;)
-		func = Inspector.prototype[func];
-	if(!func) return;
-	if(typeof(func) != &quot;function&quot;) return;
+	if( func.constructor === String )
+		func = LiteGUI.Inspector.prototype[func];
+	if( !func )
+		return;
+	if( func.constructor !== Function )
+		return;
 
-	if(typeof(options) == &#x27;function&#x27;)
+	if( options &amp;&amp; options.constructor === Function )
 		options = { callback: options };
 	
-	return func.call(this, name,value, options);
+	return func.call( this, name,value, options );
 }
 
 Inspector.prototype.getValue = function(name)
@@ -809,7 +833,7 @@ Inspector.prototype.addTitle = function(title,options)
 	element.innerHTML = code;
 
 	element.setValue = function(v) { $(this).find(&quot;.text&quot;).html(v); };
-
+	this.row_number = 0;
 	this.append(element, options);
 	return element;
 }
@@ -861,6 +885,16 @@ Inspector.prototype.addString = function(name,value, options)
 		if(r !== undefined)
 			this.value = r;
 	});
+
+	if(options.callback_enter)
+		input.addEventListener( &quot;keydown&quot; , function(e) { 
+			if(e.keyCode == 13)
+			{
+				var r = Inspector.onWidgetChange.call(that, element, name, e.target.value, options);
+				options.callback_enter();
+				e.preventDefault();
+			}
+		});
 
 	this.tab_index += 1;
 

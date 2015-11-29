@@ -1031,6 +1031,19 @@ var LiteGUI = {
 
 	special_codes: {
 		close: &quot;&amp;#10005;&quot;
+	},
+
+	//used to convert sizes
+	sizeToCSS: function( v )
+	{
+		if( v ===  undefined || v === null )
+			return null;
+		if(v.constructor === String )
+			return v;
+		if(v &gt; 0 )
+			return (v|0) + &quot;px&quot;;
+		if(v &lt; 0 )
+			return &quot;calc( 100% - &quot; + Math.abs(v|0) + &quot;px )&quot;;
 	}
 };
 

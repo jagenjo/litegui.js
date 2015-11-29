@@ -3,7 +3,10 @@
 	/***** DRAGGER **********/
 	function Dragger(value, options)
 	{
-		options = options || {};
+		this.value = value || 0;
+		var that = this;
+
+		this.options = options = options || {};
 		var element = document.createElement("div");
 		element.className = "dragger " + (options.extraclass ? options.extraclass : "");
 		this.root = element;
@@ -29,11 +32,7 @@
 			input.tabIndex = options.tab_index;
 		wrap.appendChild(input);
 
-		this.setValue = function(v) { 
-			$(input).val(v).trigger("change");
-		}
-		
-		$(input).bind("keydown",function(e) {
+		input.addEventListener("keydown",function(e) {
 			if(e.keyCode == 38)
 				inner_inc(1,e);
 			else if(e.keyCode == 40)
@@ -53,21 +52,21 @@
 		wrap.appendChild(dragger);
 		element.dragger = dragger;
 
-		$(dragger).bind("mousedown",inner_down);
+		dragger.addEventListener("mousedown",inner_down);
 
 		function inner_down(e)
 		{
-			$(document).unbind("mousemove", inner_move);
-			$(document).unbind("mouseup", inner_up);
+			document.removeEventListener("mousemove", inner_move);
+			document.removeEventListener("mouseup", inner_up);
 
 			if(!options.disabled)
 			{
-				$(document).bind("mousemove", inner_move);
-				$(document).bind("mouseup", inner_up);
+				document.addEventListener("mousemove", inner_move);
+				document.addEventListener("mouseup", inner_up);
 
 				dragger.data = [e.screenX, e.screenY];
 
-				$(element).trigger("start_dragging");
+				LiteGUI.trigger( element,"start_dragging");
 			}
 
 			e.stopPropagation();
@@ -89,10 +88,10 @@
 
 		function inner_up(e)
 		{
-			$(element).trigger("stop_dragging");
-			$(document).unbind("mousemove", inner_move);
-			$(document).unbind("mouseup", inner_up);
-			$(dragger).trigger("blur");
+			LiteGUI.trigger(element, "stop_dragging");
+			document.removeEventListener("mousemove", inner_move);
+			document.removeEventListener("mouseup", inner_up);
+			LiteGUI.trigger(dragger,"blur");
 			e.stopPropagation();
 			e.preventDefault();
 			return false;
@@ -117,9 +116,27 @@
 				input.value = ((value * 1000)<<0) / 1000; //remove ugly decimals
 			if(options.units)
 				input.value += options.units;
-			$(input).change();
+			LiteGUI.trigger(input,"change");
 		}
 	}
+
+	Dragger.prototype.setValue = function(v, skip_event) { 
+		v = parseFloat(v);
+		this.value = v;
+		if(this.options.precision)
+			v = v.toFixed(this.options.precision);
+		if(this.options.units)
+			v += this.options.units;
+		this.input.value = v;
+		if(!skip_event)
+			LiteGUI.trigger( this.input, "change" );
+	}
+
+	Dragger.prototype.getValue = function()
+	{
+		return this.value;
+	}
+
 	LiteGUI.Dragger = Dragger;
 
 })();

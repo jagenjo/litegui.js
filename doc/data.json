@@ -250,6 +250,11 @@
                     "name": "values",
                     "description": "(allows object { title: \"Nice text\", callback: function ... })",
                     "type": "Array"
+                },
+                {
+                    "name": "options",
+                    "description": "[optional] Some options:\\\n- title: title to show on top of the menu\n- callback: function to call when an option is clicked, it receives the item information\n- ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback \n- event: you can pass a MouseEvent, this way the ContextualMenu appears in that position",
+                    "type": "Object"
                 }
             ]
         },
@@ -262,7 +267,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 311,
+            "line": 316,
             "description": "List",
             "is_constructor": 1,
             "params": [
@@ -292,7 +297,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 394,
+            "line": 399,
             "description": "Slider",
             "is_constructor": 1,
             "params": [
@@ -317,7 +322,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 481,
+            "line": 487,
             "description": "LineEditor",
             "is_constructor": 1,
             "params": [
@@ -882,7 +887,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 91,
+            "line": 92,
             "description": "Removes all the widgets inside the inspector",
             "itemtype": "method",
             "name": "clear",
@@ -890,7 +895,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 111,
+            "line": 112,
             "description": "Tryes to refresh (calls on_refresh)",
             "itemtype": "method",
             "name": "refresh",
@@ -898,7 +903,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 167,
+            "line": 168,
             "itemtype": "method",
             "name": "inspectInstance",
             "params": [
@@ -927,7 +932,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 259,
+            "line": 260,
             "itemtype": "method",
             "name": "collectPropertier",
             "params": [
@@ -941,7 +946,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 282,
+            "line": 283,
             "itemtype": "method",
             "name": "showProperties",
             "params": [
@@ -965,7 +970,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 330,
+            "line": 336,
             "description": "Tryes to assigns a value to the instance stored in this.instance",
             "itemtype": "method",
             "name": "assignValue",
@@ -973,7 +978,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 356,
+            "line": 362,
             "description": "Used by all widgets to create the container of one widget",
             "itemtype": "method",
             "name": "createWidget",
@@ -998,7 +1003,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 501,
+            "line": 511,
             "description": "Adds a widgete to the inspector, its a way to provide the widget type from a string",
             "itemtype": "method",
             "name": "add",
@@ -1032,7 +1037,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 705,
+            "line": 715,
             "description": "Creates a title bar in the widgets list to help separate widgets",
             "itemtype": "method",
             "name": "addTitle",
@@ -1056,7 +1061,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 731,
+            "line": 742,
             "description": "Creates a line",
             "itemtype": "method",
             "name": "addSeparator",
@@ -1068,7 +1073,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 744,
+            "line": 755,
             "description": "Widget to edit strings",
             "itemtype": "method",
             "name": "addString",
@@ -1097,7 +1102,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 802,
+            "line": 819,
             "description": "Widget to edit strings, but it adds a button behind (useful to search values somewhere in case the user do not remember the name)",
             "itemtype": "method",
             "name": "addStringButton",
@@ -1126,7 +1131,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 846,
+            "line": 868,
             "description": "Widget to edit strings with multiline support",
             "itemtype": "method",
             "name": "addTextarea",
@@ -1155,7 +1160,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 883,
+            "line": 912,
             "description": "Widget to edit numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addNumber",
@@ -1184,7 +1189,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 962,
+            "line": 997,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector2",
@@ -1213,7 +1218,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1054,
+            "line": 1093,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector3",
@@ -1242,7 +1247,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1151,
+            "line": 1195,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector4",
@@ -1271,7 +1276,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1237,
+            "line": 1287,
             "description": "Widget to edit two numbers using a rectangular pad where you can drag horizontaly and verticaly a handler",
             "itemtype": "method",
             "name": "addPad",
@@ -1300,7 +1305,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1378,
+            "line": 1434,
             "description": "Widget to show plain information in HTML (not interactive)",
             "itemtype": "method",
             "name": "addInfo",
@@ -1329,7 +1334,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1425,
+            "line": 1489,
             "description": "Widget to edit a number using a slider",
             "itemtype": "method",
             "name": "addSlider",
@@ -1358,7 +1363,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1482,
+            "line": 1560,
             "description": "Widget to edit a boolean value using a checkbox",
             "itemtype": "method",
             "name": "addCheckbox",
@@ -1387,7 +1392,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1538,
+            "line": 1619,
             "description": "Widget to edit a set of boolean values using checkboxes",
             "itemtype": "method",
             "name": "addFlags",
@@ -1411,7 +1416,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1566,
+            "line": 1647,
             "description": "Widget to edit an enumeration using a combobox",
             "itemtype": "method",
             "name": "addCombo",
@@ -1440,7 +1445,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1729,
+            "line": 1838,
             "description": "Widget to select from a list of items",
             "itemtype": "method",
             "name": "addList",

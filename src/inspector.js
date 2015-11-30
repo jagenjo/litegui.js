@@ -1670,28 +1670,31 @@ Inspector.prototype.addCombo = function(name, value, options)
 	element.options = options;
 
 	var values = options.values || [];
+	if(values.constructor === Function)
+		values = options.values();
 
-	if(options.values)
+	if(!values)
+		values = [];
+
+	var index = 0;
+	for(var i in values)
 	{
-		if (typeof(values) == "function")
-			values = options.values();
-		else
-			values = options.values;
-		if(values) 
-			for(var i in values)
-			{
-				var item_value = values[i];
-				code += "<option data-value='" + item_value + "' "+( item_value == value ? " selected":"")+">" + ( values.length ? item_value : i) + "</option>";
-			}
+		var item_value = values[i];
+		var item_index = values.constructor === Array ? index : i;
+		var item_title = values.constructor === Array ? item_value : i;
+		if(item_value && item_value.title)
+			item_title = item_value.title;
+		code += "<option value='"+item_index+"' "+( item_value == value ? " selected":"")+">" + item_title + "</option>";
+		index++;
 	}
 	code += "</select>";
 
 	element.querySelector("span.inputcombo").innerHTML = code;
 
-	$(element).find(".wcontent select").change( function(e) { 
-		var value = e.target.value;
-		if(values && values.constructor != Array)
-			value = values[value];
+	var select = element.querySelector(".wcontent select");
+	select.addEventListener("change", function(e) { 
+		var index = e.target.value;
+		var value = values[index];
 		Inspector.onWidgetChange.call(that,element,name,value, options);
 	});
 
@@ -1700,18 +1703,38 @@ Inspector.prototype.addCombo = function(name, value, options)
 			return;
 		var select = element.querySelector("select");
 		var items = select.querySelectorAll("option");
-		var index = 0;
+		var index =  -1;
+		if(values.constructor === Array)
+			index = values.indexOf(v);
+		else
+		{
+			//search the element index in the values
+			var j = 0;
+			for(var i in values)
+			{
+				if(values[j] == v)
+				{
+					index = j;
+					break;
+				}
+				else
+					j++;
+			}
+		}
+
+		if(index == -1)
+			return;
+
 		for(var i in items)
 		{
 			var item = items[i];
 			if(!item || !item.dataset) //weird bug
 				continue;
-			if( item.dataset["value"] == v )
+			if( parseFloat(item.dataset["index"]) == index )
 			{
 				select.selectedIndex = index;
 				return;
 			}
-			index++;
 		}
 	};
 

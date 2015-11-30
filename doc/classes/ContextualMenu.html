@@ -144,6 +144,12 @@
                     
                 </li>
             
+                <li class="arg">
+                    
+                        <code>options</code>
+                    
+                </li>
+            
             </ul><span class="paren">)</span>
         </div>
     
@@ -203,6 +209,26 @@
 
                     <div class="param-description">
                         <p>(allows object { title: &quot;Nice text&quot;, callback: function ... })</p>
+
+                    </div>
+
+                    
+                </li>
+            
+                <li class="param">
+                    
+                        <code class="param-name">options</code>
+                        <span class="type">Object</span>
+                    
+
+                    
+
+                    <div class="param-description">
+                        <p>[optional] Some options:\
+- title: title to show on top of the menu
+- callback: function to call when an option is clicked, it receives the item information
+- ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback 
+- event: you can pass a MouseEvent, this way the ContextualMenu appears in that position</p>
 
                     </div>
 

@@ -425,6 +425,16 @@
 			tab_info.onclose = options.onclose;
 		this.tabs[id] = tab_info;
 
+		//context
+		element.addEventListener(&quot;contextmenu&quot;, (function(e) { 
+			if(e.button != 2) //right button
+				return false;
+			e.preventDefault(); 
+			if(options.callback_context)
+				options.callback_context.call(tab_info);
+			return false;
+		}).bind(this));
+
 		if ( options.selected == true || this.selected == null )
 			this.selectTab( id, options.skip_callbacks );
 

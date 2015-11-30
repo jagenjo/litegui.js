@@ -113,7 +113,10 @@
 	/***** DRAGGER **********/
 	function Dragger(value, options)
 	{
-		options = options || {};
+		this.value = value || 0;
+		var that = this;
+
+		this.options = options = options || {};
 		var element = document.createElement(&quot;div&quot;);
 		element.className = &quot;dragger &quot; + (options.extraclass ? options.extraclass : &quot;&quot;);
 		this.root = element;
@@ -139,11 +142,7 @@
 			input.tabIndex = options.tab_index;
 		wrap.appendChild(input);
 
-		this.setValue = function(v) { 
-			$(input).val(v).trigger(&quot;change&quot;);
-		}
-		
-		$(input).bind(&quot;keydown&quot;,function(e) {
+		input.addEventListener(&quot;keydown&quot;,function(e) {
 			if(e.keyCode == 38)
 				inner_inc(1,e);
 			else if(e.keyCode == 40)
@@ -163,21 +162,21 @@
 		wrap.appendChild(dragger);
 		element.dragger = dragger;
 
-		$(dragger).bind(&quot;mousedown&quot;,inner_down);
+		dragger.addEventListener(&quot;mousedown&quot;,inner_down);
 
 		function inner_down(e)
 		{
-			$(document).unbind(&quot;mousemove&quot;, inner_move);
-			$(document).unbind(&quot;mouseup&quot;, inner_up);
+			document.removeEventListener(&quot;mousemove&quot;, inner_move);
+			document.removeEventListener(&quot;mouseup&quot;, inner_up);
 
 			if(!options.disabled)
 			{
-				$(document).bind(&quot;mousemove&quot;, inner_move);
-				$(document).bind(&quot;mouseup&quot;, inner_up);
+				document.addEventListener(&quot;mousemove&quot;, inner_move);
+				document.addEventListener(&quot;mouseup&quot;, inner_up);
 
 				dragger.data = [e.screenX, e.screenY];
 
-				$(element).trigger(&quot;start_dragging&quot;);
+				LiteGUI.trigger( element,&quot;start_dragging&quot;);
 			}
 
 			e.stopPropagation();
@@ -199,10 +198,10 @@
 
 		function inner_up(e)
 		{
-			$(element).trigger(&quot;stop_dragging&quot;);
-			$(document).unbind(&quot;mousemove&quot;, inner_move);
-			$(document).unbind(&quot;mouseup&quot;, inner_up);
-			$(dragger).trigger(&quot;blur&quot;);
+			LiteGUI.trigger(element, &quot;stop_dragging&quot;);
+			document.removeEventListener(&quot;mousemove&quot;, inner_move);
+			document.removeEventListener(&quot;mouseup&quot;, inner_up);
+			LiteGUI.trigger(dragger,&quot;blur&quot;);
 			e.stopPropagation();
 			e.preventDefault();
 			return false;
@@ -227,9 +226,27 @@
 				input.value = ((value * 1000)&lt;&lt;0) / 1000; //remove ugly decimals
 			if(options.units)
 				input.value += options.units;
-			$(input).change();
+			LiteGUI.trigger(input,&quot;change&quot;);
 		}
 	}
+
+	Dragger.prototype.setValue = function(v, skip_event) { 
+		v = parseFloat(v);
+		this.value = v;
+		if(this.options.precision)
+			v = v.toFixed(this.options.precision);
+		if(this.options.units)
+			v += this.options.units;
+		this.input.value = v;
+		if(!skip_event)
+			LiteGUI.trigger( this.input, &quot;change&quot; );
+	}
+
+	Dragger.prototype.getValue = function()
+	{
+		return this.value;
+	}
+
 	LiteGUI.Dragger = Dragger;
 
 })();

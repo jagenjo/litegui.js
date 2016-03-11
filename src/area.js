@@ -147,11 +147,19 @@
 		this.root.style.height = "calc( 100% - " + y + "px )";
 	}
 
-	Area.prototype.split = function(direction, sizes, editable)
+	Area.prototype.split = function( direction, sizes, editable )
 	{
-		direction = direction || "vertical";
+		if( !direction || direction.constructor !== String )
+			throw ("First parameter must be a string: 'vertical' or 'horizontal'");
 
-		if(this.sections.length) throw "cannot split twice";
+		if( !sizes )
+			throw ("sizes must be an array");
+
+		if( direction != "vertical" && direction != "horizontal" )
+			throw ("First parameter must be a string: 'vertical' or 'horizontal'");
+
+		if(this.sections.length)
+			throw "cannot split twice";
 
 		//create areas
 		var area1 = new LiteGUI.Area(null, { content_id: this.content.id });
@@ -339,6 +347,9 @@
 	{
 		var section = this.sections[num];
 		var size = 0;
+
+		if( section && section.root.style.display != "none" )
+			return; //already visible
 		
 		if(this.direction == "horizontal")
 			size = section.root.style.width;

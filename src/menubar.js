@@ -1,8 +1,10 @@
 (function(){
 
 	/************** MENUBAR ************************/
-	function Menubar(id)
+	function Menubar(id, options)
 	{
+		options = options || {};
+
 		this.menu = [];
 		this.panels = [];
 
@@ -14,6 +16,8 @@
 		this.root.appendChild( this.content );
 
 		this.is_open = false;
+		this.auto_open = options.auto_open || false;
+		this.sort_entries = options.sort_entries || false;
 	}
 
 	Menubar.closing_time = 500;
@@ -195,7 +199,7 @@
 
 			element.addEventListener("mouseover", function(e) {
 				that.hidePanels();
-				if(that.is_open)
+				if(that.is_open || that.auto_open)
 					that.showMenu( this.data, e, this );
 			});
 		}
@@ -218,6 +222,7 @@
 
 		if(!menu.children || !menu.children.length)
 			return;
+
 		var that = this;
 		if(that.closing_by_leave)
 			clearInterval(that.closing_by_leave);
@@ -229,15 +234,16 @@
 		for(var i in menu.children)
 			sorted_entries.push(menu.children[i]);
 
-		sorted_entries.sort(function(a,b) {
-			var a_order = 10;
-			var b_order = 10;
-			if(a && a.data && a.data.order != null) a_order = a.data.order;
-			if(a && a.separator && a.order != null) a_order = a.order;
-			if(b && b.data && b.data.order != null) b_order = b.data.order;
-			if(b && b.separator && b.order != null) b_order = b.order;
-			return a_order - b_order;
-		});
+		if(this.sort_entries)
+			sorted_entries.sort(function(a,b) {
+				var a_order = 10;
+				var b_order = 10;
+				if(a && a.data && a.data.order != null) a_order = a.data.order;
+				if(a && a.separator && a.order != null) a_order = a.order;
+				if(b && b.data && b.data.order != null) b_order = b.data.order;
+				if(b && b.separator && b.order != null) b_order = b.order;
+				return a_order - b_order;
+			});
 
 		for(var i in sorted_entries)
 		{
@@ -245,10 +251,18 @@
 			var menu_item = sorted_entries[i];
 
 			item.className = 'litemenu-entry ' + ( item.children ? " submenu" : "" );
+			var has_submenu = menu_item.children && menu_item.children.length;
+
+			if(has_submenu)
+				item.classList.add("has_submenu");
+
 			if(menu_item && menu_item.name)
-				item.innerHTML = "<span class='icon'></span><span class='name'>" + menu_item.name + (menu_item.children && menu_item.children.length ? "<span class='more'>+</span>":"") + "</span>";
+				item.innerHTML = "<span class='icon'></span><span class='name'>" + menu_item.name + (has_submenu ? "<span class='more'>+</span>":"") + "</span>";
 			else
-				item.innerHTML = "<span class='separator'></span>";
+			{
+				item.classList.add("separator");
+				//item.innerHTML = "<span class='separator'></span>";
+			}
 
 			item.data = menu_item;
 
@@ -320,13 +334,22 @@
 					that.hidePanels();
 				}
 			});
+
+			item.addEventListener("mouseenter",function(e){
+				/*
+				if( that.auto_open && this.classList.contains("has_submenu") )
+					LiteGUI.trigger( this, "click" );
+				*/
+			});
+
 			element.appendChild( item );
 		}
 
 		element.addEventListener("mouseleave",function(e){
-			//if( $(e.target).hasClass("litemenubar-panel") || $(e.target).parents().hasClass("litemenubar-panel") ) 	return;
-			
-			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
+		
+			if(that.closing_by_leave)
+				clearInterval(that.closing_by_leave);
+
 			that.closing_by_leave = setTimeout( function() { 
 				that.is_open = false;
 				that.hidePanels();
@@ -334,17 +357,27 @@
 		});
 
 		element.addEventListener("mouseenter",function(e){
-			if(that.closing_by_leave) clearInterval(that.closing_by_leave);
+			if(that.closing_by_leave)
+				clearInterval(that.closing_by_leave);
 			that.closing_by_leave = null;
 		});
 
+		//compute X and Y for menu
 		var jQ = $(root); //$(menu.element);
 		element.style.left = jQ.offset().left + ( is_submenu ? 200 : 0 ) + "px";
-		element.style.top = jQ.offset().top + jQ.height() + ( is_submenu ? -20 : 2 ) + "px";
+		element.style.top = jQ.offset().top + jQ.height() + ( is_submenu ? -20 : 10 ) + "px";
+		/* animation, not working well, flickers
+		element.style.opacity = "0.1";
+		element.style.transform = "translate(0,-10px)";
+		element.style.transition = "all 0.2s";
+		setTimeout( function(){ 
+			element.style.opacity = "1"; 
+			element.style.transform = "translate(0,0)";
+		},1);
+		*/
 
 		this.panels.push(element);
 		document.body.appendChild( element );
-		$(element).hide().show();
 	}
 
 	LiteGUI.Menubar = Menubar;

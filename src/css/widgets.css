@@ -147,7 +147,7 @@ input[type="range"]::-moz-slider-thumb {
 	height: 1em;
 	display: inline-block;
 	vertical-align: top;
-	background-color: black;
+	background-color: #1f1f1f;
 	border: 0;
 	border-radius: 2px;
 	margin: 0 4px;

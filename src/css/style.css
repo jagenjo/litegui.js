@@ -108,6 +108,19 @@ a:hover {
 
 .litemenu-entry.disabled {
 	opacity: 0.5;
+	cursor: default;
+}
+
+.litemenu-entry.separator {
+	display: block;
+	border-top: 1px solid #333;
+	border-bottom: 1px solid #666;
+	width: 100%;
+	height: 0px;
+	margin: 3px 0 2px 0;
+	background-color: transparent;
+	padding: 0 !important;
+	cursor: default !important;
 }
 
 
@@ -119,16 +132,21 @@ a:hover {
 	color: #AAF;
 	padding: 0;
 	box-shadow: 0 0 10px black !important;
+	background-color: #2E2E2E !important;
 }
 
 .litecontextualmenu .litemenu-entry {
-	margin: 0;
+	margin: 2px;
 	padding: 2px;
+}
+
+.litecontextualmenu .litemenu-entry.submenu {
+	background-color: #2E2E2E !important;
 }
 
 .litemenu-title {
 	color: #DDE;
-	background-color: #222;	
+	background-color: #111;	
 	margin: 0;
 	padding: 2px;
 	cursor: default;
@@ -141,19 +159,11 @@ a:hover {
 }
 */
 
-.litemenu-entry:hover:not(.disabled) {
-	background-color: #777;
+.litemenu-entry:hover:not(.disabled):not(.separator) {
+	background-color: #555;
 	color: #EEE;
 }
 
-.litemenu-entry .separator {
-	display: block;
-	border-bottom: 1px solid #888;
-	width: 100%;
-	height: 0px;
-	margin: 3px 0 2px 0;
-	background-color: transparent;
-}
 
 button {
     background: -webkit-linear-gradient(#32302D, #4B4947) repeat scroll 0 0 transparent;
@@ -180,6 +190,10 @@ button:active:not(:disabled) {
 
 button:disabled {
 	opacity: 0.5;
+}
+
+.litedialog .content button {
+    vertical-align: initial;
 }
 
 .litedialog button.mini-button {
@@ -308,9 +322,14 @@ button.close-button {
 	margin-left:6px;
 	margin-right:-6px;
 	border-radius: 2px;
-	opacity: 0.5;
+	opacity: 0.2;
 	transition: all 0.3s;
 	padding: 2px;
+}
+
+.litetabs ul.wtabcontainer li.wtab:hover .tabclose
+{
+	opacity: 0.5;
 }
 
 .litetabs ul.wtabcontainer li.wtab .tabclose:hover {

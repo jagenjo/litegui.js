@@ -142,7 +142,7 @@
             "extension_for": [],
             "file": "../src/inspector.js",
             "line": 20,
-            "description": "Inspector allows to create a list of widgets easily",
+            "description": "Inspector allows to create a list of widgets easily, it also provides methods to create the widgets automatically.<br/>\nEvery widget is created calling the function add followed by the widget name, p.e. addSlider or addVector3 or addNumber.<br/>\nWidgets always receive three parameters:<br/>\n- name: String that defines the name at that it will be shown in the left side of the widget.<br/>\n- value: the value that will be displayed in the widget.<br/>\n- options: Object containing all the values .<br/>",
             "params": [
                 {
                     "name": "id",
@@ -151,7 +151,7 @@
                 },
                 {
                     "name": "options",
-                    "description": "object with a set of options { \n\twidth: total width\n\theight: total height\n\twidgets_width: width of every widget (used mostly in horizontal inspectors)\n\tname_width: width of the name part of widgets\n\tfull: set to true if you want the inspector to use all the parent width and height\n\twidgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes)\n\tone_line: widgets are place one next to the other horizontaly\n\tonchange: callback to call when something changes\n  }",
+                    "description": "object with a set of options { <br/>\n\twidth: total width <br/>\n\theight: total height <br/>\n\twidgets_width: width of every widget (used mostly in horizontal inspectors) <br/>\n\tname_width: width of the name part of widgets <br/>\n\tfull: set to true if you want the inspector to use all the parent width and height <br/>\n\twidgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes) <br/>\n\tone_line: widgets are place one next to the other horizontaly <br/>\n\tonchange: callback to call when something changes <br/>\n  } <br/>",
                     "type": "Object"
                 }
             ],
@@ -205,7 +205,7 @@
             "extension_for": [],
             "file": "../src/tree.js",
             "line": 5,
-            "description": "To create interactive trees (useful for folders or hierarchies).<br>\nOptions are:<br>\n\t+ allow_multiselection: allow to select multiple elements using the shift key<br>\n\t+ allow_rename: double click to rename items in the tree<br>\n\t+ allow_drag: drag elements around<br>\n\t+ height<br>\nItem data should be in the next format:<br>\n{<br>\n   id: unique_identifier,<br>\n   content: what to show in the HTML (if omited id will be shown)<br>\n\t children: []  array with another object with the same structure<br>\n\t className: class<br>\n   precontent: HTML inserted before the content<br>\n\t visible: boolean, to hide it<br>\n\t dataset: dataset for the element<br>\n\t onDragData: callback in case the user drags this item somewhere else<br>\n}<br>",
+            "description": "To create interactive trees (useful for folders or hierarchies).<br>\nOptions are:<br>\n\t+ allow_multiselection: allow to select multiple elements using the shift key<br>\n\t+ allow_rename: double click to rename items in the tree<br>\n\t+ allow_drag: drag elements around<br>\n\t+ height<br>\nItem data should be in the next format:<br>\n{<br>\n   id: unique_identifier,<br>\n   content: what to show in the HTML (if omited id will be shown)<br>\n\t children: []  array with another object with the same structure<br>\n\t className: class<br>\n   precontent: HTML inserted before the content<br>\n\t visible: boolean, to hide it<br>\n\t dataset: dataset for the element<br>\n\t onDragData: callback in case the user drags this item somewhere else<br>\n}<br>\nTo catch events use tree.root.addEventListener(...)<br>\nitem_selected : receive { item: node, data: node.data }<br>\nitem_dblclicked<br>\nitem_renamed<br>\nitem_moved<br>",
             "is_constructor": 1
         },
         "SearchBox": {
@@ -887,7 +887,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 92,
+            "line": 97,
             "description": "Removes all the widgets inside the inspector",
             "itemtype": "method",
             "name": "clear",
@@ -895,7 +895,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 112,
+            "line": 117,
             "description": "Tryes to refresh (calls on_refresh)",
             "itemtype": "method",
             "name": "refresh",
@@ -903,7 +903,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 168,
+            "line": 173,
             "itemtype": "method",
             "name": "inspectInstance",
             "params": [
@@ -932,7 +932,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 260,
+            "line": 265,
             "itemtype": "method",
             "name": "collectPropertier",
             "params": [
@@ -946,7 +946,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 283,
+            "line": 288,
             "itemtype": "method",
             "name": "showProperties",
             "params": [
@@ -970,7 +970,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 336,
+            "line": 341,
             "description": "Tryes to assigns a value to the instance stored in this.instance",
             "itemtype": "method",
             "name": "assignValue",
@@ -978,7 +978,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 362,
+            "line": 367,
             "description": "Used by all widgets to create the container of one widget",
             "itemtype": "method",
             "name": "createWidget",
@@ -1003,7 +1003,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 511,
+            "line": 516,
             "description": "Adds a widgete to the inspector, its a way to provide the widget type from a string",
             "itemtype": "method",
             "name": "add",
@@ -1037,7 +1037,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 715,
+            "line": 720,
             "description": "Creates a title bar in the widgets list to help separate widgets",
             "itemtype": "method",
             "name": "addTitle",
@@ -1061,7 +1061,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 742,
+            "line": 747,
             "description": "Creates a line",
             "itemtype": "method",
             "name": "addSeparator",
@@ -1073,7 +1073,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 755,
+            "line": 760,
             "description": "Widget to edit strings",
             "itemtype": "method",
             "name": "addString",
@@ -1102,7 +1102,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 819,
+            "line": 824,
             "description": "Widget to edit strings, but it adds a button behind (useful to search values somewhere in case the user do not remember the name)",
             "itemtype": "method",
             "name": "addStringButton",
@@ -1131,7 +1131,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 868,
+            "line": 873,
             "description": "Widget to edit strings with multiline support",
             "itemtype": "method",
             "name": "addTextarea",
@@ -1160,7 +1160,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 912,
+            "line": 917,
             "description": "Widget to edit numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addNumber",
@@ -1189,7 +1189,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 997,
+            "line": 1002,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector2",
@@ -1218,7 +1218,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1093,
+            "line": 1098,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector3",
@@ -1247,7 +1247,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1195,
+            "line": 1200,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector4",
@@ -1276,7 +1276,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1287,
+            "line": 1292,
             "description": "Widget to edit two numbers using a rectangular pad where you can drag horizontaly and verticaly a handler",
             "itemtype": "method",
             "name": "addPad",
@@ -1305,7 +1305,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1434,
+            "line": 1439,
             "description": "Widget to show plain information in HTML (not interactive)",
             "itemtype": "method",
             "name": "addInfo",
@@ -1334,7 +1334,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1489,
+            "line": 1494,
             "description": "Widget to edit a number using a slider",
             "itemtype": "method",
             "name": "addSlider",
@@ -1363,7 +1363,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1560,
+            "line": 1565,
             "description": "Widget to edit a boolean value using a checkbox",
             "itemtype": "method",
             "name": "addCheckbox",
@@ -1392,7 +1392,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1619,
+            "line": 1624,
             "description": "Widget to edit a set of boolean values using checkboxes",
             "itemtype": "method",
             "name": "addFlags",
@@ -1416,7 +1416,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1647,
+            "line": 1652,
             "description": "Widget to edit an enumeration using a combobox",
             "itemtype": "method",
             "name": "addCombo",
@@ -1445,7 +1445,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1838,
+            "line": 1843,
             "description": "Widget to select from a list of items",
             "itemtype": "method",
             "name": "addList",
@@ -1663,12 +1663,12 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 28,
+            "line": 33,
             "class": "Tree"
         },
         {
             "file": "../src/tree.js",
-            "line": 75,
+            "line": 80,
             "description": "update tree with new data (old data will be thrown away)",
             "itemtype": "method",
             "name": "updateTree",
@@ -1683,7 +1683,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 94,
+            "line": 99,
             "description": "update tree with new data (old data will be thrown away)",
             "itemtype": "method",
             "name": "insertItem",
@@ -1717,7 +1717,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 615,
+            "line": 620,
             "description": "get the item with that id, returns the HTML element",
             "itemtype": "method",
             "name": "getItem",
@@ -1736,7 +1736,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 652,
+            "line": 657,
             "description": "in case an item is collapsed, it expands it to show children",
             "itemtype": "method",
             "name": "expandItem",
@@ -1751,7 +1751,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 669,
+            "line": 674,
             "description": "in case an item is expanded, it collapses it to hide children",
             "itemtype": "method",
             "name": "collapseItem",
@@ -1766,7 +1766,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 687,
+            "line": 692,
             "description": "Tells you if the item its out of the view due to the scrolling",
             "itemtype": "method",
             "name": "isInsideArea",
@@ -1781,7 +1781,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 710,
+            "line": 715,
             "description": "Scrolls to center this item",
             "itemtype": "method",
             "name": "scrollToItem",
@@ -1796,7 +1796,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 735,
+            "line": 740,
             "description": "mark item as selected",
             "itemtype": "method",
             "name": "setSelectedItem",
@@ -1811,7 +1811,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 767,
+            "line": 772,
             "description": "adds item to selection (multiple selection)",
             "itemtype": "method",
             "name": "addItemToSelection",
@@ -1826,7 +1826,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 785,
+            "line": 790,
             "description": "remove item from selection (multiple selection)",
             "itemtype": "method",
             "name": "removeItemFromSelection",
@@ -1841,7 +1841,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 800,
+            "line": 805,
             "description": "returns the first selected item (its HTML element)",
             "itemtype": "method",
             "name": "getSelectedItem",
@@ -1853,7 +1853,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 810,
+            "line": 815,
             "description": "returns an array with the selected items (its HTML elements)",
             "itemtype": "method",
             "name": "getSelectedItems",
@@ -1865,7 +1865,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 820,
+            "line": 825,
             "description": "returns if an item is selected",
             "itemtype": "method",
             "name": "isItemSelected",
@@ -1884,7 +1884,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 834,
+            "line": 839,
             "description": "returns the children of an item",
             "itemtype": "method",
             "name": "getChildren",
@@ -1910,7 +1910,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 846,
+            "line": 851,
             "description": "returns the parent of a item",
             "itemtype": "method",
             "name": "getParent",
@@ -1929,7 +1929,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 860,
+            "line": 865,
             "description": "move item with id to be child of parent_id",
             "itemtype": "method",
             "name": "moveItem",
@@ -1953,7 +1953,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 923,
+            "line": 928,
             "description": "remove item with given id",
             "itemtype": "method",
             "name": "removeItem",
@@ -1972,7 +1972,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 945,
+            "line": 950,
             "description": "update a given item with new data",
             "itemtype": "method",
             "name": "updateItem",
@@ -1992,7 +1992,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 968,
+            "line": 973,
             "description": "clears all the items",
             "itemtype": "method",
             "name": "clear",
@@ -2042,7 +2042,7 @@
         },
         {
             "message": "Missing item type",
-            "line": " ../src/tree.js:28"
+            "line": " ../src/tree.js:33"
         },
         {
             "message": "Missing item type",

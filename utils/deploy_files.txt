@@ -6,4 +6,5 @@
 ../src/dragger.js
 ../src/tree.js
 ../src/panel.js
+../src/dialog.js
 ../src/inspector.js

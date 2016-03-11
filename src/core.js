@@ -114,25 +114,44 @@ var LiteGUI = {
 	*/
 	bind: function( element, event, callback )
 	{
+		if(!element)
+			throw("Cannot bind to null");
+		if(!event)
+			throw("Event bind missing");
 		if(!callback)
-			throw("bind callback missing");
-		if(element.addEventListener)
-			element.addEventListener(event, callback);
-		else if(element.__events)
-			element.__events.addEventListener( event, callback );
-		else
-		{
-			//create a dummy HTMLentity so we can use it to bind HTML events
-			var dummy = document.createElement("span");
-			dummy.widget = element; //double link
-			Object.defineProperty( element, "__events", {
-				enumerable: false,
-				configurable: false,
-				writable: false,
-				value: dummy
-			});
+			throw("Bind callback missing");
 
-			element.__events.addEventListener( event, callback );
+		if(element.constructor === String)
+			element = document.querySelectorAll( element );
+			
+		if(element.constructor === NodeList)
+		{
+			for(var i = 0; i < element.length; ++i)
+				inner( element[i] );
+		}
+		else
+			inner( element );
+
+		function inner( element )
+		{
+			if(element.addEventListener)
+				element.addEventListener(event, callback);
+			else if(element.__events)
+				element.__events.addEventListener( event, callback );
+			else
+			{
+				//create a dummy HTMLentity so we can use it to bind HTML events
+				var dummy = document.createElement("span");
+				dummy.widget = element; //double link
+				Object.defineProperty( element, "__events", {
+					enumerable: false,
+					configurable: false,
+					writable: false,
+					value: dummy
+				});
+
+				element.__events.addEventListener( event, callback );
+			}
 		}
 	},
 
@@ -231,6 +250,27 @@ var LiteGUI = {
 	setCursor: function( name )
 	{
 		this.root.style.cursor = name;
+	},
+
+	/**
+	* Test if the cursor is inside an element
+	* @method setCursor
+	* @param {String} cursor
+	**/
+	isCursorOverElement: function( event, element )
+	{
+		var left = event.pageX;
+		var top = event.pageY;
+		var rect = element.getClientRects()[0];
+		if(top > rect.top && top < (rect.top + rect.height) &&
+			left > rect.left && left < (rect.left + rect.width) )
+			return true;
+		return false;
+	},
+
+	getRect: function(element)
+	{
+		return element.getClientRects()[0];
 	},
 
 	/**
@@ -467,6 +507,7 @@ var LiteGUI = {
 
 		var total = url.length;
 		var size = total;
+		var loaded_scripts = [];
 
 		for(var i in url)
 		{
@@ -477,13 +518,14 @@ var LiteGUI = {
 			script.async = false;
 			script.onload = function(e) { 
 				total--;
+				loaded_scripts.push(this);
 				if(total)
 				{
 					if(on_progress)
 						on_progress(this.src, this.num);
 				}
 				else if(on_complete)
-					on_complete();
+					on_complete( loaded_scripts );
 			};
 			if(on_error)
 				script.onerror = function(err) { 
@@ -500,6 +542,7 @@ var LiteGUI = {
 		if(typeof(url)=="string")
 			url = [url];
 
+		var loaded_scripts = [];
 		function addScript()
 		{
 			var script = document.createElement('script');
@@ -514,9 +557,11 @@ var LiteGUI = {
 					addScript();
 					return;
 				}
+
+				loaded_scripts.push(this);
 				
 				if(on_complete)
-					on_complete();
+					on_complete( loaded_scripts );
 			};
 			document.getElementsByTagName('head')[0].appendChild(script);
 		}
@@ -581,17 +626,38 @@ var LiteGUI = {
 	* @param {String} id
 	* @param {String} content
 	* @param {Function} callback when the button is pressed
+	* @param {Object|String} style
 	**/
-	createButton: function( id, content, callback )
+	createButton: function( id_class, content, callback, style )
 	{
 		var elem = document.createElement("button");
-		elem.id = id;
-		elem.root = elem;
 		elem.className = "litegui button";
+		if(id_class)
+		{
+			var t = id_class.split(" ");
+			for(var i = 0; i < t.length; i++)
+			{
+				if(t[i][0] == ".")
+					elem.classList.add( t[i].substr(1) );
+				else if(t[i][0] == "#")
+					elem.id = t[i].substr(1);
+				else
+					elem.id = t[i];
+			}
+		}
+		elem.root = elem;
 		if(content !== undefined)
 			elem.innerHTML = content;
 		if(callback)
 			elem.addEventListener("click", callback );
+		if(style)
+		{
+			if(style.constructor === String)
+				elem.setAttribute("style",style);
+			else
+				for(var i in style)
+					elem.style[i] = style[i];
+		}
 		return elem;
 	},
 
@@ -628,7 +694,8 @@ var LiteGUI = {
 	//* DIALOGS *******************
 	showModalBackground: function(v)
 	{
-		LiteGUI.modalbg_div.style.display = v ? "block" : "none";
+		if(LiteGUI.modalbg_div)
+			LiteGUI.modalbg_div.style.display = v ? "block" : "none";
 	},
 
 	showMessage: function(content, options)
@@ -923,17 +990,66 @@ var LiteGUI = {
 		close: "&#10005;"
 	},
 
-	//used to convert sizes
+	/**
+	* Convert sizes in any format to a valid CSS format (number to string, negative number to calc( 100% - number px )
+	* @method sizeToCSS
+	* @param {String||Number} size
+	* @return {String} valid css size string
+	**/
 	sizeToCSS: function( v )
 	{
 		if( v ===  undefined || v === null )
 			return null;
 		if(v.constructor === String )
 			return v;
-		if(v > 0 )
+		if(v >= 0 )
 			return (v|0) + "px";
-		if(v < 0 )
-			return "calc( 100% - " + Math.abs(v|0) + "px )";
+		return "calc( 100% - " + Math.abs(v|0) + "px )";
+	},
+
+	/**
+	* Helper, makes drag and drop easier by enabling drag and drop in a given element
+	* @method createDropArea
+	* @param {HTMLElement} element the element where users could drop items
+	* @param {Function} callback_drop function to call when the user drops the item
+	* @param {Function} callback_enter [optional] function to call when the user drags something inside
+	**/
+	createDropArea: function( element, callback_drop, callback_enter, callback_exit )
+	{
+		element.addEventListener("dragenter", onDragEvent);
+
+		function onDragEvent(evt)
+		{
+			element.addEventListener("dragexit", onDragEvent);
+			element.addEventListener("dragover", onDragEvent);
+			element.addEventListener("drop", onDrop);
+			evt.stopPropagation();
+			evt.preventDefault();
+			if(evt.type == "dragenter" && callback_enter)
+				callback_enter(evt, this);
+			if(evt.type == "dragexit" && callback_exit)
+				callback_exit(evt, this);
+		}
+
+		function onDrop(evt)
+		{
+			evt.stopPropagation();
+			evt.preventDefault();
+
+			element.removeEventListener("dragexit", onDragEvent);
+			element.removeEventListener("dragover", onDragEvent);
+			element.removeEventListener("drop", onDrop);
+
+			var r = undefined;
+			if(callback_drop)
+				r = callback_drop(evt);
+			if(r)
+			{
+				evt.stopPropagation();
+				evt.stopImmediatePropagation();
+				return true;
+			}
+		}
 	}
 };
 
@@ -1324,4 +1440,21 @@ function beautifyJSON( code, skip_css )
 		code = "<style>.obj { color: #79B; } .prop { color: #B97; }	.str { color: #A79; } .num { color: #B97; } .cmnt { color: #798; } .rsv { color: #9AB; } </style>" + code;
 
 	return code;
+}
+
+function dataURItoBlob( dataURI ) {
+	var pos = dataURI.indexOf(",");
+	//convert to binary
+    var byteString = atob( dataURI.substr(pos+1) ); 
+	//copy from string to array
+    var ab = new ArrayBuffer( byteString.length ); 
+    var ia = new Uint8Array(ab);
+	var l = byteString.length;
+    for (var i = 0; i < l; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+	var mime = dataURI.substr(5,pos-5);
+	mime = mime.substr(0, mime.length - 7); //strip ";base64"
+    return new Blob([ab], { type: mime });
 }

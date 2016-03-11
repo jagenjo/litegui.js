@@ -8,7 +8,7 @@
 	* @class Tabs
 	* @constructor
 	*/
-	function Tabs(id,options)
+	function Tabs( id, options )
 	{
 		options = options || {};
 		this.options = options;
@@ -181,7 +181,7 @@
 	/**
 	* Create a new tab, where id is a unique identifier
 	* @method addTab
-	* @param {String} id
+	* @param {String} id could be null then a random id is generated
 	* @param {Object} options { title: tab text, callback: called when selected, callback_leave: callback when leaving, content: HTML content, closable: if it can be closed (callback is onclose), tab_width: size of the tab, tab_className: classes for the tab element, id: content id, size: full means all, mode: "vertical" or "horizontal", button: if it is a button tab, not a selectable tab}
 	* @param {bool} skip_event prevent dispatching events
 	* @return {Object} an object containing { id, tab, content }
@@ -193,6 +193,8 @@
 			options = { callback: options };
 
 		var that = this;
+		if(id === undefined || id === null)
+			id = "rand_" + ((Math.random() * 1000000)|0);
 
 		//the tab element
 		var element = document.createElement("LI");
@@ -227,6 +229,8 @@
 			else
 				this.list.appendChild(element);
 		}
+		else if( this.plus_tab )
+			this.list.insertBefore( element, this.plus_tab );
 		else
 			this.list.appendChild(element);
 
@@ -295,6 +299,7 @@
 			else
 				content.appendChild(options.content);
 		}
+
 		this.root.appendChild(content);
 
 		//when clicked
@@ -310,10 +315,23 @@
 		element.options = options;
 		element.tabs = this;
 
-		var tab_info = {id: id, tab: element, content: content, add: function(v) { this.content.appendChild(v.root || v); }};
+		var title = element.querySelector("span.tabtitle");
+
+		//tab object
+		var tab_info = {
+			id: id,
+			tab: element,
+			content: content,
+			title: title,
+			add: function(v) { this.content.appendChild(v.root || v); },
+			setTitle: function( title )	{ this.title.innerHTML = title; },
+			click: function(){ LiteGUI.trigger( this.tab, "click" ); },
+			destroy: function(){ that.removeTab(this.id) }
+		};
+
 		if(options.onclose)
 			tab_info.onclose = options.onclose;
-		this.tabs[id] = tab_info;
+		this.tabs[ id ] = tab_info;
 
 		//context
 		element.addEventListener("contextmenu", (function(e) { 
@@ -329,6 +347,13 @@
 			this.selectTab( id, options.skip_callbacks );
 
 		return tab_info;
+	}
+
+	Tabs.prototype.addPlusTab = function( callback )
+	{
+		if(this.plus_tab)
+			console.warn("There is already a plus tab created in this tab widget");
+		this.plus_tab = this.addTab( "plus_tab", { title: "+", tab_width: 20, button: true, callback: callback, skip_callbacks: true });
 	}
 
 	//this is tab
@@ -361,7 +386,7 @@
 			if( i == tab_id )
 			{
 				tab_info.selected = true;
-				tab_info.content.style.display = null;
+				tab_info.content.style.display = "";
 				tab_content = tab_info.content;
 			}
 			else

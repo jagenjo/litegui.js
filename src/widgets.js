@@ -83,6 +83,14 @@
 		this.options = options;
 		var that = this;
 
+		//to link a menu with its parent
+		if(options.parentMenu)
+		{
+			this.parentMenu = options.parentMenu;
+			this.parentMenu.lock = true;
+			this.parentMenu.openSubmenu = this;
+		}
+
 		var root = document.createElement("div");
 		root.className = "litecontextualmenu litemenubar-panel";
 		root.style.minWidth = 100;
@@ -122,10 +130,12 @@
 			var name = values.constructor == Array ? values[i] : i;
 			var value = values[i];
 
+			var disabled = false;
+
 			if(value === null)
 			{
-				element.className += "separator";
-				element.innerHTML = "<hr/>"
+				element.classList.add("separator");
+				//element.innerHTML = "<hr/>"
 				//continue;
 			}
 			else
@@ -133,41 +143,76 @@
 				element.innerHTML = value && value.title ? value.title : name;
 				element.value = value;
 
+				if(value && value.disabled)
+				{
+					disabled = true;
+					element.classList.add("disabled");
+				}
+
 				if(typeof(value) == "function")
 				{
 					element.dataset["value"] = name;
 					element.onclick_callback = value;
-				}
-				else if(typeof(value) == "object")
-				{
-					if(value.callback && !options.ignore_item_callbacks)
-						element.addEventListener("click", function(e) { this.value.callback.apply( this, this.value ); });
 				}
 				else
 					element.dataset["value"] = value;
 			}
 
 			root.appendChild(element);
-			element.addEventListener("click", inner_onclick);
+			if(!disabled)
+				element.addEventListener("click", inner_onclick);
 			num++;
 		}
 
-		//if(num == 0)
-		//	return;
-
-		//option clicked
+		//menu option clicked
 		function inner_onclick(e) {
 			var value = this.value;
-			if(options.callback)
-				options.callback.call(that, value, options, e );
-			if(root.parentNode)
-				root.parentNode.removeChild( root );
+			var close_parent = true;
+
+			if(that.openSubmenu)
+				that.openSubmenu.close();
+
+			//global callback
+			if(options.callback) 
+			{
+				var r = options.callback.call(that, value, options, e );
+				if(r === true)
+					close_parent = false;
+			}
+
+			//special cases
+			if(value)
+			{
+				if (value.callback && !options.ignore_item_callbacks && value.disabled !== true )  //item callback
+				{
+					var r = value.callback.call( this, value, options, e );
+					if(r === true)
+						close_parent = false;
+				}
+				if(value.submenu)
+				{
+					if(!value.submenu.options)
+						throw("ContextualMenu submenu needs options");
+					var submenu = new LiteGUI.ContextualMenu( value.submenu.options, {
+						callback: value.submenu.callback,
+						event: e,
+						parentMenu: that,
+						ignore_item_callbacks: value.submenu.ignore_item_callbacks,
+						title: value.submenu.title
+					});
+					close_parent = false;
+				}
+			}
+		
+			if(close_parent)
+				that.close();
 		}
 
-		//if(0)
+		//close on leave
 		root.addEventListener("mouseleave", function(e) {
-			if(this.parentNode)
-				this.parentNode.removeChild( this );
+			if(that.lock)
+				return;
+			that.close(e);
 		});
 
 		//insert before checking position
@@ -179,6 +224,7 @@
 			root_document = document;
 		root_document.body.appendChild(root);
 
+		//compute best position
 		var left = options.left || 0;
 		var top = options.top || 0;
 		if(options.event)
@@ -187,6 +233,9 @@
 			top = (options.event.pageY - 10);
 			if(options.title)
 				top -= 20;
+
+			if(options.parentMenu)
+				left = $(options.parentMenu.root).position().left + $(options.parentMenu.root).width();
 
 			var rect = document.body.getClientRects()[0];
 			if(left > (rect.width - $(root).width() - 10))
@@ -197,6 +246,21 @@
 
 		root.style.left = left + "px";
 		root.style.top = top  + "px";
+	}
+
+	ContextualMenu.prototype.close = function(e)
+	{
+		if(this.root.parentNode)
+			this.root.parentNode.removeChild( this.root );
+		if(this.parentMenu)
+		{
+			this.parentMenu.lock = false;
+			this.parentMenu.openSubmenu = null;
+			if( e === undefined )
+				this.parentMenu.close();
+			else if( e && !LiteGUI.isCursorOverElement( e, this.parentMenu.root) )
+				LiteGUI.trigger( this.parentMenu.root, "mouseleave", e );
+		}
 	}
 
 	LiteGUI.ContextualMenu = ContextualMenu;
@@ -211,7 +275,7 @@
 		root.className = "litecheckbox inputfield";
 		root.dataset["value"] = value;
 
-		var element = this.element =document.createElement("span");
+		var element = this.element = document.createElement("span");
 		element.className = "fixed flag checkbox "+(value ? "on" : "off");
 		root.appendChild( element );
 		
@@ -301,7 +365,7 @@
 		}
 
 		function onClick(e) {
-			console.log("CLICK");
+			//console.log("CLICK");
 			var box = e.target;
 			box.setValue( this.dataset["value"] == "open" ? false : true );
 			if(this.stopPropagation)

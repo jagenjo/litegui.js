@@ -128,20 +128,25 @@ jQuery.fn.wclick = function(callback) {
 };
 
 /**
-* Inspector allows to create a list of widgets easily
+* Inspector allows to create a list of widgets easily, it also provides methods to create the widgets automatically.&lt;br/&gt;
+* Every widget is created calling the function add followed by the widget name, p.e. addSlider or addVector3 or addNumber.&lt;br/&gt;
+* Widgets always receive three parameters:&lt;br/&gt;
+* - name: String that defines the name at that it will be shown in the left side of the widget.&lt;br/&gt;
+* - value: the value that will be displayed in the widget.&lt;br/&gt;
+* - options: Object containing all the values .&lt;br/&gt;
 *
 * @class Inspector
 * @param {string} id
-* @param {Object} options object with a set of options { 
-	width: total width
-	height: total height
-	widgets_width: width of every widget (used mostly in horizontal inspectors)
-	name_width: width of the name part of widgets
-	full: set to true if you want the inspector to use all the parent width and height
-	widgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes)
-	one_line: widgets are place one next to the other horizontaly
-	onchange: callback to call when something changes
-   }
+* @param {Object} options object with a set of options { &lt;br/&gt;
+	width: total width &lt;br/&gt;
+	height: total height &lt;br/&gt;
+	widgets_width: width of every widget (used mostly in horizontal inspectors) &lt;br/&gt;
+	name_width: width of the name part of widgets &lt;br/&gt;
+	full: set to true if you want the inspector to use all the parent width and height &lt;br/&gt;
+	widgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes) &lt;br/&gt;
+	one_line: widgets are place one next to the other horizontaly &lt;br/&gt;
+	onchange: callback to call when something changes &lt;br/&gt;
+   } &lt;br/&gt;
 * @constructor
 */
 
@@ -390,7 +395,7 @@ Inspector.prototype.collectProperties = function( instance )
 	return properties;
 }
 
-/** Adds the widgets for the properties specified in properties_info of instance
+/** Adds the widgets for the properties specified in properties_info of instance, it will create callback and callback_update
 *
 * @method showProperties
 * @param {Object} instance the instance that you want to inspect

@@ -20,6 +20,11 @@
 *	 dataset: dataset for the element<br>
 *	 onDragData: callback in case the user drags this item somewhere else<br>
 * }<br>
+* To catch events use tree.root.addEventListener(...)<br>
+* item_selected : receive { item: node, data: node.data }<br>
+* item_dblclicked<br>
+* item_renamed<br>
+* item_moved<br>
 *
 * @class Tree
 * @constructor
@@ -38,6 +43,7 @@
 		var that = this;
 		options = options || {allow_rename: false, allow_drag: true, allow_multiselection: false};
 		this.options = options;
+		this.indent_offset = options.indent_offset || 0;
 
 		if(options.height)
 			this.root.style.height = typeof(options.height) == "string" ? options.height : Math.round(options.height) + "px";
@@ -100,7 +106,7 @@
 	* @param {object} options
 	* @return {DIVElement}
 	*/
-	Tree.prototype.insertItem = function(data, parent_id, position, options)
+	Tree.prototype.insertItem = function( data, parent_id, position, options)
 	{
 		if(!parent_id)
 		{
@@ -111,6 +117,7 @@
 
 		var element = this.createAndInsert( data, options, parent_id, position );
 
+		//update parent collapse button
 		if(parent_id)
 			this._updateListBox( this._findElement(parent_id) );
 
@@ -118,7 +125,7 @@
 		return element;
 	}
 
-	Tree.prototype.createAndInsert = function(data, options, parent_id, element_index )
+	Tree.prototype.createAndInsert = function( data, options, parent_id, element_index )
 	{
 		//find parent
 		var parent_element_index = -1;
@@ -159,6 +166,7 @@
 			}
 		}
 
+		//update collapse button
 		this._updateListBox( element );
 
 		if(options && options.selected)
@@ -179,7 +187,7 @@
 
 		var indent = element.querySelector(".indentblock");
 		if(indent)
-			indent.style.paddingLeft = (child_level * Tree.INDENT ) + "px"; //inner padding
+			indent.style.paddingLeft = ((child_level + this.indent_offset) * Tree.INDENT ) + "px"; //inner padding
 		
 		element.dataset["level"] = child_level;
 
@@ -291,7 +299,7 @@
 		return result;
 	}
 	
-	Tree.prototype.createTreeItem = function(data, options, level)
+	Tree.prototype.createTreeItem = function( data, options, level )
 	{
 		if(data === null || data === undefined)
 		{
@@ -321,7 +329,10 @@
 		root.data = data;
 
 		if(level !== undefined)
+		{
 			root.dataset["level"] = level;
+			root.classList.add("ltree-level-" + level);
+		}
 
 		var title_element = document.createElement("div");
 		title_element.className = "ltreeitemtitle";
@@ -378,7 +389,7 @@
 			if(title._editing) 
 				return;
 
-			if(e.shiftKey && that.options.allow_multiselection)
+			if(e.ctrlKey && that.options.allow_multiselection)
 			{
 				//check if selected
 				if( that.isNodeSelected( node ) )
@@ -390,7 +401,6 @@
 
 				//mark as selected
 				that.markAsSelected( node, true );
-
 				LiteGUI.trigger(that.root, "item_add_to_selection", { item: node, data: node.data} );
 				var r = false;
 				if(data.callback) 
@@ -398,6 +408,31 @@
 
 				if(!r && that.onItemAddToSelection)
 					that.onItemAddToSelection(node.data, node);
+			}
+			if(e.shiftKey && that.options.allow_multiselection)
+			{
+				//select from current selection till here
+				//current
+				var last_item = that.getSelectedItem();
+				if(!last_item)
+					return;
+
+				if(last_item === node)
+					return;
+
+				var nodeList = Array.prototype.slice.call( last_item.parentNode.children );
+				var last_index = nodeList.indexOf( last_item );
+				var current_index = nodeList.indexOf( node );
+
+				var items = current_index > last_index ? nodeList.slice( last_index, current_index ) : nodeList.slice( current_index, last_index );
+				for( var i = 0; i < items.length; ++i )
+				{
+					var item = items[i];
+					//console.log(item);
+					//mark as selected
+					that.markAsSelected( item, true );
+					LiteGUI.trigger( that.root, "item_add_to_selection", { item: item, data: item.data } );
+				}
 			}
 			else
 			{
@@ -571,14 +606,14 @@
 			if(!name || str.indexOf( name.toLowerCase() ) != -1)
 			{
 				if( childNode.data && childNode.data.visible !== false )
-					childNode.style.display = null;
+					childNode.style.display = "";
 				var indent = childNode.querySelector(".indentblock");
 				if(indent)
 				{
 					if(name)
 						indent.style.paddingLeft = 0;
 					else
-						indent.style.paddingLeft = paddingLeft = (parseInt(childNode.dataset["level"]) * Tree.INDENT) + "px";
+						indent.style.paddingLeft = paddingLeft = ( (parseInt(childNode.dataset["level"]) + this.indent_offset) * Tree.INDENT) + "px";
 				}
 			}
 			else
@@ -600,7 +635,7 @@
 
 			if(!name || str.indexOf(name) != -1)
 			{
-				parent.style.display = null;
+				parent.style.display = "";
 				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.INDENT) + "px";
 			}
 			else
@@ -723,7 +758,7 @@
 			return false;
 		var r = rects[0];
 		var h = r.height;
-		var x = parseInt( item.dataset["level"] ) * Tree.INDENT + 50;
+		var x = ( parseInt( item.dataset["level"] ) + this.indent_offset) * Tree.INDENT + 50;
 
 		this.root.scrollTop = item.offsetTop - (h * 0.5)|0;
 		if( r.width * 0.75 < x )
@@ -834,12 +869,14 @@
 	/**
 	* returns the children of an item
 	* @method getChildren
-	* @param {string} id
+	* @param {string} id could be string or node directly
 	* @param {bool} [only_direct=false] to get only direct children
 	* @return {Array}
 	*/
 	Tree.prototype.getChildren = function(id, only_direct )
 	{
+		if( id && id.constructor !== String && id.dataset )
+			id = id.dataset["item_id"];
 		return this._findChildElements( id, only_direct );
 	}
 
@@ -886,33 +923,37 @@
 		//replace parent info
 		node.parent_id = parent_id;
 
-		//get all children and subchildren
+		//get all children and subchildren and reinsert them in the new level
 		var children = this.getChildren( node );
-		children.unshift(node); //add the node at the beginning
-
-		//remove all children
-		for(var i = 0; i < children.length; i++)
-			children[i].parentNode.removeChild( children[i] );
-
-		//update levels
-		for(var i = 0; i < children.length; i++)
+		if(children)
 		{
-			var child = children[i];
-			var new_level = parseInt(child.dataset["level"]) + level_offset;
-			child.dataset["level"] = new_level;
-		}
+			children.unshift( node ); //add the node at the beginning
 
-		//reinsert
-		parent_index = this._findElementIndex( parent ); //update parent index
-		var last_index = this._findElementLastChildIndex( parent_index );
-		if(last_index == -1)
-			last_index = 0;
-		for(var i = 0; i < children.length; i++)
-		{
-			var child = children[i];
-			this._insertInside( child, parent_index, last_index + i - 1, parseInt( child.dataset["level"] ) );
+			//remove all children
+			for(var i = 0; i < children.length; i++)
+				children[i].parentNode.removeChild( children[i] );
+
+			//update levels
+			for(var i = 0; i < children.length; i++)
+			{
+				var child = children[i];
+				var new_level = parseInt(child.dataset["level"]) + level_offset;
+				child.dataset["level"] = new_level;
+			}
+
+			//reinsert
+			parent_index = this._findElementIndex( parent ); //update parent index
+			var last_index = this._findElementLastChildIndex( parent_index );
+			if(last_index == -1)
+				last_index = 0;
+			for(var i = 0; i < children.length; i++)
+			{
+				var child = children[i];
+				this._insertInside( child, parent_index, last_index + i - 1, parseInt( child.dataset["level"] ) );
+			}
 		}
 		
+		//update collapse button
 		this._updateListBox( parent );
 		if(old_parent)
 			this._updateListBox( old_parent );
@@ -926,19 +967,35 @@
 	* @param {string} id
 	* @return {bool}
 	*/
-	Tree.prototype.removeItem = function(id_or_node)
+	Tree.prototype.removeItem = function( id_or_node, remove_children )
 	{
 		var node = id_or_node;
 		if(typeof(id_or_node) == "string")
-			node = this.getItem(id_or_node);
+			node = this.getItem( id_or_node );
 		if(!node)
 			return false;
 
-		var parent = this.getParent(node);
+		//get parent
+		var parent = this.getParent( node );
+
+		//get all descendants
+		var child_nodes = null;
+		if(remove_children)
+			child_nodes = this.getChildren( node );
+
+		//remove html element
 		this.root.removeChild( node );
 
+		//remove all children
+		if( child_nodes )
+		{
+			for( var i = 0; i < child_nodes.length; i++ )
+				this.root.removeChild( child_nodes[i] );
+		}
+
+		//update parent collapse button
 		if(parent)
-			this._updateListBox(parent);
+			this._updateListBox( parent );
 		return true;
 	}
 
@@ -1031,14 +1088,23 @@
 		node.classList.add("selected");
 
 		//go up and semiselect
+		var parent = this.getParent( node );
+		while(parent)
+		{
+			parent.classList.add("semiselected");
+			parent = this.getParent( parent );
+		}
+		/*
 		var parent = node.parentNode.parentNode; //two elements per level
 		while(parent && parent.classList.contains("ltreeitem"))
 		{
 			parent.title_element.classList.add("semiselected");
 			parent = parent.parentNode.parentNode;
 		}
+		*/
 	}
 
+	//updates the widget to collapse
 	Tree.prototype._updateListBox = function( node )
 	{
 		if(!node)
@@ -1071,8 +1137,9 @@
 		var children = this.getChildren( node );
 		var status = node.listbox.getValue();
 
-		for(var i = 0; i < children.length; ++i)
-			children[i].style.display = status == "open" ? null : "none";
+		if(children)
+			for(var i = 0; i < children.length; ++i)
+				children[i].style.display = status == "open" ? null : "none";
 	}
 
 	LiteGUI.Tree = Tree;

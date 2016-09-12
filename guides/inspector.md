@@ -165,16 +165,22 @@ my_instance["@property_name"] = { widget: "slider" };
 
 ## Adding custom widgets ##
 
-To add new custom widgets you must follow the next steps:
+To add new custom widgets you must follow this structrure.
+
+First, create the function in charge of creating the widget, for that reason follow the next steps:
+
 1. Create the function that creates the widget ```function MyWidgetFunction()```
-  1. Call the function ```options = this.processOptions(options);``` to process the options
-  2. Assign the current value to the values container: ```this.values[name] = value;```
-  3. Create the HTML element: ```var element = this.createWidget(name, widget_html_code, options);```
-  4. Add the setValue method to the element: ```element.setValue = function(v) { ... }```
-  5. Add the getValue method to the element: ```element.getValue = function() { return ... }```
-  6. Attach to inspector: 	```this.append(element,options);```
-  7. Process element: ```this.processElement(element, options);```
-  8. Return it: ```return element;```
+1. Inside call the function ```options = this.processOptions(options);``` to process the options
+1. Assign the current value to the values container: ```this.values[name] = value;```
+1. Create the HTML element: ```var element = this.createWidget(name, widget_html_code, options);```
+1. Add the setValue method to the element: ```element.setValue = function(v) { ... }```
+1. Add the getValue method to the element: ```element.getValue = function() { return ... }```
+1. Attach to inspector: 	```this.append(element,options);```
+1. Process element: ```this.processElement(element, options);```
+1. Return it: ```return element;```
+
+Finally
+
 1. Attach it to the inspector prototype: ```LiteGUI.Inspector.prototype.addMyWidget = MyWidgetFunction;```
-2. Add to widgets list: ```Inspector.widget_constructors["mytype"] = "addMyWidget";```
+1. Add to widgets list: ```Inspector.widget_constructors["mytype"] = "addMyWidget";```
 

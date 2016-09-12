@@ -88,9 +88,9 @@ Using the callback in the options:
 ```javascript
 inspector.addString( "Username", user.name, { callback: my_callback });
 
-function my_callback(v)
+function my_callback( value, event )
 {
-  user.name = v;
+  user.name = value;
 }
 ```
 
@@ -99,9 +99,9 @@ Or using an event:
 ```javascript
 inspector.addString( "Username", user.name ).addEventListener("wchange", my_callback );
 
-function my_callback(e)
+function my_callback(event)
 {
-  user.name = e.detail;
+  user.name = event.detail;
 }
 
 ```
@@ -162,4 +162,19 @@ my_instance.constructor["@property_name"] = { widget: "slider" };
 //or if it is a regular object
 my_instance["@property_name"] = { widget: "slider" };
 ```
+
+## Adding custom widgets ##
+
+To add new custom widgets you must follow the next steps:
+1. Create the function that creates the widget ```function MyWidgetFunction()```
+  1. Call the function ```options = this.processOptions(options);``` to process the options
+  2. Assign the current value to the values container: ```this.values[name] = value;```
+  3. Create the HTML element: ```var element = this.createWidget(name, widget_html_code, options);```
+  4. Add the setValue method to the element: ```element.setValue = function(v) { ... }```
+  5. Add the getValue method to the element: ```element.getValue = function() { return ... }```
+  6. Attach to inspector: 	```this.append(element,options);```
+  7. Process element: ```this.processElement(element, options);```
+  8. Return it: ```return element;```
+1. Attach it to the inspector prototype: ```LiteGUI.Inspector.prototype.addMyWidget = MyWidgetFunction;```
+2. Add to widgets list: ```Inspector.widget_constructors["mytype"] = "addMyWidget";```
 

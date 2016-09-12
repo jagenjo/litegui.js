@@ -110,14 +110,14 @@ function my_callback(e)
 
 Every widget function allows to pass an object containing parameters for the widget. All widgets support a base set of parameters, and some widget have some special parameters. Here is a list of the base parameters:
 
-- width: to select the widgets total width, this is used mostly in horizontal inspectors.
-- height: the height of the widget
-- name_width: the width of the name part of the widget
-- callback: the function to call when the user interacts with the widget
-- disabled: if you want the widget to be disabled (not allow to interact)
-- pretitle: some HTML code to put before the name of the widget (used for special icons)
-- title: used to show info when the user do a mouse over
-- id: to set an id to the container
+- **width**: to select the widgets total width, this is used mostly in horizontal inspectors.
+- **height**: the height of the widget
+- **name_width**: the width of the name part of the widget
+- **callback**: the function to call when the user interacts with the widget
+- **disabled**: if you want the widget to be disabled (not allow to interact)
+- **pretitle**: some HTML code to put before the name of the widget (used for special icons)
+- **title**: used to show info when the user do a mouse over
+- **id**: to set an id to the container
 
 
 ## Manipulating a widget ##
@@ -133,5 +133,33 @@ When changing the value of a widget you can pass a secondary parameter of false 
 
 ```javascript
 username_widget.setValue("foo",false);
+```
+
+## Clearing ##
+
+You can clear the inspector at any time to remove all the widgets:
+
+```javascript
+inspector.clear();
+```
+
+It wont generate any garbage so you can use it as much as you want.
+
+## Inspecting an instance ##
+
+In case you want to edit the content of an instance but do not want to create the widgets manually you can use the ```inspectInstance```, but keep in mind that it only works for basic types or with object that contain info about the widgets to use with every property of the instance.
+
+```javascript
+inspector.inspectInstance( my_instance );
+```
+
+To add info about the widget to use in one property of the instance there are several ways:
+
+```javascript
+//if the object is of one specyfic class create by yourself
+my_instance.constructor["@property_name"] = { widget: "slider" };
+
+//or if it is a regular object
+my_instance["@property_name"] = { widget: "slider" };
 ```
 

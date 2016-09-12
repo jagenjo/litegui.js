@@ -48,14 +48,7 @@ or the secondary way is by calling the method of the widget directly:
 var username_widget = inspector.addSstring( "username", user.name, { name_width: 100 } );
 ```
 
-When creating a widget it will return the DOM object of the base container for that widget.
-
-You can use that object to get or set the value at any time:
-
-```javascript
-username_widget.setValue("foo");
-var value = username_widget.getValue();
-```
+When creating a widget it will return the DOM object of the base container for that widget. You can use that object later to change the content.
 
 ## Widgets list ##
 
@@ -85,4 +78,60 @@ Here is a list of all the widgets available (although there could be more if the
 - **separator** or ```addSeparator```: a separator between widgets
 - **null** or ```addNull```: it does not create anything (used in some special cases)
 - **default** or ```addDefault```: it guesses the best widget for this data type
+
+## Capturing the user actions ##
+
+When the user interactues with the widget you want to perform some actions probably. There are two ways to capture the action:
+
+Using the callback in the options:
+
+```javascript
+inspector.addString( "Username", user.name, { callback: my_callback });
+
+function my_callback(v)
+{
+  user.name = v;
+}
+```
+
+Or using an event:
+
+```javascript
+inspector.addString( "Username", user.name ).addEventListener("wchange", my_callback );
+
+function my_callback(e)
+{
+  user.name = e.detail;
+}
+
+```
+
+## Widgets common options ##
+
+Every widget function allows to pass an object containing parameters for the widget. All widgets support a base set of parameters, and some widget have some special parameters. Here is a list of the base parameters:
+
+- width: to select the widgets total width, this is used mostly in horizontal inspectors.
+- height: the height of the widget
+- name_width: the width of the name part of the widget
+- callback: the function to call when the user interacts with the widget
+- disabled: if you want the widget to be disabled (not allow to interact)
+- pretitle: some HTML code to put before the name of the widget (used for special icons)
+- title: used to show info when the user do a mouse over
+- id: to set an id to the container
+
+
+## Manipulating a widget ##
+
+Once the widget is created it will return an object that you can keep to do changes in the future. Here are some examples:
+
+```javascript
+username_widget.setValue("foo");
+var value = username_widget.getValue();
+```
+
+When changing the value of a widget you can pass a secondary parameter of false if you dont want to trigger any event.
+
+```javascript
+username_widget.setValue("foo",false);
+```
 

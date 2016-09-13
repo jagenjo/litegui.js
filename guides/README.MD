@@ -24,7 +24,7 @@ To create Widgets you must use the Inspector class, check the guide about Inspec
 
 You can create areas to distribute the space in the web, and split the areas so it can be arranged dynamically.
 
-To know more about Areas check the [LiteGUI.Areas](areas.md) guide.
+To know more about Areas check the [LiteGUI.Area](area.md) guide.
 
 
 

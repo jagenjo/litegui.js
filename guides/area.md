@@ -1,4 +1,4 @@
-# Area #
+# LiteGUI.Area #
 
 Areas are a way to split the layout of your site in regions so it is easy to fill the content without having to specify sizes.
 
@@ -17,14 +17,6 @@ You can pass several options as a parameter:
 	var mainarea = new LiteGUI.Area({content_id:"workarea", height: "calc(100% - 30px)", autoresize: true, inmediateResize: true, minSplitSize: 200 });
 ```
 
-Then you can split it to have two areas:
-
-```javascript
-	mainarea.split("horizontal",[null, side_panel_width], true);
-```
-
-
-
 ## Options ##
 
 Some of the properties that you can pass when creating the Area
@@ -35,10 +27,30 @@ Some of the properties that you can pass when creating the Area
 - immediateResize: when dragging the splitter it will update contents immediatly
 - minSplitSize: minimum size the splitter allows for one side. 
 
+## Split ##
+
+When you want to divide an area in two sections you can split it:
+
+```javascript
+	mainarea.split("horizontal",[null, side_panel_width], true);
+```
+
+Horizontal means that the areas will be side by side in the horizontal axis (so the split line will be vertical).
+
+The array passed as a second parameter contains the size of every section, it could be a number or a string containing a size. Null means that this area should fill the remaining space. 
+
+
 ## Sections ##
 
-When splitting an area it creates two sections, to access them you can use:
+When splitting an area it creates two new areas (called sections), to access them you can use:
 
 ```javascript
 var section = mainarea.getSection(0);
 ```
+
+This section can be split again to create more complex layouts.
+
+## Documentation ##
+
+For a more indepth description of the actions check the documentation.
+

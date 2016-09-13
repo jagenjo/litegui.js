@@ -35,9 +35,10 @@ When you want to divide an area in two sections you can split it:
 	mainarea.split("horizontal",[null, side_panel_width], true);
 ```
 
-Horizontal means that the areas will be side by side in the horizontal axis (so the split line will be vertical).
-
-The array passed as a second parameter contains the size of every section, it could be a number or a string containing a size. Null means that this area should fill the remaining space. 
+The parameters are:
+- Aligment: Could be "horizontal" or "vertical", horizontal means that the areas will be side by side in the horizontal axis (so the split line will be vertical).
+- Distribution: The array passed as a second parameter contains the size of every section, it could be a number or a string containing a size. Null means that this area should fill the remaining space. 
+- Editable: tells if you want to allow the user to change the split position using the mouse.
 
 
 ## Sections ##

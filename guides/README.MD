@@ -26,5 +26,19 @@ You can create areas to distribute the space in the web, and split the areas so 
 
 To know more about Areas check the [LiteGUI.Area](area.md) guide.
 
+## Inspector ##
 
+This is the class used to arrange several widgets, like sliders, buttons, etc.
+
+To know more about Areas check the [LiteGUI.Inspector](inspector.md) guide.
+
+## Panels and Dialog ##
+
+When you want to create a panel containing a titlebar and some content you can use the panel class, or if you want to be floating you can use the Dialog class.
+
+## LiteGUI base class ##
+
+The LiteGUI class comes with several methods that could be useful when working with interfaces, like to bind and trigger events, to handle the clipboard, to import CSSs, to do HTTP Requests, to create elements, to launch alerts, confirm and prompt box dialogs.
+
+To know more about Areas check the [LiteGUI](litegui.md) guide.
 

@@ -132,8 +132,10 @@
 
 .inspector .icon {
 	margin-right: 4px;
+	/*
 	margin-top: 2px;
 	margin-bottom: -2px;
+	*/
 }
 
 .inspector .wcontent .icon {
@@ -335,7 +337,7 @@
 }
 
 .inspector .wcontent .inputcombo {
-	border-bottom: 1px solid #888; 
+	border-bottom: 1px solid #666; 
 	border-top: 1px solid #111; 
 	/*
     background: -webkit-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent;
@@ -346,7 +348,8 @@
 }
 
 .inspector .wcontent .inputcombo select {
-	background: #333;
+	background: #262626;
+	text-align-last:center;
 }
 
 
@@ -365,6 +368,10 @@
 
 .inspector .wcontent input.string {
 	padding-left: 5px;
+}
+
+.inspector .wcontent input.fixed_size {
+	font-family: 'monospace','courier new';
 }
 
 .inspector .wcontent input.number {
@@ -540,8 +547,11 @@
 .inspector input.color {
 	text-align: center;
 	margin-top: 1px;
-	border: 0 !important;
+	/* border: 0 !important; */
 	border-radius: 2px !important;
+	border-bottom: 1px solid #666;
+    border-top: 1px solid #111;
+
 	width: -moz-calc(100% - 40px);
 	width: -webkit-calc(100% - 40px);
 	width: calc(100% - 40px);

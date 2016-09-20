@@ -108,7 +108,7 @@ var LiteGUI = {
 	* Binds an event in an object (similar to jQuery.bind)
 	* If the element is not an HTML entity a new one is created, attached to the object (as non-enumerable, called __events) and used
 	* @method trigger
-	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {Object} element could be an HTMLEntity, a regular object, a query string or a regular Array of entities
 	* @param {String} event the string defining the event
 	* @param {Function} callback where to call
 	*/
@@ -124,7 +124,7 @@ var LiteGUI = {
 		if(element.constructor === String)
 			element = document.querySelectorAll( element );
 			
-		if(element.constructor === NodeList)
+		if(element.constructor === NodeList || element.constructor === Array)
 		{
 			for(var i = 0; i < element.length; ++i)
 				inner( element[i] );
@@ -262,6 +262,8 @@ var LiteGUI = {
 		var left = event.pageX;
 		var top = event.pageY;
 		var rect = element.getClientRects()[0];
+		if(!rect)
+			return false;
 		if(top > rect.top && top < (rect.top + rect.height) &&
 			left > rect.left && left < (rect.left + rect.width) )
 			return true;
@@ -300,7 +302,7 @@ var LiteGUI = {
 		} catch (err) {
 			if(input)
 				document.body.removeChild( input );
-			console.log('Oops, unable to copy using the true clipboard');
+			console.warn('Oops, unable to copy using the true clipboard');
 		}
 
 		//old system
@@ -631,7 +633,7 @@ var LiteGUI = {
 	createButton: function( id_class, content, callback, style )
 	{
 		var elem = document.createElement("button");
-		elem.className = "litegui button";
+		elem.className = "litegui litebutton button";
 		if(id_class)
 		{
 			var t = id_class.split(" ");
@@ -775,7 +777,7 @@ var LiteGUI = {
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
 
-		content +="<button data-value='yes' style='width:45%; margin-left: 10px'>Yes</button><button data-value='no' style='width:45%'>No</button>";
+		content +="<button class='litebutton' data-value='yes' style='width:45%; margin-left: 10px'>Yes</button><button class='litebutton' data-value='no' style='width:45%'>No</button>";
 		options.noclose = true;
 
 		var dialog = this.showMessage(content,options);
@@ -817,7 +819,7 @@ var LiteGUI = {
 		if (options.textarea)
 			textinput = "<textarea class='textfield' style='width:95%'>"+value+"</textarea>";
 
-		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
+		content +="<p>"+textinput+"</p><button class='litebutton' data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button class='litebutton' data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage( content, options );
 
@@ -852,6 +854,39 @@ var LiteGUI = {
 		return dialog;
 	},
 
+	downloadFile: function( filename, data, dataType )
+	{
+		if(!data)
+		{
+			console.warn("No file provided to download");
+			return;
+		}
+
+		if(!dataType)
+		{
+			if(data.constructor === String )
+				dataType = 'text/plain';
+			else
+				dataType = 'application/octet-stream';
+		}
+
+		var file = null;
+		if(data.constructor !== File && data.constructor !== Blob)
+			file = new Blob( [ data ], {type : dataType});
+		else
+			file = data;
+
+		var url = URL.createObjectURL( file );
+		var element = document.createElement("a");
+		element.setAttribute('href', url);
+		element.setAttribute('download', filename );
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		setTimeout( function(){ URL.revokeObjectURL( url ); }, 1000*60 ); //wait one minute to revoke url
+	},
+
 	/**
 	* Returns the URL vars ( ?foo=faa&foo2=etc )
 	* @method getUrlVars
@@ -877,13 +912,18 @@ var LiteGUI = {
 		element.focus();
 	},
 
+	blur: function( element )
+	{
+		element.blur();
+	},
+
 	/**
 	* Makes one element draggable
 	* @method draggable
 	* @param {HTMLEntity} container the element that will be dragged
 	* @param {HTMLEntity} dragger the area to start the dragging
 	**/
-	draggable: function(container, dragger)
+	draggable: function( container, dragger, on_start, on_finish, on_is_draggable )
 	{
 		dragger = dragger || container;
 		dragger.addEventListener("mousedown", inner_mouse);
@@ -910,10 +950,19 @@ var LiteGUI = {
 					y = rect ? rect.top : 0;
 				}
 
+				if(on_is_draggable && on_is_draggable(container,e) == false )
+				{
+					e.stopPropagation();
+					e.preventDefault();
+					return false;
+				}
+
 				prev_x = e.clientX;
 				prev_y = e.clientY;
 				document.addEventListener("mousemove",inner_mouse);
 				document.addEventListener("mouseup",inner_mouse);
+				if(on_start)
+					on_start( container, e );
 				e.stopPropagation();
 				e.preventDefault();
 				return false;
@@ -923,6 +972,9 @@ var LiteGUI = {
 			{
 				document.removeEventListener("mousemove",inner_mouse);
 				document.removeEventListener("mouseup",inner_mouse);
+
+				if( on_finish )
+					on_finish( container, e );
 				return;
 			}
 
@@ -986,8 +1038,29 @@ var LiteGUI = {
 		return o;
 	},
 
+	//those useful HTML unicode codes that I never remeber but I always need
 	special_codes: {
-		close: "&#10005;"
+		close: "&#10005;",
+		navicon: "&#9776;",
+		refresh: "&#8634;",
+		gear: "&#9881;",
+		open_folder: "&#128194;"
+	},
+	
+	//given a html entity string it returns the equivalent unicode character
+	htmlEncode: function( html_code )
+	{
+		var e = document.createElement("div");
+		e.innerHTML = html_code;
+		return e.innerText;
+	},
+
+	//given a unicode character it returns the equivalent html encoded string
+	htmlDecode: function( unicode_character )
+	{
+		var e = document.createElement("div");
+		e.innerText = unicode_character;
+		return e.innerHTML;
 	},
 
 	/**

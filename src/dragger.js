@@ -3,8 +3,16 @@
 	/***** DRAGGER **********/
 	function Dragger(value, options)
 	{
-		this.value = value || 0;
+		if(value === null || value === undefined)
+			value = 0;
+		else if(value.constructor === String)
+			value = parseFloat(value);
+		else if(value.constructor !== Number)
+			value = 0;
+
+		this.value = value;
 		var that = this;
+		var precision = options.precision != undefined ? options.precision : 3; //num decimals
 
 		this.options = options = options || {};
 		var element = document.createElement("div");
@@ -21,7 +29,7 @@
 
 		var input = document.createElement("input");
 		input.className = "text number " + (dragger_class ? dragger_class : "");
-		input.value = value + (options.units ? options.units : "");
+		input.value = value.toFixed( precision ) + (options.units ? options.units : "");
 		input.tabIndex = options.tab_index;
 		this.input = input;
 		element.input = input;
@@ -99,6 +107,8 @@
 
 		function inner_inc(v,e)
 		{
+			if(!options.linear)
+				v = v > 0 ? Math.pow(v,1.2) : Math.pow( Math.abs(v), 1.2) * -1;
 			var scale = (options.step ? options.step : 1.0);
 			if(e && e.shiftKey)
 				scale *= 10;
@@ -110,10 +120,8 @@
 			if(options.min != null && value < options.min)
 				value = options.min;
 
-			if(options.precision)
-				input.value = value.toFixed(options.precision);
-			else
-				input.value = ((value * 1000)<<0) / 1000; //remove ugly decimals
+			input.value = value.toFixed( precision );
+			//input.value = ((value * 1000)<<0) / 1000; //remove ugly decimals
 			if(options.units)
 				input.value += options.units;
 			LiteGUI.trigger(input,"change");

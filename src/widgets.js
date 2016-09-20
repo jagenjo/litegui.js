@@ -15,6 +15,7 @@
 
 		this.root = element;
 		var button = document.createElement("button");
+		button.className = "litebutton";
 		this.content = button;
 		element.appendChild(button);
 
@@ -66,18 +67,18 @@
 
 
 	/**
-	* ContextualMenu 
+	* ContextMenu 
 	*
-	* @class ContextualMenu
+	* @class ContextMenu 
 	* @constructor
 	* @param {Array} values (allows object { title: "Nice text", callback: function ... })
 	* @param {Object} options [optional] Some options:\
 	* - title: title to show on top of the menu
 	* - callback: function to call when an option is clicked, it receives the item information
 	* - ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback 
-	* - event: you can pass a MouseEvent, this way the ContextualMenu appears in that position
+	* - event: you can pass a MouseEvent, this way the ContextMenu appears in that position
 	*/
-	function ContextualMenu( values, options )
+	function ContextMenu( values, options )
 	{
 		options = options || {};
 		this.options = options;
@@ -92,13 +93,13 @@
 		}
 
 		var root = document.createElement("div");
-		root.className = "litecontextualmenu litemenubar-panel";
+		root.className = "litecontextmenu litemenubar-panel";
 		root.style.minWidth = 100;
 		root.style.minHeight = 100;
 		root.style.pointerEvents = "none";
 		setTimeout( function() { root.style.pointerEvents = "auto"; },100); //delay so the mouse up event is not caugh by this element
 
-		//this prevents the default contextual browser menu to open in case this menu was created when pressing right button 
+		//this prevents the default context browser menu to open in case this menu was created when pressing right button 
 		root.addEventListener("mouseup", function(e){ 
 			e.preventDefault(); return true; 
 		}, true);
@@ -143,10 +144,15 @@
 				element.innerHTML = value && value.title ? value.title : name;
 				element.value = value;
 
-				if(value && value.disabled)
+				if(value)
 				{
-					disabled = true;
-					element.classList.add("disabled");
+					if(value.disabled)
+					{
+						disabled = true;
+						element.classList.add("disabled");
+					}
+					if(value.submenu || value.has_submenu)
+						element.classList.add("has_submenu");
 				}
 
 				if(typeof(value) == "function")
@@ -166,6 +172,7 @@
 
 		//menu option clicked
 		function inner_onclick(e) {
+
 			var value = this.value;
 			var close_parent = true;
 
@@ -192,8 +199,8 @@
 				if(value.submenu)
 				{
 					if(!value.submenu.options)
-						throw("ContextualMenu submenu needs options");
-					var submenu = new LiteGUI.ContextualMenu( value.submenu.options, {
+						throw("ContextMenu submenu needs options");
+					var submenu = new LiteGUI.ContextMenu( value.submenu.options, {
 						callback: value.submenu.callback,
 						event: e,
 						parentMenu: that,
@@ -204,7 +211,7 @@
 				}
 			}
 		
-			if(close_parent)
+			if(close_parent && !that.lock)
 				that.close();
 		}
 
@@ -237,18 +244,20 @@
 			if(options.parentMenu)
 				left = $(options.parentMenu.root).position().left + $(options.parentMenu.root).width();
 
-			var rect = document.body.getClientRects()[0];
-			if(left > (rect.width - $(root).width() - 10))
-				left = (rect.width - $(root).width() - 10);
-			if(top > (rect.height - $(root).height() - 10))
-				top = (rect.height - $(root).height() - 10);
+			var body_rect = LiteGUI.getRect( document.body );
+			var root_rect = LiteGUI.getRect( root );
+
+			if(left > (body_rect.width - root_rect.width - 10))
+				left = (body_rect.width - root_rect.width - 10);
+			if(top > (body_rect.height - root_rect.height - 10))
+				top = (body_rect.height - root_rect.height - 10);
 		}
 
 		root.style.left = left + "px";
 		root.style.top = top  + "px";
 	}
 
-	ContextualMenu.prototype.close = function(e)
+	ContextMenu.prototype.close = function(e)
 	{
 		if(this.root.parentNode)
 			this.root.parentNode.removeChild( this.root );
@@ -263,7 +272,8 @@
 		}
 	}
 
-	LiteGUI.ContextualMenu = ContextualMenu;
+	LiteGUI.ContextMenu = ContextMenu;
+	LiteGUI.ContextualMenu = ContextMenu; //LEGACY: REMOVE
 
 
 	//the tiny box to expand the children of a node
@@ -333,6 +343,16 @@
 				this.classList.add("empty");
 			else
 				this.classList.remove("empty");
+		}
+
+		element.expand = function()
+		{
+			this.setValue(true);
+		}
+
+		element.collapse = function()
+		{
+			this.setValue(false);
 		}
 
 		element.setValue = function(v)

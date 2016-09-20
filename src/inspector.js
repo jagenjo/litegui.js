@@ -43,6 +43,13 @@ jQuery.fn.wclick = function(callback) {
 
 function Inspector( id, options )
 {
+	//allows to pass only options instead of id
+	if(id && id.constructor === Object && !options)
+	{
+		options = id;
+		id = null;
+	}
+
 	options = options || {};
 	this.root = document.createElement("DIV");
 	this.root.className = "inspector " + ( options.full ? "full" : "");
@@ -200,6 +207,19 @@ Inspector.prototype.setup = function(info)
 	}
 }
 
+/**  Returns the widget given the name
+*
+* @method getWidget
+* @param {String} name the name of the widget supplied when creating it or the number of the widget
+* @return {Object} widget object
+*/
+Inspector.prototype.getWidget = function( name )
+{
+	if( name !== null && name.constructor === Number )
+		return this.widgets[ name ];
+	return this.widgets_by_name[ name ];
+}
+
 /**  Given an instance it shows all the attributes
 *
 * @method inspectInstance
@@ -251,6 +271,8 @@ Inspector.prototype.inspectInstance = function( instance, properties, properties
 			if(classObject["@" + i]) //guess from class object info
 			{
 				var shared_options = classObject["@" + i];
+				if( shared_options && shared_options.widget === null)
+					continue; //skip
 				properties_info[i] = inner_clone( shared_options );
 			}
 			else if(instance["@" + i]) //guess from instance info
@@ -430,10 +452,16 @@ Inspector.prototype.createWidget = function(name, content, options)
 		element.className += " even";
 
 	var width = options.width || this.widgets_width;
-	if(width)
+	if( width )
 	{
-		element.style.width = width.constructor === String ? width : width + "px";
-		element.style.minWidth = element.style.width;
+		element.style.width = LiteGUI.sizeToCSS( width );
+		element.style.minWidth = "auto";
+	}
+	var height = options.height || this.height;
+	if( height )
+	{
+		element.style.height = LiteGUI.sizeToCSS( height );
+		element.style.minHeight = "auto";
 	}
 
 	//store widgets 
@@ -509,18 +537,24 @@ Inspector.onWidgetChange = function( element, name, value, options, expand_value
 			r = options.callback.call( element, value, event );
 	}
 
-	//LiteGUI.trigger( this.current_section, "wchange", value );
-	$(this.current_section).trigger("wchange",value); //used for undo //TODO: use LiteGUI.trigger
-	//LiteGUI.trigger( element, "wchange", value );
-	$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
+	if(!options.skip_wchange)
+	{
+		//LiteGUI.trigger( this.current_section, "wchange", value );
+		$(this.current_section).trigger("wchange",value); //used for undo //TODO: use LiteGUI.trigger
+		//LiteGUI.trigger( element, "wchange", value );
+		$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
+	}
 	if(this.onchange) 
 		this.onchange(name, value, element);
 	return r;
 }
 
+//must be lowercase
 Inspector.widget_constructors = {
+	"null": 'addNull', //use for special cases
 	title: 'addTitle',
 	info: 'addInfo',
+	"default": 'addDefault', //it guesses
 	number: 'addNumber',
 	slider: 'addSlider',
 	string: 'addString',
@@ -547,7 +581,6 @@ Inspector.widget_constructors = {
 	datatree: 'addDataTree',
 	pad: 'addPad',
 	array: 'addArray',
-	"Array": 'addArray',
 	separator: 'addSeparator'
 };
 
@@ -583,7 +616,7 @@ Inspector.prototype.add = function( type, name, value, options )
 		value = options.value;
 	}
 
-	var func = LiteGUI.Inspector.widget_constructors[type];
+	var func = LiteGUI.Inspector.widget_constructors[type.toLowerCase()];
 	if(!func){
 		console.warn("LiteGUI.Inspector do not have a widget called",type);
 		return;
@@ -637,6 +670,34 @@ Inspector.prototype.addSeparator = function()
 	return element;
 }
 
+//used when you want to skip the widget of an object
+Inspector.prototype.addNull = function(name,value, options)
+{
+	return null;
+}
+
+//used when you dont know which widget to use
+Inspector.prototype.addDefault = function( name, value, options)
+{
+	if(value === null || value === undefined) //can we guess it from the current value?
+		return null;
+
+	if( value.constructor === Boolean )
+		return this.addCheckbox( name, value, options );
+	else if( value.constructor === String )
+		return this.addString( name, value, options );
+	else if( value.constructor === Number )
+		return this.addNumber( name, value, options );
+	else if( value.length == 4)
+		return this.addVector4( name, value, options );
+	else if( value.length == 3)
+		return this.addVector3( name, value, options );
+	else if( value.length == 2)
+		return this.addVector2( name, value, options );
+	return null;
+}
+
+
 /**
 * Widget to edit strings
 * @method addString
@@ -684,7 +745,7 @@ Inspector.prototype.addString = function(name,value, options)
 
 	this.tab_index += 1;
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v, skip_event) { 
 		if(v === undefined )
 			return;
 		if(v === input.value)
@@ -722,7 +783,7 @@ Inspector.prototype.addStringButton = function( name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var element = this.createWidget(name,"<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
+	var element = this.createWidget( name, "<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
 	var input = element.querySelector(".wcontent input");
 	input.addEventListener("change", function(e) { 
 		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
@@ -740,7 +801,7 @@ Inspector.prototype.addStringButton = function( name, value, options)
 	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v, skip_event) { 
 		input.value = v;
 		if(!skip_event)
 			LiteGUI.trigger(input, "change" );
@@ -771,18 +832,20 @@ Inspector.prototype.addTextarea = function(name,value, options)
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
-	;
 
 	var element = this.createWidget(name,"<span class='inputfield textarea "+(options.disabled?"disabled":"")+"'><textarea tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+">"+value+"</textarea></span>", options);
 	this.tab_index++;
 	var textarea = element.querySelector(".wcontent textarea");
 	textarea.addEventListener( options.immediate ? "keyup" : "change", function(e) { 
-		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		Inspector.onWidgetChange.call(that,element,name,e.target.value, options, false, e);
 	});
+	if(options.callback_keydown)
+		textarea.addEventListener( "keydown", options.callback_keydown );
+
 	if(options.height)
 		textarea.style.height = LiteGUI.sizeToCSS( options.height );
 	this.append(element,options);
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v, skip_event) { 
 		if(v === undefined)
 			return;
 		if(v == textarea.value)
@@ -860,7 +923,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 		if(that.onchange) that.onchange(name,e.target.value,element);
 	});
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event) { 
 		if(v === undefined)
 			return;
 		v = parseFloat(v);
@@ -964,7 +1027,7 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event) { 
 		if(!v)
 			return;
 		if(dragger1.getValue() != v[0])
@@ -1066,7 +1129,7 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event ) { 
 		if(!v)
 			return;
 		dragger1.setValue(v[0],true);
@@ -1159,7 +1222,7 @@ Inspector.prototype.addVector4 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event ) { 
 		if(!v)
 			return;
 		for(var i = 0; i < draggers.length; i++)
@@ -1551,7 +1614,6 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'>";
 	this.tab_index++;
 
 	var element = this.createWidget(name,"<span class='inputfield full inputcombo "+(options.disabled?"disabled":"")+"'></span>", options);
@@ -1561,6 +1623,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 	if(values.constructor === Function)
 		values = options.values();
 
+	/*
 	if(!values)
 		values = [];
 
@@ -1572,12 +1635,14 @@ Inspector.prototype.addCombo = function(name, value, options)
 		var item_title = values.constructor === Array ? item_value : i;
 		if(item_value && item_value.title)
 			item_title = item_value.title;
-		code += "<option value='"+item_index+"' "+( item_value == value ? " selected":"")+">" + item_title + "</option>";
+		code += "<option value='"+item_index+"' "+( item_value == value ? " selected":"")+" data-index='"+item_index+"'>" + item_title + "</option>";
 		index++;
 	}
-	code += "</select>";
+	*/
 
+	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'></select>";
 	element.querySelector("span.inputcombo").innerHTML = code;
+	setValues(values);
 
 	var select = element.querySelector(".wcontent select");
 	select.addEventListener("change", function(e) { 
@@ -1620,11 +1685,35 @@ Inspector.prototype.addCombo = function(name, value, options)
 				continue;
 			if( parseFloat(item.dataset["index"]) == index )
 			{
+				item.setAttribute("selected", true);
 				select.selectedIndex = index;
-				return;
 			}
+			else
+				item.removeAttribute("selected");
 		}
 	};
+
+	function setValues(v){
+		if(!v)
+			v = [];
+		values = v;
+
+		var code = "";
+		var index = 0;
+		for(var i in values)
+		{
+			var item_value = values[i];
+			var item_index = values.constructor === Array ? index : i;
+			var item_title = values.constructor === Array ? item_value : i;
+			if(item_value && item_value.title)
+				item_title = item_value.title;
+			code += "<option value='"+item_index+"' "+( item_value == value ? " selected":"")+" data-index='"+item_index+"'>" + item_title + "</option>";
+			index++;
+		}
+		element.querySelector("select").innerHTML = code;
+	}
+
+	element.setOptionValues = setValues;
 
 	this.append(element,options);
 	this.processElement(element, options);
@@ -1918,11 +2007,17 @@ Inspector.prototype.addButton = function(name, value, options)
 	value = options.button_text || value || "";
 	var that = this;
 
-	var c = "";
+	var button_classname = "";
 	if(name === null)
-		c = "single";
+		button_classname = "single";
+	if(options.micro)
+		button_classname += " micro";
+
+	var attrs = "";
+	if(options.disabled)
+		attrs = "disabled='disabled'";
 	
-	var element = this.createWidget(name,"<button class='"+c+"' tabIndex='"+ this.tab_index + "'>"+value+"</button>", options);
+	var element = this.createWidget(name,"<button class='litebutton "+button_classname+"' tabIndex='"+ this.tab_index + "' "+attrs+">"+value+"</button>", options);
 	this.tab_index++;
 	var button = element.querySelector("button");
 	button.addEventListener("click", function(event) {
@@ -1962,7 +2057,7 @@ Inspector.prototype.addButtons = function(name, value, options)
 	{
 		for(var i in value)
 		{
-			code += "<button tabIndex='"+this.tab_index+"' style='"+style+"'>"+value[i]+"</button>";
+			code += "<button class='litebutton' tabIndex='"+this.tab_index+"' style='"+style+"'>"+value[i]+"</button>";
 			this.tab_index++;
 		}
 	}
@@ -1971,8 +2066,8 @@ Inspector.prototype.addButtons = function(name, value, options)
 	for(var i = 0; i < buttons.length; ++i)
 	{
 		var button = buttons[i];
-		button.addEventListener("click", function() {
-			Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
+		button.addEventListener("click", function(evt) {
+			Inspector.onWidgetChange.call(that, element, name, this.innerHTML, options, null, evt);
 			LiteGUI.trigger( element, "wclick",this.innerHTML );
 		});
 	}
@@ -2046,7 +2141,7 @@ Inspector.prototype.addIcon = function(name, value, options)
 	return element;
 }
 
-Inspector.prototype.addColor = function(name,value,options)
+Inspector.prototype.addColor = function( name, value, options )
 {
 	options = this.processOptions(options);
 
@@ -2063,8 +2158,48 @@ Inspector.prototype.addColor = function(name,value,options)
 	this.append(element,options); //add now or jscolor dont work
 
 	//create jsColor 
-	var input_element = $(element).find("input.color")[0];
-	var myColor = new jscolor.color(input_element);
+	var input_element = element.querySelector("input.color");
+	var myColor = null;
+
+	//SHOWS CONTEXTUAL MENU
+	//block focusing
+	/*
+    input_element.addEventListener("contextmenu", function(e) { 
+		if(e.button != 2) //right button
+			return false;
+		//create the context menu
+		var contextmenu = new LiteGUI.ContextMenu( ["Copy in HEX","Copy in RGBA"], { event: e, callback: inner_action });
+		e.preventDefault(); 
+		e.stopPropagation();
+
+		input_element.addEventListener("focus", block_focus , true);
+		setTimeout(function(){ input_element.removeEventListener("focus", block_focus , true);},1000);
+
+		return false;
+    },true);	
+
+	function block_focus(e)
+	{
+		e.stopPropagation();
+		e.stopImmediatePropagation();
+		e.preventDefault();
+		return false;
+	}
+
+	function inner_action(v)
+	{
+		if(v == "Copy in HEX")
+		{
+			LiteGUI.toClipboard( "in HEX");
+		}
+		else
+		{
+			LiteGUI.toClipboard( "in RGB");
+		}
+	}
+	*/
+
+	myColor = new jscolor.color(input_element);
 	myColor.pickerFaceColor = "#333";
 	myColor.pickerBorderColor = "black";
 	myColor.pickerInsetColor = "#222";
@@ -2073,7 +2208,7 @@ Inspector.prototype.addColor = function(name,value,options)
 	if(options.disabled) 
 		myColor.pickerOnfocus = false; //this doesnt work
 
-	if(typeof(value) != "string" && value.length && value.length > 2)
+	if( value.constructor !== String && value.length && value.length > 2)
 	{
 		var intensity = 1.0;
 		myColor.fromRGB(value[0]*intensity,value[1]*intensity,value[2]*intensity);
@@ -2104,10 +2239,10 @@ Inspector.prototype.addColor = function(name,value,options)
 	options.dragger_class = "nano";
 
 	var dragger = new LiteGUI.Dragger(1, options);
-	$(element).find('.wcontent').append(dragger.root);
-	$(dragger.input).change(function()
+	element.querySelector('.wcontent').appendChild(dragger.root);
+	dragger.input.addEventListener("change", function(e)
 	{
-		var v = parseFloat($(this).val());
+		var v = parseFloat( this.value );
 		myColor.rgb_intensity = v;
 		if (myColor.onImmediateChange)
 			myColor.onImmediateChange();
@@ -2131,7 +2266,7 @@ Inspector.prototype.addFile = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'>"+value+"</span></span><button style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
+	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'>"+value+"</span></span><button class='litebutton' style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
 	var content = element.querySelector(".wcontent");
 	content.style.position = "relative";
 	var input = element.querySelector(".wcontent input");
@@ -2226,7 +2361,7 @@ Inspector.prototype.addDataTree = function(name, value, options)
 
 	inner_recursive(node,value);
 
-	function inner_recursive(root_node, value)
+	function inner_recursive( root_node, value)
 	{
 		for(var i in value)
 		{

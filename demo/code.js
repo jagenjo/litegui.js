@@ -45,6 +45,7 @@ $(window).bind("load", function() {
 	//mainarea.resize();
 
 	var dialog = createWidgetsDialog();
+	var dialog2 = createTableDialog();
 
 	//$("#menu-bar").append(this.mainmenu.root);
 	mainmenu.add("file/new");
@@ -153,7 +154,7 @@ function updateSidePanel( root )
 	widgets.addString("string","foo");
 	widgets.addStringButton("string button","foo", { callback_button: function(v) { console.log("Button: " + v); } });
 	widgets.addTextarea(null,"a really long silly text", {height: 100});
-	widgets.addCombo("combo","javi",{values:["foo","faa","super largo texto que no cabe entero","javi","nada"], callback: function(name) { console.log("Combo selected: " + name); }});
+	var w = widgets.addCombo("combo","javi",{values:["foo","faa","super largo texto que no cabe entero","javi","nada"], callback: function(name) { console.log("Combo selected: " + name); }});
 	widgets.addComboButtons("combobuttons","javi",{values:["foo","faa","javi","nada"], callback: function(name) { console.log("Combo button selected: " + name); }});
 	widgets.addTags("tags","pop",{values:["rap","blues","pop","jazz"], callback: function(tags) { console.log("Tag added: " + JSON.stringify(tags) ); }});
 	widgets.addSection("Other widgets");
@@ -174,7 +175,7 @@ function createWidgetsDialog()
 {
 	//test floating panel
 	var name = "Dialog_" + ((Math.random() * 100)>>0);
-	var dialog = new LiteGUI.Dialog(name, {title:name, close: true, minimize: true, width: 300, scroll: true, resizable:true, draggable: true});
+	var dialog = new LiteGUI.Dialog(name, {title:name, close: true, minimize: true, width: 300, scroll: true, resizable:true, draggable: true, detachable: true });
 	dialog.show('fade');
 
 	//test menu in panel
@@ -204,4 +205,44 @@ function createWidgetsDialog()
 	dialog.add(widgets);
 
 	return dialog;
+}
+
+function createTableDialog()
+{
+	var dialog = new LiteGUI.Dialog( { title:"Table dialog", close: true, minimize: true, width: 300, scroll: true, resizable:true, draggable: true} );
+	dialog.show();
+	dialog.setPosition( 200,200 );
+	dialog.addButton("Randomize", inner );
+
+	var table = new LiteGUI.Table({scrollable:true});
+	dialog.add( table );
+
+	table.setColumns(["Name",{ name: "Age", width: 50 },"Address"]);
+
+	var data = [];
+
+	for(var i = 0; i < 10; ++i)
+		data.push({
+				name: randomName(),
+				age: 30,
+				address: "none"
+			});
+
+	inner();
+
+	function randomName(){
+		var names = ["Phil","Smith","Gregory","Martin","James","Coleman","Jerry","Helen","Mary"];
+		var name = [];
+		name.push( names[Math.floor(Math.random()*names.length)] );
+		name.push( names[Math.floor(Math.random()*names.length)] );
+		return name.join(" ");
+	}
+
+	function inner()
+	{
+		for(var i in data)
+			data[i].age = (Math.random() * 100)|0;
+
+		table.setRows( data, true );
+	}
 }

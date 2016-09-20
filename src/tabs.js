@@ -59,11 +59,20 @@
 		else
 			list.style.height = LiteGUI.Tabs.tabs_height + "px";
 
+		//allows to use the wheel to see hidden tabs
+		list.addEventListener("wheel", onMouseWheel);
+		list.addEventListener("mousewheel", onMouseWheel);
+		function onMouseWheel(e){
+			if(e.deltaY)
+				list.scrollLeft += e.deltaY;
+		}
+
 		this.list = list;
 		this.root.appendChild(this.list);
 		this.tabs_root = list;
 
 		this.tabs = {};
+		this.tabs_by_index = [];
 		this.selected = null;
 
 		this.onchange = options.callback;
@@ -124,7 +133,7 @@
 	}
 
 	/**
-	* Returns a tab 
+	* Returns a tab given its id
 	* @method getTab
 	* @param {String} id tab id
 	* @return {Object} the tab in the form of an object with {id,tab,content}
@@ -132,6 +141,17 @@
 	Tabs.prototype.getTab = function(id)
 	{
 		return this.tabs[id];
+	}
+
+	/**
+	* Returns a tab given its index in the tabs list
+	* @method getTabByIndex
+	* @param {Number} index
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
+	Tabs.prototype.getTabByIndex = function(index)
+	{
+		return this.tabs_by_index[index];
 	}
 
 	/**
@@ -333,6 +353,8 @@
 			tab_info.onclose = options.onclose;
 		this.tabs[ id ] = tab_info;
 
+		this.recomputeTabsByIndex();
+
 		//context
 		element.addEventListener("contextmenu", (function(e) { 
 			if(e.button != 2) //right button
@@ -376,6 +398,13 @@
 		if(options.callback_canopen && options.callback_canopen() == false)
 			return;
 
+		//launch leaving current tab event
+		if( that.current_tab && 
+			that.current_tab[0] != tab_id && 
+			that.current_tab[2] && 
+			that.current_tab[2].callback_leave)
+				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
+
 		var tab_id = this.dataset["id"];
 		var tab_content = null;
 
@@ -398,13 +427,6 @@
 
 		$(that.list).find("li.wtab").removeClass("selected");
 		this.classList.add("selected");
-
-		//launch leaving current tab event
-		if( that.current_tab && 
-			that.current_tab[0] != tab_id && 
-			that.current_tab[2] && 
-			that.current_tab[2].callback_leave)
-				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
 
 		//change tab
 		that.previous_tab = that.current_tab;
@@ -430,7 +452,7 @@
 		if(!id)
 			return;
 
-		if(typeof(id) != "string")
+		if( id.constructor != String )
 			id = id.id; //in case id is the object referencing the tab
 
 		var tabs = this.list.querySelectorAll("li.wtab");
@@ -452,6 +474,24 @@
 		tab.content.style.display = v ? "none" : null;
 	}
 
+	Tabs.prototype.recomputeTabsByIndex = function()
+	{
+		this.tabs_by_index = [];
+
+		for(var i in this.tabs)
+		{
+			var tab = this.tabs[i];
+
+			//compute index
+			var index = 0;
+			var child = tab.tab;
+			while( (child = child.previousSibling) != null ) 
+				index++;
+
+			this.tabs_by_index[index] = tab;
+		}
+	}
+
 	Tabs.prototype.removeTab = function(id)
 	{
 		var tab = this.tabs[id];
@@ -464,9 +504,11 @@
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
 		delete this.tabs[id];
+
+		this.recomputeTabsByIndex();
 	}
 
-	Tabs.prototype.removeAllTabs = function()
+	Tabs.prototype.removeAllTabs = function( keep_plus )
 	{
 		var tabs = [];
 		for(var i in this.tabs)
@@ -475,12 +517,15 @@
 		for(var i in tabs)
 		{
 			var tab = tabs[i];
+			if(tab == this.plus_tab && keep_plus)
+				continue;
+
 			tab.tab.parentNode.removeChild( tab.tab );
 			tab.content.parentNode.removeChild( tab.content );
 			delete this.tabs[ tab.id ];
 		}
 
-		this.tabs = {};
+		this.recomputeTabsByIndex();
 	}
 
 	Tabs.prototype.clear = function()
@@ -566,6 +611,7 @@
 		tab_window.document.body.appendChild(newtabs.root);
 		that.transferTab(id, newtabs);
 		newtabs.tabs[id].tab.classList.add("selected");
+		this.recomputeTabsByIndex();
 
 		if(on_complete)
 			on_complete();

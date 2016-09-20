@@ -16,16 +16,22 @@
 	Dialog.MINIMIZED_WIDTH = 200;
 	Dialog.title_height = "20px";
 
-	Dialog.getDialog = function(id)
+	Dialog.getDialog = function( id )
 	{
-		var element = document.getElementById(id);		
+		var element = document.getElementById( id );		
 		if(!element)
 			return null;
 		return element.dialog;
 	}
 
-	Dialog.prototype._ctor = function(id, options)
+	Dialog.prototype._ctor = function( id, options )
 	{
+		if(!options && id && id.constructor !== String)
+		{
+			options = id;
+			id = null;
+		}
+
 		var that = this;
 		this.width = options.width;
 		this.height = options.height;
@@ -46,16 +52,16 @@
 		{
 			code += "<div class='panel-header'>"+options.title+"</div><div class='buttons'>";
 			if(options.minimize){
-				code += "<button class='mini-button minimize-button'>-</button>";
-				code += "<button class='mini-button maximize-button' style='display:none'></button>";
+				code += "<button class='litebutton mini-button minimize-button'>-</button>";
+				code += "<button class='litebutton mini-button maximize-button' style='display:none'></button>";
 			}
 			if(options.hide)
-				code += "<button class='mini-button hide-button'></button>";
+				code += "<button class='litebutton mini-button hide-button'></button>";
 			if(options.detachable)
-				code += "<button class='mini-button detach-button'></button>";
+				code += "<button class='litebutton mini-button detach-button'></button>";
 			
 			if(options.close || options.closable)
-				code += "<button class='mini-button close-button'>"+ LiteGUI.special_codes.close +"</button>";
+				code += "<button class='litebutton mini-button close-button'>"+ LiteGUI.special_codes.close +"</button>";
 			code += "</div>";
 		}
 
@@ -107,6 +113,18 @@
 		//size, draggable, resizable, etc
 		this.enableProperties(options);
 
+		this.root.addEventListener("DOMNodeInsertedIntoDocument", function(){ 
+			if( that.on_attached_to_DOM )
+				that.on_attached_to_DOM();
+			if( that.on_resize )
+				that.on_resize();
+		});
+		this.root.addEventListener("DOMNodeRemovedFromDocument", function(){ 
+			if( that.on_detached_from_DOM )
+				that.on_detached_from_DOM();
+		});
+
+
 		//attach
 		if(options.attach || options.parent)
 		{
@@ -118,6 +136,9 @@
 			parent.appendChild( this.root );
 			this.center();
 		}
+
+		//if(options.position) //not docked
+		//	this.setPosition( options.position[0], options.position[1] );
 	}
 
 	/**
@@ -133,6 +154,7 @@
 	Dialog.prototype.enableProperties = function(options)
 	{
 		options = options || {};
+		var that = this;
 
 		var panel = this.root;
 		panel.style.position = "absolute";
@@ -164,7 +186,11 @@
 		if(options.draggable)
 		{
 			this.draggable = true;
-			LiteGUI.draggable( panel, panel.querySelector(".panel-header") );
+			LiteGUI.draggable( panel, panel.querySelector(".panel-header"), function(){
+				that.bringToFront();
+			},null, function(){
+				return !that.minimized;
+			});
 		}
 
 		if(options.resizable)
@@ -208,19 +234,25 @@
 			}
 			else if(e.type == "mousemove")
 			{
-				var w = $(root).width();
+				var rect = LiteGUI.getRect( root );
+				var w = rect.width; //$(root).width();
 				var neww = w - (mouse[0] - e.pageX);
 	
-				var h = $(root).height();
+				var h = rect.height; //$(root).height();
 				var newh = h - (mouse[1] - e.pageY);
 
 				if(is_corner)
-					$(root).width(neww + "px");
-				$(root).height(newh + "px");
+					root.style.width = neww + "px";
+					//$(root).width(neww + "px");
+				root.style.height = newh + "px";
+				//$(root).height(newh + "px");
 
 				mouse[0] = e.pageX;
 				mouse[1] = e.pageY;
 				that.content.style.height = "calc( 100% - 24px )";
+
+				if(that.on_resize && (w != neww || h != newh) )
+					that.on_resize(e,neww,newh);
 			}
 			else if(e.type == "mouseup")
 			{
@@ -234,7 +266,7 @@
 		}
 	}
 
-	Dialog.prototype.dockTo = function(parent, dock_type)
+	Dialog.prototype.dockTo = function( parent, dock_type )
 	{
 		if(!parent) return;
 		var panel = this.root;
@@ -312,10 +344,11 @@
 
 		var that = this;
 		var button = document.createElement("button");
+		button.className = "litebutton";
 
 		button.innerHTML = name;
 		if(options.className)
-			button.className = options.className;
+			button.className += " " + options.className;
 
 		this.root.querySelector(".panel-footer").appendChild( button );
 
@@ -443,8 +476,8 @@
 	Dialog.prototype.bringToFront = function()
 	{
 		var parent = this.root.parentNode;
-		parent.detach(this.root);
-		parent.attach(this.root);
+		parent.removeChild(this.root);
+		parent.appendChild(this.root);
 	}
 
 	/**
@@ -500,6 +533,8 @@
 
 	Dialog.prototype.setPosition = function(x,y)
 	{
+		if(!this.root.parentNode)
+			console.warn("LiteGUI.Dialog: Cannot set position of dialog if it is not in the DOM");
 		this.root.position = "absolute";
 		this.root.style.left = x + "px";
 		this.root.style.top = y + "px";

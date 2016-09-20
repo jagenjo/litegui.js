@@ -109,7 +109,7 @@ var LiteGUI = {
 	* Binds an event in an object (similar to jQuery.bind)
 	* If the element is not an HTML entity a new one is created, attached to the object (as non-enumerable, called __events) and used
 	* @method trigger
-	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {Object} element could be an HTMLEntity, a regular object, a query string or a regular Array of entities
 	* @param {String} event the string defining the event
 	* @param {Function} callback where to call
 	*/
@@ -125,7 +125,7 @@ var LiteGUI = {
 		if(element.constructor === String)
 			element = document.querySelectorAll( element );
 			
-		if(element.constructor === NodeList)
+		if(element.constructor === NodeList || element.constructor === Array)
 		{
 			for(var i = 0; i < element.length; ++i)
 				inner( element[i] );
@@ -263,6 +263,8 @@ var LiteGUI = {
 		var left = event.pageX;
 		var top = event.pageY;
 		var rect = element.getClientRects()[0];
+		if(!rect)
+			return false;
 		if(top > rect.top && top < (rect.top + rect.height) &&
 			left > rect.left && left < (rect.left + rect.width) )
 			return true;
@@ -301,7 +303,7 @@ var LiteGUI = {
 		} catch (err) {
 			if(input)
 				document.body.removeChild( input );
-			console.log('Oops, unable to copy using the true clipboard');
+			console.warn('Oops, unable to copy using the true clipboard');
 		}
 
 		//old system
@@ -632,7 +634,7 @@ var LiteGUI = {
 	createButton: function( id_class, content, callback, style )
 	{
 		var elem = document.createElement("button");
-		elem.className = "litegui button";
+		elem.className = "litegui litebutton button";
 		if(id_class)
 		{
 			var t = id_class.split(" ");
@@ -776,7 +778,7 @@ var LiteGUI = {
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
 
-		content +="<button data-value='yes' style='width:45%; margin-left: 10px'>Yes</button><button data-value='no' style='width:45%'>No</button>";
+		content +="<button class='litebutton' data-value='yes' style='width:45%; margin-left: 10px'>Yes</button><button class='litebutton' data-value='no' style='width:45%'>No</button>";
 		options.noclose = true;
 
 		var dialog = this.showMessage(content,options);
@@ -818,7 +820,7 @@ var LiteGUI = {
 		if (options.textarea)
 			textinput = "<textarea class='textfield' style='width:95%'>"+value+"</textarea>";
 
-		content +="<p>"+textinput+"</p><button data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button data-value='cancel' style='width:45%'>Cancel</button>";
+		content +="<p>"+textinput+"</p><button class='litebutton' data-value='accept' style='width:45%; margin-left: 10px; margin-bottom: 10px'>Accept</button><button class='litebutton' data-value='cancel' style='width:45%'>Cancel</button>";
 		options.noclose = true;
 		var dialog = this.showMessage( content, options );
 
@@ -853,6 +855,39 @@ var LiteGUI = {
 		return dialog;
 	},
 
+	downloadFile: function( filename, data, dataType )
+	{
+		if(!data)
+		{
+			console.warn("No file provided to download");
+			return;
+		}
+
+		if(!dataType)
+		{
+			if(data.constructor === String )
+				dataType = 'text/plain';
+			else
+				dataType = 'application/octet-stream';
+		}
+
+		var file = null;
+		if(data.constructor !== File && data.constructor !== Blob)
+			file = new Blob( [ data ], {type : dataType});
+		else
+			file = data;
+
+		var url = URL.createObjectURL( file );
+		var element = document.createElement("a");
+		element.setAttribute('href', url);
+		element.setAttribute('download', filename );
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		setTimeout( function(){ URL.revokeObjectURL( url ); }, 1000*60 ); //wait one minute to revoke url
+	},
+
 	/**
 	* Returns the URL vars ( ?foo=faa&foo2=etc )
 	* @method getUrlVars
@@ -878,13 +913,18 @@ var LiteGUI = {
 		element.focus();
 	},
 
+	blur: function( element )
+	{
+		element.blur();
+	},
+
 	/**
 	* Makes one element draggable
 	* @method draggable
 	* @param {HTMLEntity} container the element that will be dragged
 	* @param {HTMLEntity} dragger the area to start the dragging
 	**/
-	draggable: function(container, dragger)
+	draggable: function( container, dragger, on_start, on_finish, on_is_draggable )
 	{
 		dragger = dragger || container;
 		dragger.addEventListener("mousedown", inner_mouse);
@@ -911,10 +951,19 @@ var LiteGUI = {
 					y = rect ? rect.top : 0;
 				}
 
+				if(on_is_draggable && on_is_draggable(container,e) == false )
+				{
+					e.stopPropagation();
+					e.preventDefault();
+					return false;
+				}
+
 				prev_x = e.clientX;
 				prev_y = e.clientY;
 				document.addEventListener("mousemove",inner_mouse);
 				document.addEventListener("mouseup",inner_mouse);
+				if(on_start)
+					on_start( container, e );
 				e.stopPropagation();
 				e.preventDefault();
 				return false;
@@ -924,6 +973,9 @@ var LiteGUI = {
 			{
 				document.removeEventListener("mousemove",inner_mouse);
 				document.removeEventListener("mouseup",inner_mouse);
+
+				if( on_finish )
+					on_finish( container, e );
 				return;
 			}
 
@@ -987,8 +1039,29 @@ var LiteGUI = {
 		return o;
 	},
 
+	//those useful HTML unicode codes that I never remeber but I always need
 	special_codes: {
-		close: "&#10005;"
+		close: "&#10005;",
+		navicon: "&#9776;",
+		refresh: "&#8634;",
+		gear: "&#9881;",
+		open_folder: "&#128194;"
+	},
+	
+	//given a html entity string it returns the equivalent unicode character
+	htmlEncode: function( html_code )
+	{
+		var e = document.createElement("div");
+		e.innerHTML = html_code;
+		return e.innerText;
+	},
+
+	//given a unicode character it returns the equivalent html encoded string
+	htmlDecode: function( unicode_character )
+	{
+		var e = document.createElement("div");
+		e.innerText = unicode_character;
+		return e.innerHTML;
 	},
 
 	/**
@@ -1476,6 +1549,7 @@ function dataURItoBlob( dataURI ) {
 
 		this.root = element;
 		var button = document.createElement("button");
+		button.className = "litebutton";
 		this.content = button;
 		element.appendChild(button);
 
@@ -1527,18 +1601,18 @@ function dataURItoBlob( dataURI ) {
 
 
 	/**
-	* ContextualMenu 
+	* ContextMenu 
 	*
-	* @class ContextualMenu
+	* @class ContextMenu 
 	* @constructor
 	* @param {Array} values (allows object { title: "Nice text", callback: function ... })
 	* @param {Object} options [optional] Some options:\
 	* - title: title to show on top of the menu
 	* - callback: function to call when an option is clicked, it receives the item information
 	* - ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback 
-	* - event: you can pass a MouseEvent, this way the ContextualMenu appears in that position
+	* - event: you can pass a MouseEvent, this way the ContextMenu appears in that position
 	*/
-	function ContextualMenu( values, options )
+	function ContextMenu( values, options )
 	{
 		options = options || {};
 		this.options = options;
@@ -1553,13 +1627,13 @@ function dataURItoBlob( dataURI ) {
 		}
 
 		var root = document.createElement("div");
-		root.className = "litecontextualmenu litemenubar-panel";
+		root.className = "litecontextmenu litemenubar-panel";
 		root.style.minWidth = 100;
 		root.style.minHeight = 100;
 		root.style.pointerEvents = "none";
 		setTimeout( function() { root.style.pointerEvents = "auto"; },100); //delay so the mouse up event is not caugh by this element
 
-		//this prevents the default contextual browser menu to open in case this menu was created when pressing right button 
+		//this prevents the default context browser menu to open in case this menu was created when pressing right button 
 		root.addEventListener("mouseup", function(e){ 
 			e.preventDefault(); return true; 
 		}, true);
@@ -1604,10 +1678,15 @@ function dataURItoBlob( dataURI ) {
 				element.innerHTML = value && value.title ? value.title : name;
 				element.value = value;
 
-				if(value && value.disabled)
+				if(value)
 				{
-					disabled = true;
-					element.classList.add("disabled");
+					if(value.disabled)
+					{
+						disabled = true;
+						element.classList.add("disabled");
+					}
+					if(value.submenu || value.has_submenu)
+						element.classList.add("has_submenu");
 				}
 
 				if(typeof(value) == "function")
@@ -1627,6 +1706,7 @@ function dataURItoBlob( dataURI ) {
 
 		//menu option clicked
 		function inner_onclick(e) {
+
 			var value = this.value;
 			var close_parent = true;
 
@@ -1653,8 +1733,8 @@ function dataURItoBlob( dataURI ) {
 				if(value.submenu)
 				{
 					if(!value.submenu.options)
-						throw("ContextualMenu submenu needs options");
-					var submenu = new LiteGUI.ContextualMenu( value.submenu.options, {
+						throw("ContextMenu submenu needs options");
+					var submenu = new LiteGUI.ContextMenu( value.submenu.options, {
 						callback: value.submenu.callback,
 						event: e,
 						parentMenu: that,
@@ -1665,7 +1745,7 @@ function dataURItoBlob( dataURI ) {
 				}
 			}
 		
-			if(close_parent)
+			if(close_parent && !that.lock)
 				that.close();
 		}
 
@@ -1698,18 +1778,20 @@ function dataURItoBlob( dataURI ) {
 			if(options.parentMenu)
 				left = $(options.parentMenu.root).position().left + $(options.parentMenu.root).width();
 
-			var rect = document.body.getClientRects()[0];
-			if(left > (rect.width - $(root).width() - 10))
-				left = (rect.width - $(root).width() - 10);
-			if(top > (rect.height - $(root).height() - 10))
-				top = (rect.height - $(root).height() - 10);
+			var body_rect = LiteGUI.getRect( document.body );
+			var root_rect = LiteGUI.getRect( root );
+
+			if(left > (body_rect.width - root_rect.width - 10))
+				left = (body_rect.width - root_rect.width - 10);
+			if(top > (body_rect.height - root_rect.height - 10))
+				top = (body_rect.height - root_rect.height - 10);
 		}
 
 		root.style.left = left + "px";
 		root.style.top = top  + "px";
 	}
 
-	ContextualMenu.prototype.close = function(e)
+	ContextMenu.prototype.close = function(e)
 	{
 		if(this.root.parentNode)
 			this.root.parentNode.removeChild( this.root );
@@ -1724,7 +1806,8 @@ function dataURItoBlob( dataURI ) {
 		}
 	}
 
-	LiteGUI.ContextualMenu = ContextualMenu;
+	LiteGUI.ContextMenu = ContextMenu;
+	LiteGUI.ContextualMenu = ContextMenu; //LEGACY: REMOVE
 
 
 	//the tiny box to expand the children of a node
@@ -1794,6 +1877,16 @@ function dataURItoBlob( dataURI ) {
 				this.classList.add("empty");
 			else
 				this.classList.remove("empty");
+		}
+
+		element.expand = function()
+		{
+			this.setValue(true);
+		}
+
+		element.collapse = function()
+		{
+			this.setValue(false);
 		}
 
 		element.setValue = function(v)
@@ -2322,14 +2415,24 @@ function dataURItoBlob( dataURI ) {
 	*
 	* @class Area
 	* @constructor
+	* @param {String} id
+	* @param {Object} options
 	*/
-	function Area(id, options)
+	function Area( id, options )
 	{
+		if(!options && id && id.constructor !== String)
+		{
+			options = id;
+			id = null;
+		}
+
 		options = options || {};
 		/* the root element containing all sections */
 		var root = document.createElement("div");
 		root.className = "litearea";
 		if(id)
+			root.id = id;
+		if(options.id)
 			root.id = id;
 		if(options.className)
 			root.className +=  " " + options.className;
@@ -2634,7 +2737,7 @@ function dataURItoBlob( dataURI ) {
 			last_pos[1] = e.pageY;
 			e.stopPropagation();
 			e.preventDefault();
-			if(that.options.inmediateResize)
+			if(that.options.immediateResize || that.options.inmediateResize) //inmediate is for legacy...
 				that.onResize();
 		}
 
@@ -3364,11 +3467,20 @@ function dataURItoBlob( dataURI ) {
 		else
 			list.style.height = LiteGUI.Tabs.tabs_height + "px";
 
+		//allows to use the wheel to see hidden tabs
+		list.addEventListener("wheel", onMouseWheel);
+		list.addEventListener("mousewheel", onMouseWheel);
+		function onMouseWheel(e){
+			if(e.deltaY)
+				list.scrollLeft += e.deltaY;
+		}
+
 		this.list = list;
 		this.root.appendChild(this.list);
 		this.tabs_root = list;
 
 		this.tabs = {};
+		this.tabs_by_index = [];
 		this.selected = null;
 
 		this.onchange = options.callback;
@@ -3429,7 +3541,7 @@ function dataURItoBlob( dataURI ) {
 	}
 
 	/**
-	* Returns a tab 
+	* Returns a tab given its id
 	* @method getTab
 	* @param {String} id tab id
 	* @return {Object} the tab in the form of an object with {id,tab,content}
@@ -3437,6 +3549,17 @@ function dataURItoBlob( dataURI ) {
 	Tabs.prototype.getTab = function(id)
 	{
 		return this.tabs[id];
+	}
+
+	/**
+	* Returns a tab given its index in the tabs list
+	* @method getTabByIndex
+	* @param {Number} index
+	* @return {Object} the tab in the form of an object with {id,tab,content}
+	*/
+	Tabs.prototype.getTabByIndex = function(index)
+	{
+		return this.tabs_by_index[index];
 	}
 
 	/**
@@ -3638,6 +3761,8 @@ function dataURItoBlob( dataURI ) {
 			tab_info.onclose = options.onclose;
 		this.tabs[ id ] = tab_info;
 
+		this.recomputeTabsByIndex();
+
 		//context
 		element.addEventListener("contextmenu", (function(e) { 
 			if(e.button != 2) //right button
@@ -3681,6 +3806,13 @@ function dataURItoBlob( dataURI ) {
 		if(options.callback_canopen && options.callback_canopen() == false)
 			return;
 
+		//launch leaving current tab event
+		if( that.current_tab && 
+			that.current_tab[0] != tab_id && 
+			that.current_tab[2] && 
+			that.current_tab[2].callback_leave)
+				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
+
 		var tab_id = this.dataset["id"];
 		var tab_content = null;
 
@@ -3703,13 +3835,6 @@ function dataURItoBlob( dataURI ) {
 
 		$(that.list).find("li.wtab").removeClass("selected");
 		this.classList.add("selected");
-
-		//launch leaving current tab event
-		if( that.current_tab && 
-			that.current_tab[0] != tab_id && 
-			that.current_tab[2] && 
-			that.current_tab[2].callback_leave)
-				that.current_tab[2].callback_leave( that.current_tab[0], that.current_tab[1], that.current_tab[2] );
 
 		//change tab
 		that.previous_tab = that.current_tab;
@@ -3735,7 +3860,7 @@ function dataURItoBlob( dataURI ) {
 		if(!id)
 			return;
 
-		if(typeof(id) != "string")
+		if( id.constructor != String )
 			id = id.id; //in case id is the object referencing the tab
 
 		var tabs = this.list.querySelectorAll("li.wtab");
@@ -3757,6 +3882,24 @@ function dataURItoBlob( dataURI ) {
 		tab.content.style.display = v ? "none" : null;
 	}
 
+	Tabs.prototype.recomputeTabsByIndex = function()
+	{
+		this.tabs_by_index = [];
+
+		for(var i in this.tabs)
+		{
+			var tab = this.tabs[i];
+
+			//compute index
+			var index = 0;
+			var child = tab.tab;
+			while( (child = child.previousSibling) != null ) 
+				index++;
+
+			this.tabs_by_index[index] = tab;
+		}
+	}
+
 	Tabs.prototype.removeTab = function(id)
 	{
 		var tab = this.tabs[id];
@@ -3769,9 +3912,11 @@ function dataURItoBlob( dataURI ) {
 		tab.tab.parentNode.removeChild( tab.tab );
 		tab.content.parentNode.removeChild( tab.content );
 		delete this.tabs[id];
+
+		this.recomputeTabsByIndex();
 	}
 
-	Tabs.prototype.removeAllTabs = function()
+	Tabs.prototype.removeAllTabs = function( keep_plus )
 	{
 		var tabs = [];
 		for(var i in this.tabs)
@@ -3780,12 +3925,15 @@ function dataURItoBlob( dataURI ) {
 		for(var i in tabs)
 		{
 			var tab = tabs[i];
+			if(tab == this.plus_tab && keep_plus)
+				continue;
+
 			tab.tab.parentNode.removeChild( tab.tab );
 			tab.content.parentNode.removeChild( tab.content );
 			delete this.tabs[ tab.id ];
 		}
 
-		this.tabs = {};
+		this.recomputeTabsByIndex();
 	}
 
 	Tabs.prototype.clear = function()
@@ -3871,6 +4019,7 @@ function dataURItoBlob( dataURI ) {
 		tab_window.document.body.appendChild(newtabs.root);
 		that.transferTab(id, newtabs);
 		newtabs.tabs[id].tab.classList.add("selected");
+		this.recomputeTabsByIndex();
 
 		if(on_complete)
 			on_complete();
@@ -3886,8 +4035,16 @@ function dataURItoBlob( dataURI ) {
 	/***** DRAGGER **********/
 	function Dragger(value, options)
 	{
-		this.value = value || 0;
+		if(value === null || value === undefined)
+			value = 0;
+		else if(value.constructor === String)
+			value = parseFloat(value);
+		else if(value.constructor !== Number)
+			value = 0;
+
+		this.value = value;
 		var that = this;
+		var precision = options.precision != undefined ? options.precision : 3; //num decimals
 
 		this.options = options = options || {};
 		var element = document.createElement("div");
@@ -3904,7 +4061,7 @@ function dataURItoBlob( dataURI ) {
 
 		var input = document.createElement("input");
 		input.className = "text number " + (dragger_class ? dragger_class : "");
-		input.value = value + (options.units ? options.units : "");
+		input.value = value.toFixed( precision ) + (options.units ? options.units : "");
 		input.tabIndex = options.tab_index;
 		this.input = input;
 		element.input = input;
@@ -3982,6 +4139,8 @@ function dataURItoBlob( dataURI ) {
 
 		function inner_inc(v,e)
 		{
+			if(!options.linear)
+				v = v > 0 ? Math.pow(v,1.2) : Math.pow( Math.abs(v), 1.2) * -1;
 			var scale = (options.step ? options.step : 1.0);
 			if(e && e.shiftKey)
 				scale *= 10;
@@ -3993,10 +4152,8 @@ function dataURItoBlob( dataURI ) {
 			if(options.min != null && value < options.min)
 				value = options.min;
 
-			if(options.precision)
-				input.value = value.toFixed(options.precision);
-			else
-				input.value = ((value * 1000)<<0) / 1000; //remove ugly decimals
+			input.value = value.toFixed( precision );
+			//input.value = ((value * 1000)<<0) / 1000; //remove ugly decimals
 			if(options.units)
 				input.value += options.units;
 			LiteGUI.trigger(input,"change");
@@ -4144,7 +4301,7 @@ function dataURItoBlob( dataURI ) {
 
 		//update parent collapse button
 		if(parent_id)
-			this._updateListBox( this._findElement(parent_id) );
+			this._updateListBox( this._findElement(parent_id) ); //no options here, this is the parent
 
 
 		return element;
@@ -4176,11 +4333,20 @@ function dataURItoBlob( dataURI ) {
 
 		element.parent_id = parent_id;
 
+		//check
+		var existing_item = this.getItem( element.dataset["item_id"] );
+		if( existing_item )
+			console.warn("There another item with the same ID in this tree");
+
 		//insert
 		if(parent_element_index == -1)
 			this.root.appendChild( element );
 		else
 			this._insertInside( element, parent_element_index, element_index );
+
+		//compute visibility according to parents
+		if( parent && !this._isNodeChildrenVisible( parent_id ) )
+			element.classList.add("hidden");
 
 		//children
 		if(data.children)
@@ -4192,7 +4358,7 @@ function dataURItoBlob( dataURI ) {
 		}
 
 		//update collapse button
-		this._updateListBox( element );
+		this._updateListBox( element, options );
 
 		if(options && options.selected)
 			this.markAsSelected( element, true );
@@ -4201,7 +4367,7 @@ function dataURItoBlob( dataURI ) {
 	}
 
 	//element to add, position of the parent node, position inside children, the depth level
-	Tree.prototype._insertInside = function(element, parent_index, offset_index, level )
+	Tree.prototype._insertInside = function( element, parent_index, offset_index, level )
 	{
 		var parent = this.root.childNodes[ parent_index ];
 		if(!parent)
@@ -4242,8 +4408,28 @@ function dataURItoBlob( dataURI ) {
 		this.root.appendChild( element );
 	}
 
+
+	Tree.prototype._isNodeChildrenVisible = function( id )
+	{
+		var node = this.getItem( id );
+		if(!node)
+			return false;
+		if( node.classList.contains("hidden") )
+			return false;
+
+		//check listbox
+		var listbox = node.querySelector(".listbox");
+		if(!listbox)
+			return true;
+		if(listbox.getValue() == "closed")
+			return false;
+		return true;
+	}
+
 	Tree.prototype._findElement = function( id )
 	{
+		if( !id || id.constructor !== String)
+			throw("findElement param must be string with item id");
 		for(var i = 0; i < this.root.childNodes.length; ++i)
 		{
 			var childNode = this.root.childNodes[i];
@@ -4377,7 +4563,7 @@ function dataURItoBlob( dataURI ) {
 			for(var i in data.dataset)
 				root.dataset[i] = data.dataset[i];
 
-		root.appendChild(title_element);
+		root.appendChild( title_element );
 		root.title_element = title_element;
 
 		if(data.visible === false)
@@ -4614,6 +4800,12 @@ function dataURItoBlob( dataURI ) {
 		return root;
 	}
 
+
+	/**
+	* remove from the tree the items that do not have a name that matches the string
+	* @method filterByName
+	* @param {string} name
+	*/
 	Tree.prototype.filterByName = function(name)
 	{
 		for(var i = 0; i < this.root.childNodes.length; ++i)
@@ -4631,7 +4823,7 @@ function dataURItoBlob( dataURI ) {
 			if(!name || str.indexOf( name.toLowerCase() ) != -1)
 			{
 				if( childNode.data && childNode.data.visible !== false )
-					childNode.style.display = "";
+					childNode.classList.remove("filtered");
 				var indent = childNode.querySelector(".indentblock");
 				if(indent)
 				{
@@ -4643,34 +4835,50 @@ function dataURItoBlob( dataURI ) {
 			}
 			else
 			{
-				childNode.style.display = "none";
+				childNode.classList.add("filtered");
 			}
 		}
+	}	
 
-		/*
-		var all = this.root.querySelectorAll(".ltreeitemtitle .incontent");
-		for(var i = 0; i < all.length; i++)
+	/**
+	* remove from the tree the items that do not have a name that matches the string
+	* @method filterByName
+	* @param {string} name
+	*/
+	Tree.prototype.filterByRule = function( callback_to_filter, param )
+	{
+		if(!callback_to_filter)
+			throw("filterByRule requires a callback");
+		for(var i = 0; i < this.root.childNodes.length; ++i)
 		{
-			var element = all[i];
-			if(!element)
+			var childNode = this.root.childNodes[i]; //ltreeitem
+			if( !childNode.classList || !childNode.classList.contains("ltreeitem") )
 				continue;
 
-			var str = element.innerHTML;
-			var parent = element.parentNode;
+			var content = childNode.querySelector(".incontent");
+			if(!content)
+				continue;
 
-			if(!name || str.indexOf(name) != -1)
+			if( callback_to_filter( childNode.data, content, param ) )
 			{
-				parent.style.display = "";
-				parent.parentNode.style.paddingLeft = (parseInt(parent.parentNode.dataset["level"]) * Tree.INDENT) + "px";
+				if( childNode.data && childNode.data.visible !== false )
+					childNode.classList.remove("filtered");
+				var indent = childNode.querySelector(".indentblock");
+				if(indent)
+				{
+					if(name)
+						indent.style.paddingLeft = 0;
+					else
+						indent.style.paddingLeft = paddingLeft = ( (parseInt(childNode.dataset["level"]) + this.indent_offset) * LiteGUI.Tree.INDENT) + "px";
+				}
 			}
 			else
 			{
-				parent.style.display = "none";
-				parent.parentNode.style.paddingLeft = 0;
+				childNode.classList.add("filtered");
 			}
 		}
-		*/
 	}	
+
 
 	/**
 	* get the item with that id, returns the HTML element
@@ -4723,7 +4931,7 @@ function dataURItoBlob( dataURI ) {
 		if(!item.listbox)
 			return;
 
-		listbox.setValue(true);
+		listbox.setValue(true); //this propagates changes
 	}
 
 	/**
@@ -4740,7 +4948,7 @@ function dataURItoBlob( dataURI ) {
 		if(!item.listbox)
 			return;
 
-		listbox.setValue(false);
+		listbox.setValue(false);  //this propagates changes
 	}
 
 
@@ -4929,13 +5137,18 @@ function dataURItoBlob( dataURI ) {
 	Tree.prototype.moveItem = function(id, parent_id )
 	{
 		if(id === parent_id)
-			return;
+			return false;
 
 		var node = this.getItem( id );
 		var parent = this.getItem( parent_id );
 		var parent_index = this._findElementIndex( parent );
 		var parent_level = parseInt( parent.dataset["level"] );
 		var old_parent = this.getParent( node );
+		if(!old_parent)
+		{
+			console.error("node parent not found by id, maybe id has changed");
+			return false;
+		}
 		var old_parent_level = parseInt( old_parent.dataset["level"] );
 		var level_offset = parent_level - old_parent_level;
 
@@ -4943,7 +5156,7 @@ function dataURItoBlob( dataURI ) {
 			return false;
 
 		if(parent == old_parent)
-			return;
+			return false;
 
 		//replace parent info
 		node.parent_id = parent_id;
@@ -5034,18 +5247,45 @@ function dataURItoBlob( dataURI ) {
 	{
 		var node = this.getItem(id);
 		if(!node)
-			return;
+			return false;
 
 		node.data = data;
 		if(data.id)
-			node.id = data.id;
+			node.id = data.id; //this updateItemId ?
 		if(data.content)
 		{
 			//node.title_element.innerHTML = "<span class='precontent'></span><span class='incontent'>" +  + "</span><span class='postcontent'></span>";
 			var incontent = node.title_element.querySelector(".incontent");
 			incontent.innerHTML = data.content;
 		}
+
+		return true;
 	}
+
+	/**
+	* update a given item id and the link with its children
+	* @method updateItemId
+	* @param {string} old_id
+	* @param {string} new_id
+	*/
+	Tree.prototype.updateItemId = function(old_id, new_id)
+	{
+		var node = this.getItem(old_id);
+		if(!node)
+			return false;
+
+		var children = this.getChildren( old_id, true );
+		node.id = new_id;
+
+		for(var i = 0; i < children.length; ++i)
+		{
+			var child = children[i];
+			child.parent_id = new_id;
+		}
+
+		return true;
+	}
+
 
 	/**
 	* clears all the items
@@ -5130,7 +5370,7 @@ function dataURItoBlob( dataURI ) {
 	}
 
 	//updates the widget to collapse
-	Tree.prototype._updateListBox = function( node )
+	Tree.prototype._updateListBox = function( node, options )
 	{
 		if(!node)
 			return;
@@ -5140,12 +5380,18 @@ function dataURItoBlob( dataURI ) {
 		if(!node.listbox)
 		{
 			var pre = node.title_element.querySelector(".collapsebox");
-			var box = LiteGUI.createLitebox(true, function(e) { that.onClickBox(e, node); });
+			var box = LiteGUI.createLitebox(true, function(e) { 
+				that.onClickBox(e, node);
+				LiteGUI.trigger( that.root, "item_collapse_change", { item: node, data: box.getValue() } );
+			});
 			box.stopPropagation = true;
 			box.setEmpty(true);
 			pre.appendChild(box);
 			node.listbox = box;
 		}
+
+		if(options && options.collapsed)
+			node.listbox.collapse();
 
 		var child_elements = this.getChildren( node.dataset["item_id"] );
 		if(!child_elements)
@@ -5160,11 +5406,24 @@ function dataURItoBlob( dataURI ) {
 	Tree.prototype.onClickBox = function(e, node)
 	{
 		var children = this.getChildren( node );
-		var status = node.listbox.getValue();
 
-		if(children)
-			for(var i = 0; i < children.length; ++i)
-				children[i].style.display = status == "open" ? null : "none";
+		if(!children)
+			return;
+
+		//update children visibility
+		for(var i = 0; i < children.length; ++i)
+		{
+			var child = children[i];
+			
+			var child_parent = this.getParent( child );
+			var visible = true;
+			if( child_parent )
+				visible = this._isNodeChildrenVisible(child_parent);
+			if(visible)
+				child.classList.remove("hidden");
+			else
+				child.classList.add("hidden");
+		}
 	}
 
 	LiteGUI.Tree = Tree;
@@ -5175,7 +5434,6 @@ function dataURItoBlob( dataURI ) {
 	/****************** PANEL **************/
 	function Panel(id, options)
 	{
-		options = options || {};
 		this._ctor(id,options);
 	}
 
@@ -5183,6 +5441,14 @@ function dataURItoBlob( dataURI ) {
 
 	Panel.prototype._ctor = function(id, options)
 	{
+		if(!options && id && id.constructor !== String)
+		{
+			options = id;
+			id = null;
+		}
+
+		options = options || {};
+
 		this.content = options.content || "";
 
 		var root = this.root = document.createElement("div");
@@ -5235,16 +5501,22 @@ function dataURItoBlob( dataURI ) {
 	Dialog.MINIMIZED_WIDTH = 200;
 	Dialog.title_height = "20px";
 
-	Dialog.getDialog = function(id)
+	Dialog.getDialog = function( id )
 	{
-		var element = document.getElementById(id);		
+		var element = document.getElementById( id );		
 		if(!element)
 			return null;
 		return element.dialog;
 	}
 
-	Dialog.prototype._ctor = function(id, options)
+	Dialog.prototype._ctor = function( id, options )
 	{
+		if(!options && id && id.constructor !== String)
+		{
+			options = id;
+			id = null;
+		}
+
 		var that = this;
 		this.width = options.width;
 		this.height = options.height;
@@ -5265,16 +5537,16 @@ function dataURItoBlob( dataURI ) {
 		{
 			code += "<div class='panel-header'>"+options.title+"</div><div class='buttons'>";
 			if(options.minimize){
-				code += "<button class='mini-button minimize-button'>-</button>";
-				code += "<button class='mini-button maximize-button' style='display:none'></button>";
+				code += "<button class='litebutton mini-button minimize-button'>-</button>";
+				code += "<button class='litebutton mini-button maximize-button' style='display:none'></button>";
 			}
 			if(options.hide)
-				code += "<button class='mini-button hide-button'></button>";
+				code += "<button class='litebutton mini-button hide-button'></button>";
 			if(options.detachable)
-				code += "<button class='mini-button detach-button'></button>";
+				code += "<button class='litebutton mini-button detach-button'></button>";
 			
 			if(options.close || options.closable)
-				code += "<button class='mini-button close-button'>"+ LiteGUI.special_codes.close +"</button>";
+				code += "<button class='litebutton mini-button close-button'>"+ LiteGUI.special_codes.close +"</button>";
 			code += "</div>";
 		}
 
@@ -5326,6 +5598,18 @@ function dataURItoBlob( dataURI ) {
 		//size, draggable, resizable, etc
 		this.enableProperties(options);
 
+		this.root.addEventListener("DOMNodeInsertedIntoDocument", function(){ 
+			if( that.on_attached_to_DOM )
+				that.on_attached_to_DOM();
+			if( that.on_resize )
+				that.on_resize();
+		});
+		this.root.addEventListener("DOMNodeRemovedFromDocument", function(){ 
+			if( that.on_detached_from_DOM )
+				that.on_detached_from_DOM();
+		});
+
+
 		//attach
 		if(options.attach || options.parent)
 		{
@@ -5337,6 +5621,9 @@ function dataURItoBlob( dataURI ) {
 			parent.appendChild( this.root );
 			this.center();
 		}
+
+		//if(options.position) //not docked
+		//	this.setPosition( options.position[0], options.position[1] );
 	}
 
 	/**
@@ -5352,6 +5639,7 @@ function dataURItoBlob( dataURI ) {
 	Dialog.prototype.enableProperties = function(options)
 	{
 		options = options || {};
+		var that = this;
 
 		var panel = this.root;
 		panel.style.position = "absolute";
@@ -5383,7 +5671,11 @@ function dataURItoBlob( dataURI ) {
 		if(options.draggable)
 		{
 			this.draggable = true;
-			LiteGUI.draggable( panel, panel.querySelector(".panel-header") );
+			LiteGUI.draggable( panel, panel.querySelector(".panel-header"), function(){
+				that.bringToFront();
+			},null, function(){
+				return !that.minimized;
+			});
 		}
 
 		if(options.resizable)
@@ -5427,19 +5719,25 @@ function dataURItoBlob( dataURI ) {
 			}
 			else if(e.type == "mousemove")
 			{
-				var w = $(root).width();
+				var rect = LiteGUI.getRect( root );
+				var w = rect.width; //$(root).width();
 				var neww = w - (mouse[0] - e.pageX);
 	
-				var h = $(root).height();
+				var h = rect.height; //$(root).height();
 				var newh = h - (mouse[1] - e.pageY);
 
 				if(is_corner)
-					$(root).width(neww + "px");
-				$(root).height(newh + "px");
+					root.style.width = neww + "px";
+					//$(root).width(neww + "px");
+				root.style.height = newh + "px";
+				//$(root).height(newh + "px");
 
 				mouse[0] = e.pageX;
 				mouse[1] = e.pageY;
 				that.content.style.height = "calc( 100% - 24px )";
+
+				if(that.on_resize && (w != neww || h != newh) )
+					that.on_resize(e,neww,newh);
 			}
 			else if(e.type == "mouseup")
 			{
@@ -5453,7 +5751,7 @@ function dataURItoBlob( dataURI ) {
 		}
 	}
 
-	Dialog.prototype.dockTo = function(parent, dock_type)
+	Dialog.prototype.dockTo = function( parent, dock_type )
 	{
 		if(!parent) return;
 		var panel = this.root;
@@ -5531,10 +5829,11 @@ function dataURItoBlob( dataURI ) {
 
 		var that = this;
 		var button = document.createElement("button");
+		button.className = "litebutton";
 
 		button.innerHTML = name;
 		if(options.className)
-			button.className = options.className;
+			button.className += " " + options.className;
 
 		this.root.querySelector(".panel-footer").appendChild( button );
 
@@ -5662,8 +5961,8 @@ function dataURItoBlob( dataURI ) {
 	Dialog.prototype.bringToFront = function()
 	{
 		var parent = this.root.parentNode;
-		parent.detach(this.root);
-		parent.attach(this.root);
+		parent.removeChild(this.root);
+		parent.appendChild(this.root);
 	}
 
 	/**
@@ -5719,6 +6018,8 @@ function dataURItoBlob( dataURI ) {
 
 	Dialog.prototype.setPosition = function(x,y)
 	{
+		if(!this.root.parentNode)
+			console.warn("LiteGUI.Dialog: Cannot set position of dialog if it is not in the DOM");
 		this.root.position = "absolute";
 		this.root.style.left = x + "px";
 		this.root.style.top = y + "px";
@@ -5880,6 +6181,223 @@ function dataURItoBlob( dataURI ) {
 
 	LiteGUI.Dialog = Dialog;
 })();
+//enclose in a scope
+(function(){
+
+
+function Table( options )
+{
+	options = options || {};
+
+	this.root = document.createElement("table");
+	this.root.classList.add("litetable");
+
+	this.columns = [];
+	this.column_fields = [];
+	this.rows = [];
+	this.data = [];
+
+	this._must_update_header = true;
+
+	if(options.colums)
+		this.setColumns(options.colums);
+
+	if(options.scrollable)
+		this.root.style.overflow = "auto";
+
+	if(options.height)
+		this.root.style.height = LiteGUI.sizeToCSS( options.height );
+
+	if(options.columns)
+		this.setColumns( options.columns );
+
+	if(options.rows)
+		this.setRows( options.data );
+}
+
+Table.prototype.setRows = function( data, reuse )
+{
+	this.data = data;
+	this.updateContent( reuse );
+}
+
+Table.prototype.addRow = function( row, skip_add )
+{
+	var tr = document.createElement("tr");
+
+	//create cells
+	for(var j = 0; j < this.column_fields.length; ++j)
+	{
+		var td = document.createElement("td");
+
+		var value = null;
+
+		if(row.constructor === Array )
+			value = row[ j ];
+		else //object
+			value = row[ this.column_fields[j] ];
+		if(value === undefined)
+			value = "";
+
+		td.innerHTML = value;
+
+		var column = this.columns[j];
+		if(column === undefined)
+			break;
+
+		if(column.className)
+			td.className = column.className;
+		if(column.width)
+			td.style.width = column.width;
+		tr.appendChild( td );
+	}
+
+	this.root.appendChild( tr );
+	this.rows.push( tr );
+	if(!skip_add)
+		this.data.push( row );
+
+	return tr;
+}
+
+Table.prototype.updateRow = function( index, row )
+{
+	this.data[ index ] = row;
+
+	var tr = this.rows[index];
+	if(!tr)
+		return;
+
+	var cells = tr.querySelectorAll("td");
+	for(var j = 0; j < cells.length; ++j)
+	{
+		var column = this.columns[j];
+
+		var value = null;
+
+		if(row.constructor === Array )
+			value = row[ j ];
+		else
+			value = row[ column.field ];
+
+		if(value === undefined)
+			value = "";
+
+		cells[j].innerHTML = value;
+	}
+	return tr;
+}
+
+Table.prototype.updateCell = function( row, cell, data )
+{
+	var tr = this.rows[ row ];
+	if(!tr)
+		return;
+	var cell = tr.childNodes[cell];
+	if(!cell)
+		return;
+	cell.innerHTML = data;
+	return cell;
+}
+
+
+Table.prototype.setColumns = function( columns )
+{
+	this.columns.length = 0;
+	this.column_fields.length = 0;
+
+	var avg_width = ((Math.floor(100 / columns.length)).toFixed(1)) + "%";
+
+	var rest = [];
+
+	for(var i = 0; i < columns.length; ++i)
+	{
+		var c = columns[i];
+
+		if( c === null || c === undefined )
+			continue;
+
+		//allow to pass just strings or numbers instead of objects
+		if( c.constructor === String || c.constructor === Number )
+			c = { name: String(c) };
+
+		var column = {
+			name: c.name || "",
+			width: LiteGUI.sizeToCSS(c.width || avg_width),
+			field: (c.field || c.name || "").toLowerCase(),
+			className: c.className
+		};
+
+		//last
+		if(i == columns.length - 1)
+			column.width = " calc( 100% - ( " + rest.join(" + ") + " ) )";
+		else
+			rest.push( column.width );
+
+		this.columns.push( column );
+		this.column_fields.push( column.field );
+	}
+
+	this._must_update_header = true;
+	this.updateContent();
+}
+
+Table.prototype.updateContent = function( reuse )
+{
+	this.root.innerHTML = "";
+
+	//update header
+	if(this._must_update_header)
+	{
+		this.header = document.createElement("tr");
+		for(var i = 0; i < this.columns.length; ++i)
+		{
+			var column = this.columns[i];
+			var th = document.createElement("th");
+			th.innerHTML = column.name;
+			if(column.width)
+				th.style.width = column.width;
+			column.th = th;
+			this.header.appendChild( th );
+		}
+		this._must_update_header = false;
+	}
+	this.root.appendChild( this.header );
+
+	if(!this.data)
+		return;
+
+	if(this.data.length != this.rows.length)
+		reuse = false;
+
+	if(reuse)
+	{
+		for(var i = 0; i < this.rows.length; ++i)
+		{
+			var data_row = this.data[i];
+			var tr = this.updateRow( i, data_row );
+			this.root.appendChild( tr );
+		}
+	}
+	else
+	{
+		this.rows.length = 0;
+
+		//create rows
+		for(var i = 0; i < this.data.length; ++i)
+		{
+			var row = this.data[i];
+			this.addRow( row, true );
+		}
+	}
+}
+
+
+
+LiteGUI.Table = Table;
+
+
+})();
 /* Attributes editor panel 
 	Dependencies: 
 		- jQuery
@@ -5925,6 +6443,13 @@ jQuery.fn.wclick = function(callback) {
 
 function Inspector( id, options )
 {
+	//allows to pass only options instead of id
+	if(id && id.constructor === Object && !options)
+	{
+		options = id;
+		id = null;
+	}
+
 	options = options || {};
 	this.root = document.createElement("DIV");
 	this.root.className = "inspector " + ( options.full ? "full" : "");
@@ -6082,6 +6607,19 @@ Inspector.prototype.setup = function(info)
 	}
 }
 
+/**  Returns the widget given the name
+*
+* @method getWidget
+* @param {String} name the name of the widget supplied when creating it or the number of the widget
+* @return {Object} widget object
+*/
+Inspector.prototype.getWidget = function( name )
+{
+	if( name !== null && name.constructor === Number )
+		return this.widgets[ name ];
+	return this.widgets_by_name[ name ];
+}
+
 /**  Given an instance it shows all the attributes
 *
 * @method inspectInstance
@@ -6133,6 +6671,8 @@ Inspector.prototype.inspectInstance = function( instance, properties, properties
 			if(classObject["@" + i]) //guess from class object info
 			{
 				var shared_options = classObject["@" + i];
+				if( shared_options && shared_options.widget === null)
+					continue; //skip
 				properties_info[i] = inner_clone( shared_options );
 			}
 			else if(instance["@" + i]) //guess from instance info
@@ -6312,10 +6852,16 @@ Inspector.prototype.createWidget = function(name, content, options)
 		element.className += " even";
 
 	var width = options.width || this.widgets_width;
-	if(width)
+	if( width )
 	{
-		element.style.width = width.constructor === String ? width : width + "px";
-		element.style.minWidth = element.style.width;
+		element.style.width = LiteGUI.sizeToCSS( width );
+		element.style.minWidth = "auto";
+	}
+	var height = options.height || this.height;
+	if( height )
+	{
+		element.style.height = LiteGUI.sizeToCSS( height );
+		element.style.minHeight = "auto";
 	}
 
 	//store widgets 
@@ -6391,18 +6937,24 @@ Inspector.onWidgetChange = function( element, name, value, options, expand_value
 			r = options.callback.call( element, value, event );
 	}
 
-	//LiteGUI.trigger( this.current_section, "wchange", value );
-	$(this.current_section).trigger("wchange",value); //used for undo //TODO: use LiteGUI.trigger
-	//LiteGUI.trigger( element, "wchange", value );
-	$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
+	if(!options.skip_wchange)
+	{
+		//LiteGUI.trigger( this.current_section, "wchange", value );
+		$(this.current_section).trigger("wchange",value); //used for undo //TODO: use LiteGUI.trigger
+		//LiteGUI.trigger( element, "wchange", value );
+		$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
+	}
 	if(this.onchange) 
 		this.onchange(name, value, element);
 	return r;
 }
 
+//must be lowercase
 Inspector.widget_constructors = {
+	"null": 'addNull', //use for special cases
 	title: 'addTitle',
 	info: 'addInfo',
+	"default": 'addDefault', //it guesses
 	number: 'addNumber',
 	slider: 'addSlider',
 	string: 'addString',
@@ -6429,7 +6981,6 @@ Inspector.widget_constructors = {
 	datatree: 'addDataTree',
 	pad: 'addPad',
 	array: 'addArray',
-	"Array": 'addArray',
 	separator: 'addSeparator'
 };
 
@@ -6465,7 +7016,7 @@ Inspector.prototype.add = function( type, name, value, options )
 		value = options.value;
 	}
 
-	var func = LiteGUI.Inspector.widget_constructors[type];
+	var func = LiteGUI.Inspector.widget_constructors[type.toLowerCase()];
 	if(!func){
 		console.warn("LiteGUI.Inspector do not have a widget called",type);
 		return;
@@ -6519,6 +7070,34 @@ Inspector.prototype.addSeparator = function()
 	return element;
 }
 
+//used when you want to skip the widget of an object
+Inspector.prototype.addNull = function(name,value, options)
+{
+	return null;
+}
+
+//used when you dont know which widget to use
+Inspector.prototype.addDefault = function( name, value, options)
+{
+	if(value === null || value === undefined) //can we guess it from the current value?
+		return null;
+
+	if( value.constructor === Boolean )
+		return this.addCheckbox( name, value, options );
+	else if( value.constructor === String )
+		return this.addString( name, value, options );
+	else if( value.constructor === Number )
+		return this.addNumber( name, value, options );
+	else if( value.length == 4)
+		return this.addVector4( name, value, options );
+	else if( value.length == 3)
+		return this.addVector3( name, value, options );
+	else if( value.length == 2)
+		return this.addVector2( name, value, options );
+	return null;
+}
+
+
 /**
 * Widget to edit strings
 * @method addString
@@ -6566,7 +7145,7 @@ Inspector.prototype.addString = function(name,value, options)
 
 	this.tab_index += 1;
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v, skip_event) { 
 		if(v === undefined )
 			return;
 		if(v === input.value)
@@ -6604,7 +7183,7 @@ Inspector.prototype.addStringButton = function( name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var element = this.createWidget(name,"<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
+	var element = this.createWidget( name, "<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
 	var input = element.querySelector(".wcontent input");
 	input.addEventListener("change", function(e) { 
 		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
@@ -6622,7 +7201,7 @@ Inspector.prototype.addStringButton = function( name, value, options)
 	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v, skip_event) { 
 		input.value = v;
 		if(!skip_event)
 			LiteGUI.trigger(input, "change" );
@@ -6653,18 +7232,20 @@ Inspector.prototype.addTextarea = function(name,value, options)
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
-	;
 
 	var element = this.createWidget(name,"<span class='inputfield textarea "+(options.disabled?"disabled":"")+"'><textarea tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+">"+value+"</textarea></span>", options);
 	this.tab_index++;
 	var textarea = element.querySelector(".wcontent textarea");
 	textarea.addEventListener( options.immediate ? "keyup" : "change", function(e) { 
-		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
+		Inspector.onWidgetChange.call(that,element,name,e.target.value, options, false, e);
 	});
+	if(options.callback_keydown)
+		textarea.addEventListener( "keydown", options.callback_keydown );
+
 	if(options.height)
 		textarea.style.height = LiteGUI.sizeToCSS( options.height );
 	this.append(element,options);
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v, skip_event) { 
 		if(v === undefined)
 			return;
 		if(v == textarea.value)
@@ -6742,7 +7323,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 		if(that.onchange) that.onchange(name,e.target.value,element);
 	});
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event) { 
 		if(v === undefined)
 			return;
 		v = parseFloat(v);
@@ -6846,7 +7427,7 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event) { 
 		if(!v)
 			return;
 		if(dragger1.getValue() != v[0])
@@ -6948,7 +7529,7 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event ) { 
 		if(!v)
 			return;
 		dragger1.setValue(v[0],true);
@@ -7041,7 +7622,7 @@ Inspector.prototype.addVector4 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function( v, skip_event ) { 
 		if(!v)
 			return;
 		for(var i = 0; i < draggers.length; i++)
@@ -7433,7 +8014,6 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'>";
 	this.tab_index++;
 
 	var element = this.createWidget(name,"<span class='inputfield full inputcombo "+(options.disabled?"disabled":"")+"'></span>", options);
@@ -7443,6 +8023,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 	if(values.constructor === Function)
 		values = options.values();
 
+	/*
 	if(!values)
 		values = [];
 
@@ -7454,12 +8035,14 @@ Inspector.prototype.addCombo = function(name, value, options)
 		var item_title = values.constructor === Array ? item_value : i;
 		if(item_value && item_value.title)
 			item_title = item_value.title;
-		code += "<option value='"+item_index+"' "+( item_value == value ? " selected":"")+">" + item_title + "</option>";
+		code += "<option value='"+item_index+"' "+( item_value == value ? " selected":"")+" data-index='"+item_index+"'>" + item_title + "</option>";
 		index++;
 	}
-	code += "</select>";
+	*/
 
+	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'></select>";
 	element.querySelector("span.inputcombo").innerHTML = code;
+	setValues(values);
 
 	var select = element.querySelector(".wcontent select");
 	select.addEventListener("change", function(e) { 
@@ -7502,11 +8085,35 @@ Inspector.prototype.addCombo = function(name, value, options)
 				continue;
 			if( parseFloat(item.dataset["index"]) == index )
 			{
+				item.setAttribute("selected", true);
 				select.selectedIndex = index;
-				return;
 			}
+			else
+				item.removeAttribute("selected");
 		}
 	};
+
+	function setValues(v){
+		if(!v)
+			v = [];
+		values = v;
+
+		var code = "";
+		var index = 0;
+		for(var i in values)
+		{
+			var item_value = values[i];
+			var item_index = values.constructor === Array ? index : i;
+			var item_title = values.constructor === Array ? item_value : i;
+			if(item_value && item_value.title)
+				item_title = item_value.title;
+			code += "<option value='"+item_index+"' "+( item_value == value ? " selected":"")+" data-index='"+item_index+"'>" + item_title + "</option>";
+			index++;
+		}
+		element.querySelector("select").innerHTML = code;
+	}
+
+	element.setOptionValues = setValues;
 
 	this.append(element,options);
 	this.processElement(element, options);
@@ -7800,11 +8407,17 @@ Inspector.prototype.addButton = function(name, value, options)
 	value = options.button_text || value || "";
 	var that = this;
 
-	var c = "";
+	var button_classname = "";
 	if(name === null)
-		c = "single";
+		button_classname = "single";
+	if(options.micro)
+		button_classname += " micro";
+
+	var attrs = "";
+	if(options.disabled)
+		attrs = "disabled='disabled'";
 	
-	var element = this.createWidget(name,"<button class='"+c+"' tabIndex='"+ this.tab_index + "'>"+value+"</button>", options);
+	var element = this.createWidget(name,"<button class='litebutton "+button_classname+"' tabIndex='"+ this.tab_index + "' "+attrs+">"+value+"</button>", options);
 	this.tab_index++;
 	var button = element.querySelector("button");
 	button.addEventListener("click", function(event) {
@@ -7844,7 +8457,7 @@ Inspector.prototype.addButtons = function(name, value, options)
 	{
 		for(var i in value)
 		{
-			code += "<button tabIndex='"+this.tab_index+"' style='"+style+"'>"+value[i]+"</button>";
+			code += "<button class='litebutton' tabIndex='"+this.tab_index+"' style='"+style+"'>"+value[i]+"</button>";
 			this.tab_index++;
 		}
 	}
@@ -7853,8 +8466,8 @@ Inspector.prototype.addButtons = function(name, value, options)
 	for(var i = 0; i < buttons.length; ++i)
 	{
 		var button = buttons[i];
-		button.addEventListener("click", function() {
-			Inspector.onWidgetChange.call(that,element,name,this.innerHTML, options);
+		button.addEventListener("click", function(evt) {
+			Inspector.onWidgetChange.call(that, element, name, this.innerHTML, options, null, evt);
 			LiteGUI.trigger( element, "wclick",this.innerHTML );
 		});
 	}
@@ -7928,7 +8541,7 @@ Inspector.prototype.addIcon = function(name, value, options)
 	return element;
 }
 
-Inspector.prototype.addColor = function(name,value,options)
+Inspector.prototype.addColor = function( name, value, options )
 {
 	options = this.processOptions(options);
 
@@ -7945,8 +8558,48 @@ Inspector.prototype.addColor = function(name,value,options)
 	this.append(element,options); //add now or jscolor dont work
 
 	//create jsColor 
-	var input_element = $(element).find("input.color")[0];
-	var myColor = new jscolor.color(input_element);
+	var input_element = element.querySelector("input.color");
+	var myColor = null;
+
+	//SHOWS CONTEXTUAL MENU
+	//block focusing
+	/*
+    input_element.addEventListener("contextmenu", function(e) { 
+		if(e.button != 2) //right button
+			return false;
+		//create the context menu
+		var contextmenu = new LiteGUI.ContextMenu( ["Copy in HEX","Copy in RGBA"], { event: e, callback: inner_action });
+		e.preventDefault(); 
+		e.stopPropagation();
+
+		input_element.addEventListener("focus", block_focus , true);
+		setTimeout(function(){ input_element.removeEventListener("focus", block_focus , true);},1000);
+
+		return false;
+    },true);	
+
+	function block_focus(e)
+	{
+		e.stopPropagation();
+		e.stopImmediatePropagation();
+		e.preventDefault();
+		return false;
+	}
+
+	function inner_action(v)
+	{
+		if(v == "Copy in HEX")
+		{
+			LiteGUI.toClipboard( "in HEX");
+		}
+		else
+		{
+			LiteGUI.toClipboard( "in RGB");
+		}
+	}
+	*/
+
+	myColor = new jscolor.color(input_element);
 	myColor.pickerFaceColor = "#333";
 	myColor.pickerBorderColor = "black";
 	myColor.pickerInsetColor = "#222";
@@ -7955,7 +8608,7 @@ Inspector.prototype.addColor = function(name,value,options)
 	if(options.disabled) 
 		myColor.pickerOnfocus = false; //this doesnt work
 
-	if(typeof(value) != "string" && value.length && value.length > 2)
+	if( value.constructor !== String && value.length && value.length > 2)
 	{
 		var intensity = 1.0;
 		myColor.fromRGB(value[0]*intensity,value[1]*intensity,value[2]*intensity);
@@ -7986,10 +8639,10 @@ Inspector.prototype.addColor = function(name,value,options)
 	options.dragger_class = "nano";
 
 	var dragger = new LiteGUI.Dragger(1, options);
-	$(element).find('.wcontent').append(dragger.root);
-	$(dragger.input).change(function()
+	element.querySelector('.wcontent').appendChild(dragger.root);
+	dragger.input.addEventListener("change", function(e)
 	{
-		var v = parseFloat($(this).val());
+		var v = parseFloat( this.value );
 		myColor.rgb_intensity = v;
 		if (myColor.onImmediateChange)
 			myColor.onImmediateChange();
@@ -8013,7 +8666,7 @@ Inspector.prototype.addFile = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'>"+value+"</span></span><button style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
+	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'>"+value+"</span></span><button class='litebutton' style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
 	var content = element.querySelector(".wcontent");
 	content.style.position = "relative";
 	var input = element.querySelector(".wcontent input");
@@ -8108,7 +8761,7 @@ Inspector.prototype.addDataTree = function(name, value, options)
 
 	inner_recursive(node,value);
 
-	function inner_recursive(root_node, value)
+	function inner_recursive( root_node, value)
 	{
 		for(var i in value)
 		{

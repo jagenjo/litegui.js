@@ -4,7 +4,6 @@
 	/****************** PANEL **************/
 	function Panel(id, options)
 	{
-		options = options || {};
 		this._ctor(id,options);
 	}
 
@@ -12,6 +11,14 @@
 
 	Panel.prototype._ctor = function(id, options)
 	{
+		if(!options && id && id.constructor !== String)
+		{
+			options = id;
+			id = null;
+		}
+
+		options = options || {};
+
 		this.content = options.content || "";
 
 		var root = this.root = document.createElement("div");

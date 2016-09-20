@@ -8,14 +8,24 @@
 	*
 	* @class Area
 	* @constructor
+	* @param {String} id
+	* @param {Object} options
 	*/
-	function Area(id, options)
+	function Area( id, options )
 	{
+		if(!options && id && id.constructor !== String)
+		{
+			options = id;
+			id = null;
+		}
+
 		options = options || {};
 		/* the root element containing all sections */
 		var root = document.createElement("div");
 		root.className = "litearea";
 		if(id)
+			root.id = id;
+		if(options.id)
 			root.id = id;
 		if(options.className)
 			root.className +=  " " + options.className;
@@ -320,7 +330,7 @@
 			last_pos[1] = e.pageY;
 			e.stopPropagation();
 			e.preventDefault();
-			if(that.options.inmediateResize)
+			if(that.options.immediateResize || that.options.inmediateResize) //inmediate is for legacy...
 				that.onResize();
 		}
 

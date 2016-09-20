@@ -7,4 +7,5 @@
 ../src/tree.js
 ../src/panel.js
 ../src/dialog.js
+../src/table.js
 ../src/inspector.js

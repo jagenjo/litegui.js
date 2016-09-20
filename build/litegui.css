@@ -132,8 +132,10 @@
 
 .inspector .icon {
 	margin-right: 4px;
+	/*
 	margin-top: 2px;
 	margin-bottom: -2px;
+	*/
 }
 
 .inspector .wcontent .icon {
@@ -335,7 +337,7 @@
 }
 
 .inspector .wcontent .inputcombo {
-	border-bottom: 1px solid #888; 
+	border-bottom: 1px solid #666; 
 	border-top: 1px solid #111; 
 	/*
     background: -webkit-linear-gradient(#4B4947, #32302D) repeat scroll 0 0 transparent;
@@ -346,7 +348,8 @@
 }
 
 .inspector .wcontent .inputcombo select {
-	background: #333;
+	background: #262626;
+	text-align-last:center;
 }
 
 
@@ -365,6 +368,10 @@
 
 .inspector .wcontent input.string {
 	padding-left: 5px;
+}
+
+.inspector .wcontent input.fixed_size {
+	font-family: 'monospace','courier new';
 }
 
 .inspector .wcontent input.number {
@@ -540,8 +547,11 @@
 .inspector input.color {
 	text-align: center;
 	margin-top: 1px;
-	border: 0 !important;
+	/* border: 0 !important; */
 	border-radius: 2px !important;
+	border-bottom: 1px solid #666;
+    border-top: 1px solid #111;
+
 	width: -moz-calc(100% - 40px);
 	width: -webkit-calc(100% - 40px);
 	width: calc(100% - 40px);
@@ -1353,6 +1363,9 @@ a:hover {
 	cursor: default !important;
 }
 
+.litemenu-entry.has_submenu {
+	border-right: 2px solid cyan;
+}
 
 .litecontextualmenu {
 	position: fixed;
@@ -1395,7 +1408,7 @@ a:hover {
 }
 
 
-button {
+button.litebutton {
     background: -webkit-linear-gradient(#32302D, #4B4947) repeat scroll 0 0 transparent;
     background: -moz-linear-gradient(#32302D, #4B4947) repeat scroll 0 0 transparent;
     background: linear-gradient(#32302D, #4B4947) repeat scroll 0 0 transparent;
@@ -1410,23 +1423,23 @@ button {
     vertical-align: top;	
 }
 
-button:hover:not(:disabled) {
+button.litebutton:hover:not(:disabled) {
     background: #aab !important;
 }
 
-button:active:not(:disabled) {
+button.litebutton:active:not(:disabled) {
     background: #fff !important;
 }
 
-button:disabled {
+button.litebutton:disabled {
 	opacity: 0.5;
 }
 
-.litedialog .content button {
+.litedialog .content button.litebutton {
     vertical-align: initial;
 }
 
-.litedialog button.mini-button {
+.litedialog button.litebutton.mini-button {
 	margin: 2px 2px 0 0;
 	line-height: 0;
 	padding: 0;
@@ -1436,7 +1449,7 @@ button:disabled {
 	border: 1px solid #222;
 }
 
-button.close-button {
+button.litebutton.close-button {
 	background-size: 100% auto;
 }
 
@@ -1458,6 +1471,9 @@ button.close-button {
 	/*margin-top: 4px;*/
 	list-style-type: none;
 	border-bottom: 2px solid #666;
+
+	overflow: hidden;
+    white-space: nowrap;
 
 	-moz-box-sizing: border-box;	
 	-webkit-box-sizing: border-box;	
@@ -1681,6 +1697,11 @@ li.ltreeitem .ltreeitemtitle .postcontent {
 	margin-left: 4px;
 }
 
+
+li.ltreeitem.hidden, li.ltreeitem.filtered {
+	display: none;
+}
+
 .listbox {
 	font-size: 1em;
 	width: 0.9em;
@@ -1812,6 +1833,10 @@ ul.file-list li.file-item {
 	position: relative;
 }
 
+ul.file-list li.file-item.filtered {
+	display: none;
+}
+
 ul.file-list li.file-item .title {
 	display: block;
 	height: 20px;
@@ -1937,7 +1962,53 @@ textarea.textfield {
 	top: 0;
 	left: 0;
 	pointer-events: none;
-}/********************/
+}
+
+
+.ellipsis {
+  width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+table.litetable  {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+table.litetable tr {
+	display: block;
+	width: 100%;
+}
+
+table.litetable th, table.litetable td {
+	display: inline-block;
+	border-right: 1px solid rgba(0,0,0,0.2);
+}
+
+
+table.litetable  th {
+	color: #6c7ba7;
+	background: #272a30;
+	font-weight: bold;
+	/*
+    background: -webkit-linear-gradient(#4B4947,#32302D) repeat scroll 0 0 transparent;
+    background: -moz-linear-gradient(#4B4947,#32302D) repeat scroll 0 0 transparent;
+    background: linear-gradient(#4B4947,#32302D) repeat scroll 0 0 transparent;
+	*/
+}
+
+table.litetable  td {
+	padding: 2px 4px;
+}
+
+table.litetable  tr:nth-child(even)
+{
+	background: rgba(0,0,0,0.1);
+}
+/********************/
 .ui-slider {
     position: relative;
     text-align: left;

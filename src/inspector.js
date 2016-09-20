@@ -1665,7 +1665,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 			var j = 0;
 			for(var i in values)
 			{
-				if(values[j] == v)
+				if(values[i] == v) 
 				{
 					index = j;
 					break;
@@ -1677,20 +1677,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 
 		if(index == -1)
 			return;
-
-		for(var i in items)
-		{
-			var item = items[i];
-			if(!item || !item.dataset) //weird bug
-				continue;
-			if( parseFloat(item.dataset["index"]) == index )
-			{
-				item.setAttribute("selected", true);
-				select.selectedIndex = index;
-			}
-			else
-				item.removeAttribute("selected");
-		}
+		select.selectedIndex = index;
 	};
 
 	function setValues(v){

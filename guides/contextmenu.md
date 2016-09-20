@@ -50,7 +50,7 @@ To capture the right mouse click and show the context menu I suggest this exampl
 		if(e.button != 2) //right button
 			return false;
 	  //create the context menu
-	  var contextmenu = new LiteGUI.ContextMenu( actions, { callback: function(v){...} );
+	  var contextmenu = new LiteGUI.ContextMenu( actions, { callback: function(v){...}});
 		e.preventDefault(); 
 		return false;
 	});

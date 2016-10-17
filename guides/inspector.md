@@ -32,7 +32,7 @@ myelement.addChild( inspector.root );
 
 When adding widgets you can call the method inspector.add(...) where the parameters are:
 - **widget**: the name of the widget, like number, textarea, slider, combo, checkbox...
-- **name**: the title that appears next to the widget, if null no title will be shown.
+- **name**: the title that appears next to the widget, if null no title will be shown and the content will ocupy all the area.
 - **value**: the value to be shown on the widget
 - **options**: an object containing all the optional parameters for the widget.
 
@@ -45,7 +45,7 @@ inspector.add("string", "username", user.name, { name_width: 100 } );
 or the secondary way is by calling the method of the widget directly:
 
 ```javascript
-var username_widget = inspector.addSstring( "username", user.name, { name_width: 100 } );
+var username_widget = inspector.addString( "username", user.name, { name_width: 100 } );
 ```
 
 When creating a widget it will return the DOM object of the base container for that widget. You can use that object later to change the content.
@@ -136,7 +136,7 @@ When changing the value of a widget you can pass a secondary parameter of false 
 username_widget.setValue("foo",false);
 ```
 
-## Clearing ##
+## Clearing the Inspector 
 
 You can clear the inspector at any time to remove all the widgets:
 
@@ -163,6 +163,29 @@ my_instance.constructor["@property_name"] = { widget: "slider" };
 //or if it is a regular object
 my_instance["@property_name"] = { widget: "slider" };
 ```
+
+## Sections, Groups and Containers ##
+
+Every widget is added to the current section, if you want to create new sections you can call the ```addSection``` method, then you can add later widgets to that section. Sections can be collapsed.
+
+```javascript
+var section = inspector.addSection("My tools");
+//...
+inspector.setCurrentSection( section );
+```
+
+If you want to pack several widgets in a group so it can be collapsed (similar to a section but much simpler), then use ```beginGroup``` and ```endGroup```.
+
+Or if you just want to put the next widgets inside some DOM element for any reason, you can call ```startContainer``` and ```endContainer```.
+
+## Updating all widgets ##
+
+If you want to update the value of every widget in an inspector you can call the ```updateWidgets``` method.
+This will check all the widgets to see if the contain a on_update method, and if that is the case, it will call it.
+
+## Adapting size ##
+
+Because it is hard to know the height of all the widgets, you can call the method ```adjustHeight``` to adapt the current inspector size to the total height of the widgets.
 
 ## Adding custom widgets ##
 

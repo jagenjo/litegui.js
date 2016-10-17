@@ -136,6 +136,18 @@ When changing the value of a widget you can pass a secondary parameter of false 
 username_widget.setValue("foo",false);
 ```
 
+## Packing widgets ##
+
+You can put two or more widgets in the same line by changing the value ```widgets_per_row``` which controls how many widgets per row in the inspector:
+
+```javascript
+inspector.widgets_per_row = 2;
+inspector.addCheckbox(...);
+inspector.addCheckbox(...);
+inspector.widgets_per_row = 1;
+```
+
+
 ## Clearing the Inspector 
 
 You can clear the inspector at any time to remove all the widgets:

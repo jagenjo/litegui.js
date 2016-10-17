@@ -113,6 +113,7 @@ Every widget function allows to pass an object containing parameters for the wid
 - **width**: to select the widgets total width, this is used mostly in horizontal inspectors.
 - **height**: the height of the widget
 - **name_width**: the width of the name part of the widget
+- **content_width**: the width of the content part of the widget
 - **callback**: the function to call when the user interacts with the widget
 - **disabled**: if you want the widget to be disabled (not allow to interact)
 - **pretitle**: some HTML code to put before the name of the widget (used for special icons)

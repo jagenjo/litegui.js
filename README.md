@@ -26,7 +26,7 @@ some items to it. Please note that the javascript is brief on purpose and doesn'
 practices. The goal here is to get you up and running as fast as possible.
 
 Start with the following index.html:
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -46,7 +46,7 @@ Start with the following index.html:
 ```
 
 Add the following to init.js:
-```
+```javascript
 // Initialize litegui.js
 LiteGUI.init();
 
@@ -71,7 +71,7 @@ Now open index.html in your browser. You should see a menu bar on the top of the
 but it's not yet doing anything usefull. Let's fix that by adding a settings dialog
 
 Add the following code to init.js after the call to LiteGUI.init():
-```
+```javascript
 function createSettingsDialog() {
     // Create a new dialog
     var dialog = new LiteGUI.Dialog('Settings', { title:'Settings', close: true, minimize: false, width: 300, height: 500, scroll: false, resizable: false, draggable: true });
@@ -104,7 +104,7 @@ settingsDialog.hide();
 ```
 
 And change the initialization of the menu bar:
-```
+```javascript
 menu.add('File/Settings', {callback: function() { settingsDialog.show('fade'); } });
 ```
 

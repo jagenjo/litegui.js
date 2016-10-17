@@ -185,7 +185,7 @@ This will check all the widgets to see if the contain a on_update method, and if
 
 ## Adapting size ##
 
-When creating a dialog with an Inspector inside it is hard to know the height of all the widgets. Remember that you can call the method ```adjustHeight``` in the ```LiteGUI.Dialog``` to adapt the dialog height to the content.
+When creating a dialog with an Inspector inside it is hard to know the height of all the widgets. Remember that you can call the method ```adjustSize``` in the ```LiteGUI.Dialog``` to adapt the dialog height to the content.
 
 ## Adding custom widgets ##
 

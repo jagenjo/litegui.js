@@ -280,6 +280,7 @@
 	function Checkbox( value, on_change)
 	{
 		var that = this;
+		this.value = value;
 
 		var root = this.root = document.createElement("span");
 		root.className = "litecheckbox inputfield";
@@ -299,6 +300,9 @@
 
 		this.setValue = function(v)
 		{
+			if(this.value === v)
+				return;
+
 			if( this.root.dataset["value"] == v.toString())
 				return;
 
@@ -313,14 +317,17 @@
 				this.element.classList.remove("on");
 				this.element.classList.add("off");
 			}
+			var old_value = this.value;
+			this.value = v;
 
 			if(on_change)
-				on_change( v );
+				on_change( v, old_value );
 		}
 
 		this.getValue = function()
 		{
-			return this.root.dataset["value"] == "true";
+			return this.value;
+			//return this.root.dataset["value"] == "true";
 		}
 	}	
 

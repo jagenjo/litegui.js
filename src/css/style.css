@@ -292,6 +292,10 @@ button.litebutton.close-button {
 	opacity: 0.5;
 }
 
+.litetabs .wtab.autoswitch * {
+	pointer-events: none;
+}
+
 .litetabs li.wtab.selected {
 	color: #EEE !important;
 	background-color: #777;

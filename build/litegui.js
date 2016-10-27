@@ -150,7 +150,6 @@ var LiteGUI = {
 					writable: false,
 					value: dummy
 				});
-
 				element.__events.addEventListener( event, callback );
 			}
 		}
@@ -184,11 +183,14 @@ var LiteGUI = {
 	/**
 	* Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.
 	* @method remove
-	* @param {Object} litegui_element it also supports HTMLentity or selector string
+	* @param {Object} litegui_element it also supports HTMLentity, selector string or Array of elements
 	*/
 	remove: function( element )
 	{
-		if(element && element.constructor === String) //selector
+		if(!element)
+			return;
+
+		if( element.constructor === String) //selector
 		{
 			var elements = document.querySelectorAll( element );
 			for(var i = 0; i < elements.length; ++i)
@@ -197,6 +199,11 @@ var LiteGUI = {
 				if(element && element.parentNode)
 					element.parentNode.removeChild(element);
 			}
+		}
+		if( element.constructor === Array || element.constructor === NodeList ) 
+		{
+			for(var i = 0; i < element.length; ++i)
+				LiteGUI.remove( element[i] );
 		}
 		else if( element.root && element.root.parentNode ) //ltiegui widget
 			element.root.parentNode.removeChild( element.root );
@@ -280,14 +287,16 @@ var LiteGUI = {
 	* Copy a string to the clipboard (it needs to be invoqued from a click event)
 	* @method toClipboard
 	* @param {String} data
+	* @param {Boolean} force_local force to store the data in the browser clipboard (this one can be read back)
 	**/
-	toClipboard: function( object )
+	toClipboard: function( object, force_local )
 	{
 		if(object && object.constructor !== String )
 			object = JSON.stringify( object );
 
 		var input = null;
 		var in_clipboard = false;
+		if( !force_local )
 		try
 		{
 			var copySupported = document.queryCommandSupported('copy');
@@ -312,10 +321,10 @@ var LiteGUI = {
 
 	/**
 	* Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)
-	* @method getClipboard
+	* @method getLocalClipboard
 	* @return {String} clipboard
 	**/
-	getClipboard: function()
+	getLocalClipboard: function()
 	{
 		var data = localStorage.getItem("litegui_clipboard");
 		if(!data) 
@@ -1814,6 +1823,7 @@ function dataURItoBlob( dataURI ) {
 	function Checkbox( value, on_change)
 	{
 		var that = this;
+		this.value = value;
 
 		var root = this.root = document.createElement("span");
 		root.className = "litecheckbox inputfield";
@@ -1833,6 +1843,9 @@ function dataURItoBlob( dataURI ) {
 
 		this.setValue = function(v)
 		{
+			if(this.value === v)
+				return;
+
 			if( this.root.dataset["value"] == v.toString())
 				return;
 
@@ -1847,14 +1860,17 @@ function dataURItoBlob( dataURI ) {
 				this.element.classList.remove("on");
 				this.element.classList.add("off");
 			}
+			var old_value = this.value;
+			this.value = v;
 
 			if(on_change)
-				on_change( v );
+				on_change( v, old_value );
 		}
 
 		this.getValue = function()
 		{
-			return this.root.dataset["value"] == "true";
+			return this.value;
+			//return this.root.dataset["value"] == "true";
 		}
 	}	
 
@@ -3412,7 +3428,11 @@ function dataURItoBlob( dataURI ) {
 
 	/**
 	* Widget that contains several tabs and their content
-	*
+	* Options:
+	* - mode: "vertical","horizontal"
+	* - size
+	* - width,height
+	* - autoswitch: allow autoswitch (switch when mouse over)
 	* @class Tabs
 	* @constructor
 	*/
@@ -3610,7 +3630,18 @@ function dataURItoBlob( dataURI ) {
 	* Create a new tab, where id is a unique identifier
 	* @method addTab
 	* @param {String} id could be null then a random id is generated
-	* @param {Object} options { title: tab text, callback: called when selected, callback_leave: callback when leaving, content: HTML content, closable: if it can be closed (callback is onclose), tab_width: size of the tab, tab_className: classes for the tab element, id: content id, size: full means all, mode: "vertical" or "horizontal", button: if it is a button tab, not a selectable tab}
+	* @param {Object} options { 
+	*	title: tab text, 
+	*	callback: called when selected, 
+	*	callback_leave: callback when leaving, 
+	*	content: HTML content, closable: if it can be closed (callback is onclose), 
+	*	tab_width: size of the tab,
+	*	tab_className: classes for the tab element,
+	*	id: content id,
+	*	size: full means all,
+	*	mode: "vertical" or "horizontal",
+	*	button: if it is a button tab, not a selectable tab
+	*	}
 	* @param {bool} skip_event prevent dispatching events
 	* @return {Object} an object containing { id, tab, content }
 	*/
@@ -3647,7 +3678,7 @@ function dataURItoBlob( dataURI ) {
 				e.stopPropagation();
 			},true);
 		}
-		//WARNING: do not modify element.innerHTML or event will be lost
+		//WARNING: do not modify element.innerHTML or events will be lost
 
 		if( options.index !== undefined )
 		{
@@ -3667,6 +3698,30 @@ function dataURItoBlob( dataURI ) {
 			element.style.width = options.tab_width.constructor === Number ? ( options.tab_width.toFixed(0) + "px" ) : options.tab_width;
 			element.style.minWidth = "0";
 		}
+
+		if(this.options.autoswitch)
+		{
+			element.classList.add("autoswitch");
+			element.addEventListener("dragenter",function(e){
+				//console.log("Enter",this.dataset["id"]);
+				if(that._timeout_mouseover)
+					clearTimeout(that._timeout_mouseover);
+				that._timeout_mouseover = setTimeout((function(){
+					LiteGUI.trigger(this,"click");
+					that._timeout_mouseover = null;
+				}).bind(this),1500);
+			});
+			
+			element.addEventListener("dragleave",function(e){
+				//console.log("Leave",this.dataset["id"]);
+				if(that._timeout_mouseover)
+				{
+					clearTimeout(that._timeout_mouseover);
+					that._timeout_mouseover = null;
+				}
+			});
+		}
+
 
 		//the content of the tab
 		var content = document.createElement("div");
@@ -3763,7 +3818,7 @@ function dataURItoBlob( dataURI ) {
 
 		this.recomputeTabsByIndex();
 
-		//context
+		//context menu
 		element.addEventListener("contextmenu", (function(e) { 
 			if(e.button != 2) //right button
 				return false;
@@ -4093,6 +4148,8 @@ function dataURItoBlob( dataURI ) {
 		element.dragger = dragger;
 
 		dragger.addEventListener("mousedown",inner_down);
+		input.addEventListener("wheel",inner_wheel,false);
+		input.addEventListener("mousewheel",inner_wheel,false);
 
 		function inner_down(e)
 		{
@@ -4125,6 +4182,17 @@ function dataURItoBlob( dataURI ) {
 			e.preventDefault();
 			return false;
 		};
+
+		function inner_wheel(e)
+		{
+			//console.log("wheel!");
+			if(document.activeElement !== this)
+				return;
+			var delta = e.wheelDelta !== undefined ? e.wheelDelta : (e.deltaY ? -e.deltaY/3 : 0);
+			inner_inc( delta > 0 ? 1 : -1, e );
+			e.stopPropagation();
+			e.preventDefault();
+		}
 
 		function inner_up(e)
 		{
@@ -6547,7 +6615,10 @@ Inspector.prototype.append = function( widget, options )
 	if(options.replace)
 		options.replace.parentNode.replaceChild( widget, options.replace );
 	else
+	{
+		widget.section = this.current_section;
 		root.appendChild( widget );
+	}
 }
 
 Inspector.prototype.pushContainer = function( container )
@@ -6834,6 +6905,7 @@ Inspector.assignValue = function(value)
 * @param {object} options some generic options that any widget could have:
 * - width: the width of the widget (if omited it will use the Inspector widgets_width, otherwise 100%
 * - name_width: the width of the name part of the widget, if not specified it will use Inspector name_width, otherwise css default
+* - content_width: the width of the widget content area
 * - pre_title: string to append to the left side of the name, this is helpful if you want to add icons with behaviour when clicked
 * - title: string to replace the name, sometimes you want to supply a different name than the one you want to show (this is helpful to retrieve values from an inspector)
 */
@@ -6880,12 +6952,15 @@ Inspector.prototype.createWidget = function(name, content, options)
 	var contentwidth = "";
 	if( (name !== undefined && name !== null) && (this.name_width || options.name_width) && !this.one_line)
 	{
-		var w = options.name_width || this.name_width;
-		if(w !== undefined && w.constructor === Number)
-			w = w.toFixed() + "px";
+		var w = LiteGUI.sizeToCSS( options.name_width || this.name_width );
 		namewidth = "style='width: calc(" + w + " - 0px); width: -webkit-calc(" + w + " - 0px); width: -moz-calc(" + w + " - 0px); '"; //hack 
 		contentwidth = "style='width: calc( 100% - " + w + "); width: -webkit-calc(100% - " + w + "); width: -moz-calc( 100% - " + w + "); '";
 	}
+
+	if(options.name_width)
+		namewidth = "style='width: "+ LiteGUI.sizeToCSS(options.name_width)+" '";
+	if(options.content_width)
+		contentwidth = "style='width: "+ LiteGUI.sizeToCSS(options.content_width)+" '";
 
 	var code = "";
 	var pretitle = "";
@@ -6927,6 +7002,18 @@ Inspector.prototype.createWidget = function(name, content, options)
 //calls callback, triggers wchange, calls onchange in Inspector
 Inspector.onWidgetChange = function( element, name, value, options, expand_value, event )
 {
+	var section = element.section; //this.current_section
+
+	if(!options.skip_wchange)
+	{
+		if(section)
+			LiteGUI.trigger( section, "wbeforechange", value );
+		//$(this.current_section).trigger("wbeforechange",value); //used for undo //TODO: use LiteGUI.trigger
+		LiteGUI.trigger( element, "wbeforechange", value );
+		//$(element).trigger("wbeforechange",value); //TODO: REPLACE by LiteGUI.trigger
+	}
+
+	//assign and launch callbacks
 	this.values[ name ] = value;
 	var r = undefined;
 	if(options.callback)
@@ -6939,11 +7026,13 @@ Inspector.onWidgetChange = function( element, name, value, options, expand_value
 
 	if(!options.skip_wchange)
 	{
-		//LiteGUI.trigger( this.current_section, "wchange", value );
-		$(this.current_section).trigger("wchange",value); //used for undo //TODO: use LiteGUI.trigger
-		//LiteGUI.trigger( element, "wchange", value );
-		$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
+		if(section)
+			LiteGUI.trigger( section, "wchange", value );
+		//$(this.current_section).trigger("wchange",value); //used for undo //TODO: use LiteGUI.trigger
+		LiteGUI.trigger( element, "wchange", value );
+		//$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
 	}
+
 	if(this.onchange) 
 		this.onchange(name, value, element);
 	return r;
@@ -7293,7 +7382,10 @@ Inspector.prototype.addNumber = function(name, value, options)
 	options.full = true;
 	this.tab_index++;
 
-	var dragger = new LiteGUI.Dragger(value, options);
+	
+	var dragger = null;
+	
+	dragger = new LiteGUI.Dragger(value, options);
 	dragger.root.style.width = "calc( 100% - 1px )";
 	element.querySelector(".wcontent").appendChild( dragger.root );
 	dragger.root.addEventListener("start_dragging", inner_before_change.bind(options) );
@@ -7309,7 +7401,10 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 	var input = element.querySelector("input");
 	
-	$(input).change( function(e) { 
+	input.addEventListener("change", function(e) { 
+
+		LiteGUI.trigger( element, "wbeforechange", e.target.value );
+
 		that.values[name] = e.target.value;
 		//Inspector.onWidgetChange.call(that,this,name,ret, options);
 
@@ -7319,8 +7414,9 @@ Inspector.prototype.addNumber = function(name, value, options)
 			if( typeof(ret) == "number")
 				this.value = ret;
 		}
-		$(element).trigger("wchange",e.target.value);
-		if(that.onchange) that.onchange(name,e.target.value,element);
+		LiteGUI.trigger( element, "wchange", e.target.value );
+		if(that.onchange)
+			that.onchange(name,e.target.value,element);
 	});
 
 	element.setValue = function( v, skip_event) { 
@@ -7328,7 +7424,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 			return;
 		v = parseFloat(v);
 		if(options.precision)
-			v = v.toFixed( options.precision );
+			v = v.toFixed( options.step && options.step < options.precision ? options.step : options.precision );
 		v += (options.units || "");
 		if(input.value == v)
 			return;
@@ -7401,11 +7497,14 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 	//jQUERY for ALL INPUTS
 	$(element).find("input").change( function(e) { 
+
 		//gather all three parameters
 		var r = [];
 		var elems = $(element).find("input");
 		for(var i = 0; i < elems.length; i++)
 			r.push( parseFloat( elems[i].value ) );
+
+		LiteGUI.trigger( element, "wbeforechange", [r] );
 
 		that.values[name] = r;
 
@@ -7421,8 +7520,9 @@ Inspector.prototype.addVector2 = function(name,value, options)
 			}
 		}
 
-		$(element).trigger("wchange",[r]);
-		if(that.onchange) that.onchange(name,r,element);
+		LiteGUI.trigger( element, "wchange", [r] );
+		if(that.onchange)
+			that.onchange(name,r,element);
 	});
 
 	this.append(element,options);
@@ -7509,6 +7609,8 @@ Inspector.prototype.addVector3 = function(name,value, options)
 		for(var i = 0; i < elems.length; i++)
 			r.push( parseFloat( elems[i].value ) );
 
+		LiteGUI.trigger( element, "wbeforechange", [r] );
+
 		that.values[name] = r;
 
 		if(options.callback)
@@ -7523,8 +7625,9 @@ Inspector.prototype.addVector3 = function(name,value, options)
 			}
 		}
 
-		$(element).trigger("wchange",[r]);
-		if(that.onchange) that.onchange(name,r,element);
+		LiteGUI.trigger( element, "wchange",[r]);
+		if(that.onchange)
+			that.onchange(name,r,element);
 	});
 
 	this.append(element,options);
@@ -7602,6 +7705,8 @@ Inspector.prototype.addVector4 = function(name,value, options)
 		for(var i = 0; i < elems.length; i++)
 			r.push( parseFloat( elems[i].value ) );
 
+		LiteGUI.trigger( element, "wbeforechange", [r] );
+
 		that.values[name] = r;
 
 		if(options.callback)
@@ -7615,7 +7720,7 @@ Inspector.prototype.addVector4 = function(name,value, options)
 			}
 		}
 
-		$(element).trigger("wchange",[r]);
+		LiteGUI.trigger( element, "wchange",[r]);
 		if(that.onchange)
 			that.onchange(name,r,element);
 	});
@@ -7723,6 +7828,9 @@ Inspector.prototype.addPad = function(name,value, options)
 			y = y * (maxy - miny) + minx;
 
 			var r = [x,y];
+
+			LiteGUI.trigger( element, "wbeforechange", [r] );
+
 			element.setValue(r);
 
 			if(options.callback)
@@ -7734,7 +7842,8 @@ Inspector.prototype.addPad = function(name,value, options)
 						element.setValue( new_val );
 				}
 			}
-			$(element).trigger("wchange",[r]);
+			
+			LiteGUI.trigger( element, "wchange",[r]);
 			if(that.onchange)
 				that.onchange(name,r,element);
 		}
@@ -7882,7 +7991,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 		var v = parseFloat( this.value );
 		value = v;
 		slider.setValue( v );
-		Inspector.onWidgetChange.call(that,element,name,v, options);
+		Inspector.onWidgetChange.call( that,element,name,v, options );
 	});
 
 	//Slider change -> update Text
@@ -7974,7 +8083,7 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 * @param {Object} optional object with extra flags to insert
 * @return {HTMLElement} the widget in the form of the DOM element that contains it
 **/
-Inspector.prototype.addFlags = function(flags, force_flags)
+Inspector.prototype.addFlags = function(flags, force_flags, options)
 {
 	var f = {};
 	for(var i in flags)
@@ -7986,12 +8095,17 @@ Inspector.prototype.addFlags = function(flags, force_flags)
 
 	for(var i in f)
 	{
-		this.addCheckbox(i, f[i], { callback: (function(j) {
-			return function(v) { 
-				flags[j] = v;
-			}
-		})(i)
-		});
+		var flag_options = {};
+		for(var j in options)
+			flag_options[j] = options[j];
+
+		flag_options.callback = (function(j) {
+				return function(v) { 
+					flags[j] = v;
+				}
+			})(i);
+
+		this.addCheckbox(i, f[i], flag_options );
 	}
 }
 
@@ -8048,12 +8162,13 @@ Inspector.prototype.addCombo = function(name, value, options)
 	select.addEventListener("change", function(e) { 
 		var index = e.target.value;
 		var value = values[index];
-		Inspector.onWidgetChange.call(that,element,name,value, options);
+		Inspector.onWidgetChange.call( that,element,name,value, options );
 	});
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v, skip_event) { 
 		if(v === undefined)
 			return;
+		value = v;
 		var select = element.querySelector("select");
 		var items = select.querySelectorAll("option");
 		var index =  -1;
@@ -8093,11 +8208,12 @@ Inspector.prototype.addCombo = function(name, value, options)
 		}
 	};
 
-	function setValues(v){
+	function setValues(v, selected){
 		if(!v)
 			v = [];
 		values = v;
-
+		if(selected)
+			value = selected;
 		var code = "";
 		var index = 0;
 		for(var i in values)
@@ -8134,7 +8250,8 @@ Inspector.prototype.addComboButtons = function(name, value, options)
 			code += "<button class='wcombobutton "+(value == options.values[i] ? "selected":"")+"' data-name='options.values[i]'>" + options.values[i] + "</button>";
 
 	var element = this.createWidget(name,code, options);
-	$(element).find(".wcontent button").click( function(e) { 
+	var buttons = element.querySelectorAll( ".wcontent button" );
+	LiteGUI.bind( buttons, "click", function(e) { 
 
 		var buttonname = e.target.innerHTML;
 		that.values[name] = buttonname;
@@ -8182,6 +8299,8 @@ Inspector.prototype.addTags = function(name, value, options)
 		if( element.tags[tagname] )
 			return; //repeated tags no
 
+		LiteGUI.trigger( element, "wbeforechange", element.tags);
+
 		element.tags[tagname] = true;
 
 		var tag = document.createElement("div");
@@ -8202,9 +8321,10 @@ Inspector.prototype.addTags = function(name, value, options)
 		that.values[name] = element.tags;
 		if(options.callback)
 			options.callback.call( element, element.tags ); 
-		$(element).trigger("wchange",element.tags);
-		$(element).trigger("wadded",tagname);
-		if(that.onchange) that.onchange(name, element.tags, element);
+		LiteGUI.trigger( element, "wchange", element.tags);
+		LiteGUI.trigger( element, "wadded", tagname);
+		if(that.onchange)
+			that.onchange(name, element.tags, element);
 	}
 
 	this.append(element,options);
@@ -8220,6 +8340,7 @@ Inspector.prototype.addTags = function(name, value, options)
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - multiselection: allow multiple selection
 * - callback: function to call once an items is clicked
+* - selected: the item selected
 * @return {HTMLElement} the widget in the form of the DOM element that contains it
 **/
 Inspector.prototype.addList = function(name, values, options)
@@ -8286,6 +8407,9 @@ Inspector.prototype.addList = function(name, values, options)
 		item_selected = item_selected || options.selected;
 		var code = "";
 		values = new_values;
+		var ul = this.querySelector("ul");
+		ul.innerHTML = "";
+
 		if(values)
 			for(var i in values)
 			{
@@ -8294,6 +8418,8 @@ Inspector.prototype.addList = function(name, values, options)
 				if(!item_name)
 					item_name = i;
 				var item_title = item_name.constructor === String ? item_name : i;
+				var item_style = null;
+				item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
 
 				var icon = "";
 				if( value === null || value === undefined )
@@ -8307,6 +8433,7 @@ Inspector.prototype.addList = function(name, values, options)
 				else if( value )
 				{
 					item_title = value.content || value.name || i;
+					item_style = value.style;
 					if(value.icon)
 						icon = "<img src='"+value.icon+"' class='icon' />";
 				}
@@ -8314,11 +8441,21 @@ Inspector.prototype.addList = function(name, values, options)
 				var selected = false;
 				if( (typeof(values[i]) == "object" && values[i].selected) || (item_selected == values[i]) )
 					selected = true;
-				code += "<li class='item-" + i + " " + (selected ? "selected":"") + "' data-name='" + item_name + "' data-pos='"+i+"'>" + icon + item_title + "</li>";
+				var li_element = document.createElement("li");
+				li_element.classList.add( 'item-' + i );
+				if( selected )
+					li_element.classList.add( 'selected' );
+				li_element.dataset["name"] = item_name;
+				li_element.dataset["pos"] = i;
+				if(item_style)
+					li_element.setAttribute("style", item_style );
+				li_element.innerHTML = icon + item_title;
+				//code += "<li class='item-" + i + " " + (selected ? "selected":"") + "' data-name='" + item_name + "' data-pos='"+i+"' "+item_style+">" + icon + item_title + "</li>";
+				ul.appendChild( li_element );
+				li_element.addEventListener( "click", inner_item_click );
 			}
 
-		var ul = this.querySelector("ul");
-		ul.innerHTML = code;
+		//ul.innerHTML = code;
 		LiteGUI.bind( ul.querySelectorAll("li"), "click", inner_item_click );
 		//$(this).find(".wcontent li").click( inner_item_click );
 	}
@@ -8333,7 +8470,7 @@ Inspector.prototype.addList = function(name, values, options)
 		}
 	}
 
-	element.updateItems(values);
+	element.updateItems( values, options.selected );
 	this.append(element,options);
 
 	element.getSelected = function()
@@ -8626,11 +8763,12 @@ Inspector.prototype.addColor = function( name, value, options )
 	{
 		var v = [ myColor.rgb[0] * myColor.rgb_intensity, myColor.rgb[1] * myColor.rgb_intensity, myColor.rgb[2] * myColor.rgb_intensity ];
 		//Inspector.onWidgetChange.call(that,element,name,v, options);
-
+		var event_data = [v.concat(), myColor.toString()];
+		LiteGUI.trigger( element, "wbeforechange", event_data );
 		that.values[name] = v;
 		if(options.callback)
 			options.callback.call( element, v.concat(), "#" + myColor.toString(), myColor );
-		$(element).trigger("wchange",[v.concat(), myColor.toString()]);
+		LiteGUI.trigger( element, "wchange", event_data );
 		if(that.onchange) that.onchange(name, v.concat(), element);
 	}
 
@@ -8706,9 +8844,10 @@ Inspector.prototype.addLine = function(name, value, options)
 	$(element).find("span.line-editor").append(line_editor);
 
 	$(line_editor).change( function(e) { 
+		LiteGUI.trigger(element, "wbeforechange",[e.target.value]);
 		if(options.callback)
 			options.callback.call( element,e.target.value );
-		$(element).trigger("wchange",[e.target.value]);
+		LiteGUI.trigger(element, "wchange",[e.target.value]);
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 	});
 
@@ -9214,7 +9353,7 @@ Inspector.prototype.updateWidgets = function()
 	{
 		var widget = this.widgets[i];
 		if(widget.on_update)
-			widget.on_update();
+			widget.on_update( widget );
 	}
 }
 

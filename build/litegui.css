@@ -49,6 +49,7 @@
 
 	vertical-align: top;
 	min-height: 1.2em;
+	/*user-select: none;*/
 }
 
 .inspector:not(.one_line) .widget.even {
@@ -1530,6 +1531,10 @@ button.litebutton.close-button {
 
 .litetabs.vertical > ul.wtabcontainer > li.wtab .tabbigicon {
 	opacity: 0.5;
+}
+
+.litetabs .wtab.autoswitch * {
+	pointer-events: none;
 }
 
 .litetabs li.wtab.selected {

@@ -61,6 +61,8 @@
 		element.dragger = dragger;
 
 		dragger.addEventListener("mousedown",inner_down);
+		input.addEventListener("wheel",inner_wheel,false);
+		input.addEventListener("mousewheel",inner_wheel,false);
 
 		function inner_down(e)
 		{
@@ -93,6 +95,17 @@
 			e.preventDefault();
 			return false;
 		};
+
+		function inner_wheel(e)
+		{
+			//console.log("wheel!");
+			if(document.activeElement !== this)
+				return;
+			var delta = e.wheelDelta !== undefined ? e.wheelDelta : (e.deltaY ? -e.deltaY/3 : 0);
+			inner_inc( delta > 0 ? 1 : -1, e );
+			e.stopPropagation();
+			e.preventDefault();
+		}
 
 		function inner_up(e)
 		{

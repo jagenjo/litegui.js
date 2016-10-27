@@ -4,7 +4,11 @@
 
 	/**
 	* Widget that contains several tabs and their content
-	*
+	* Options:
+	* - mode: "vertical","horizontal"
+	* - size
+	* - width,height
+	* - autoswitch: allow autoswitch (switch when mouse over)
 	* @class Tabs
 	* @constructor
 	*/
@@ -202,7 +206,18 @@
 	* Create a new tab, where id is a unique identifier
 	* @method addTab
 	* @param {String} id could be null then a random id is generated
-	* @param {Object} options { title: tab text, callback: called when selected, callback_leave: callback when leaving, content: HTML content, closable: if it can be closed (callback is onclose), tab_width: size of the tab, tab_className: classes for the tab element, id: content id, size: full means all, mode: "vertical" or "horizontal", button: if it is a button tab, not a selectable tab}
+	* @param {Object} options { 
+	*	title: tab text, 
+	*	callback: called when selected, 
+	*	callback_leave: callback when leaving, 
+	*	content: HTML content, closable: if it can be closed (callback is onclose), 
+	*	tab_width: size of the tab,
+	*	tab_className: classes for the tab element,
+	*	id: content id,
+	*	size: full means all,
+	*	mode: "vertical" or "horizontal",
+	*	button: if it is a button tab, not a selectable tab
+	*	}
 	* @param {bool} skip_event prevent dispatching events
 	* @return {Object} an object containing { id, tab, content }
 	*/
@@ -239,7 +254,7 @@
 				e.stopPropagation();
 			},true);
 		}
-		//WARNING: do not modify element.innerHTML or event will be lost
+		//WARNING: do not modify element.innerHTML or events will be lost
 
 		if( options.index !== undefined )
 		{
@@ -259,6 +274,30 @@
 			element.style.width = options.tab_width.constructor === Number ? ( options.tab_width.toFixed(0) + "px" ) : options.tab_width;
 			element.style.minWidth = "0";
 		}
+
+		if(this.options.autoswitch)
+		{
+			element.classList.add("autoswitch");
+			element.addEventListener("dragenter",function(e){
+				//console.log("Enter",this.dataset["id"]);
+				if(that._timeout_mouseover)
+					clearTimeout(that._timeout_mouseover);
+				that._timeout_mouseover = setTimeout((function(){
+					LiteGUI.trigger(this,"click");
+					that._timeout_mouseover = null;
+				}).bind(this),1500);
+			});
+			
+			element.addEventListener("dragleave",function(e){
+				//console.log("Leave",this.dataset["id"]);
+				if(that._timeout_mouseover)
+				{
+					clearTimeout(that._timeout_mouseover);
+					that._timeout_mouseover = null;
+				}
+			});
+		}
+
 
 		//the content of the tab
 		var content = document.createElement("div");
@@ -355,7 +394,7 @@
 
 		this.recomputeTabsByIndex();
 
-		//context
+		//context menu
 		element.addEventListener("contextmenu", (function(e) { 
 			if(e.button != 2) //right button
 				return false;

@@ -149,7 +149,6 @@ var LiteGUI = {
 					writable: false,
 					value: dummy
 				});
-
 				element.__events.addEventListener( event, callback );
 			}
 		}
@@ -183,11 +182,14 @@ var LiteGUI = {
 	/**
 	* Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.
 	* @method remove
-	* @param {Object} litegui_element it also supports HTMLentity or selector string
+	* @param {Object} litegui_element it also supports HTMLentity, selector string or Array of elements
 	*/
 	remove: function( element )
 	{
-		if(element && element.constructor === String) //selector
+		if(!element)
+			return;
+
+		if( element.constructor === String) //selector
 		{
 			var elements = document.querySelectorAll( element );
 			for(var i = 0; i < elements.length; ++i)
@@ -196,6 +198,11 @@ var LiteGUI = {
 				if(element && element.parentNode)
 					element.parentNode.removeChild(element);
 			}
+		}
+		if( element.constructor === Array || element.constructor === NodeList ) 
+		{
+			for(var i = 0; i < element.length; ++i)
+				LiteGUI.remove( element[i] );
 		}
 		else if( element.root && element.root.parentNode ) //ltiegui widget
 			element.root.parentNode.removeChild( element.root );
@@ -279,14 +286,16 @@ var LiteGUI = {
 	* Copy a string to the clipboard (it needs to be invoqued from a click event)
 	* @method toClipboard
 	* @param {String} data
+	* @param {Boolean} force_local force to store the data in the browser clipboard (this one can be read back)
 	**/
-	toClipboard: function( object )
+	toClipboard: function( object, force_local )
 	{
 		if(object && object.constructor !== String )
 			object = JSON.stringify( object );
 
 		var input = null;
 		var in_clipboard = false;
+		if( !force_local )
 		try
 		{
 			var copySupported = document.queryCommandSupported('copy');
@@ -311,10 +320,10 @@ var LiteGUI = {
 
 	/**
 	* Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)
-	* @method getClipboard
+	* @method getLocalClipboard
 	* @return {String} clipboard
 	**/
-	getClipboard: function()
+	getLocalClipboard: function()
 	{
 		var data = localStorage.getItem("litegui_clipboard");
 		if(!data) 

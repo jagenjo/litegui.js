@@ -193,7 +193,7 @@ Or if you just want to put the next widgets inside some DOM element for any reas
 ## Updating all widgets ##
 
 If you want to update the value of every widget in an inspector you can call the ```updateWidgets``` method.
-This will check all the widgets to see if the contain a on_update method, and if that is the case, it will call it.
+This will check all the widgets to see if the contain a ```callback_update``` method in its options or a ```on_update``` in the widget, and if that is the case, it will call it. This is helpful when you dont want to rebuild all the widgets everytime a value has changed.
 
 ## Adapting size ##
 

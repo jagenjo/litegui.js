@@ -628,6 +628,9 @@ Inspector.registerWidget = function(name, callback)
 **/
 Inspector.prototype.add = function( type, name, value, options )
 {
+	if(!type)
+		throw("Inspector: no type specified");
+
 	//type could be an object with every parameter contained inside
 	if( arguments.length == 1 && typeof(type) == "object" )
 	{
@@ -1689,11 +1692,15 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'></select>";
 	element.querySelector("span.inputcombo").innerHTML = code;
 	setValues(values);
+	
+	var stop_event = false; //used internally
 
 	var select = element.querySelector(".wcontent select");
 	select.addEventListener("change", function(e) { 
 		var index = e.target.value;
 		var value = values[index];
+		if(stop_event)
+			return;
 		Inspector.onWidgetChange.call( that,element,name,value, options );
 	});
 
@@ -1724,6 +1731,8 @@ Inspector.prototype.addCombo = function(name, value, options)
 
 		if(index == -1)
 			return;
+			
+		stop_event = skip_event;
 
 		for(var i in items)
 		{
@@ -1738,6 +1747,8 @@ Inspector.prototype.addCombo = function(name, value, options)
 			else
 				item.removeAttribute("selected");
 		}
+		
+		stop_event = false;
 	};
 
 	function setValues(v, selected){
@@ -1934,6 +1945,12 @@ Inspector.prototype.addList = function(name, values, options)
 		$(element).trigger("wadded",value);
 	}
 
+	function inner_item_dblclick(e) { 
+		var value = values[ this.dataset["pos"] ];
+		if(options.callback_dblclick)
+			options.callback_dblclick.call(that,value);
+	}
+
 	element.updateItems = function( new_values, item_selected )
 	{
 		item_selected = item_selected || options.selected;
@@ -1951,7 +1968,8 @@ Inspector.prototype.addList = function(name, values, options)
 					item_name = i;
 				var item_title = item_name.constructor === String ? item_name : i;
 				var item_style = null;
-				item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
+				if(item_name && item_name.constructor === String)
+					item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
 
 				var icon = "";
 				if( value === null || value === undefined )
@@ -1974,7 +1992,7 @@ Inspector.prototype.addList = function(name, values, options)
 				if( (typeof(values[i]) == "object" && values[i].selected) || (item_selected == values[i]) )
 					selected = true;
 				var li_element = document.createElement("li");
-				li_element.classList.add( 'item-' + i );
+				li_element.classList.add( 'item-' + LiteGUI.safeName(i) );
 				if( selected )
 					li_element.classList.add( 'selected' );
 				li_element.dataset["name"] = item_name;
@@ -1985,6 +2003,8 @@ Inspector.prototype.addList = function(name, values, options)
 				//code += "<li class='item-" + i + " " + (selected ? "selected":"") + "' data-name='" + item_name + "' data-pos='"+i+"' "+item_style+">" + icon + item_title + "</li>";
 				ul.appendChild( li_element );
 				li_element.addEventListener( "click", inner_item_click );
+				if(options.callback_dblclick)
+					li_element.addEventListener( "dblclick", inner_item_dblclick );
 			}
 
 		//ul.innerHTML = code;
@@ -2641,8 +2661,10 @@ Inspector.prototype.addSection = function( name, options )
 	this.root.appendChild( element );
 	this.sections.push( element );
 
+	element.sectiontitle = element.querySelector(".wsectiontitle");
+
 	if(name)
-		element.querySelector(".wsectiontitle").addEventListener("click",function(e) {
+		element.sectiontitle.addEventListener("click",function(e) {
 			if(e.target.localName == "button") 
 				return;
 			element.classList.toggle("collapsed");

@@ -1047,6 +1047,11 @@ var LiteGUI = {
 		return o;
 	},
 
+	safeName: function( str )
+	{
+		return String(str).replace(/[\s\.]/g, '');
+	},
+
 	//those useful HTML unicode codes that I never remeber but I always need
 	special_codes: {
 		close: "&#10005;",

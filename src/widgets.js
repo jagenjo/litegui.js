@@ -89,7 +89,7 @@
 		{
 			this.parentMenu = options.parentMenu;
 			this.parentMenu.lock = true;
-			this.parentMenu.openSubmenu = this;
+			this.parentMenu.current_submenu = this;
 		}
 
 		var root = document.createElement("div");
@@ -109,6 +109,15 @@
 			e.preventDefault(); 
 			return false;
 		},true);
+
+		root.addEventListener("mousedown", function(e){ 
+			if(e.button == 2)
+			{
+				that.close();
+				e.preventDefault(); return true; 
+			}
+		}, true);
+
 
 		this.root = root;
 
@@ -167,17 +176,26 @@
 			root.appendChild(element);
 			if(!disabled)
 				element.addEventListener("click", inner_onclick);
+			if(options.autoopen)
+				element.addEventListener("mouseenter", inner_over);
 			num++;
+		}
+
+		function inner_over(e)
+		{
+			var value = this.value;
+			if(!value || !value.has_submenu)
+				return;
+			inner_onclick.call(this,e);
 		}
 
 		//menu option clicked
 		function inner_onclick(e) {
-
 			var value = this.value;
 			var close_parent = true;
 
-			if(that.openSubmenu)
-				that.openSubmenu.close();
+			if(that.current_submenu)
+				that.current_submenu.close(e);
 
 			//global callback
 			if(options.callback) 
@@ -205,7 +223,8 @@
 						event: e,
 						parentMenu: that,
 						ignore_item_callbacks: value.submenu.ignore_item_callbacks,
-						title: value.submenu.title
+						title: value.submenu.title,
+						autoopen: options.autoopen
 					});
 					close_parent = false;
 				}
@@ -257,19 +276,21 @@
 		root.style.top = top  + "px";
 	}
 
-	ContextMenu.prototype.close = function(e)
+	ContextMenu.prototype.close = function(e, ignore_parent_menu)
 	{
 		if(this.root.parentNode)
 			this.root.parentNode.removeChild( this.root );
-		if(this.parentMenu)
+		if(this.parentMenu && !ignore_parent_menu)
 		{
 			this.parentMenu.lock = false;
-			this.parentMenu.openSubmenu = null;
+			this.parentMenu.current_submenu = null;
 			if( e === undefined )
 				this.parentMenu.close();
 			else if( e && !LiteGUI.isCursorOverElement( e, this.parentMenu.root) )
 				LiteGUI.trigger( this.parentMenu.root, "mouseleave", e );
 		}
+		if(this.current_submenu)
+			this.current_submenu.close(e, true);
 	}
 
 	LiteGUI.ContextMenu = ContextMenu;

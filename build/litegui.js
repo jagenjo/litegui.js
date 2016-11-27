@@ -1048,6 +1048,11 @@ var LiteGUI = {
 		return o;
 	},
 
+	safeName: function( str )
+	{
+		return String(str).replace(/[\s\.]/g, '');
+	},
+
 	//those useful HTML unicode codes that I never remeber but I always need
 	special_codes: {
 		close: "&#10005;",
@@ -1632,7 +1637,7 @@ function dataURItoBlob( dataURI ) {
 		{
 			this.parentMenu = options.parentMenu;
 			this.parentMenu.lock = true;
-			this.parentMenu.openSubmenu = this;
+			this.parentMenu.current_submenu = this;
 		}
 
 		var root = document.createElement("div");
@@ -1652,6 +1657,15 @@ function dataURItoBlob( dataURI ) {
 			e.preventDefault(); 
 			return false;
 		},true);
+
+		root.addEventListener("mousedown", function(e){ 
+			if(e.button == 2)
+			{
+				that.close();
+				e.preventDefault(); return true; 
+			}
+		}, true);
+
 
 		this.root = root;
 
@@ -1710,17 +1724,26 @@ function dataURItoBlob( dataURI ) {
 			root.appendChild(element);
 			if(!disabled)
 				element.addEventListener("click", inner_onclick);
+			if(options.autoopen)
+				element.addEventListener("mouseenter", inner_over);
 			num++;
+		}
+
+		function inner_over(e)
+		{
+			var value = this.value;
+			if(!value || !value.has_submenu)
+				return;
+			inner_onclick.call(this,e);
 		}
 
 		//menu option clicked
 		function inner_onclick(e) {
-
 			var value = this.value;
 			var close_parent = true;
 
-			if(that.openSubmenu)
-				that.openSubmenu.close();
+			if(that.current_submenu)
+				that.current_submenu.close(e);
 
 			//global callback
 			if(options.callback) 
@@ -1748,7 +1771,8 @@ function dataURItoBlob( dataURI ) {
 						event: e,
 						parentMenu: that,
 						ignore_item_callbacks: value.submenu.ignore_item_callbacks,
-						title: value.submenu.title
+						title: value.submenu.title,
+						autoopen: options.autoopen
 					});
 					close_parent = false;
 				}
@@ -1800,19 +1824,21 @@ function dataURItoBlob( dataURI ) {
 		root.style.top = top  + "px";
 	}
 
-	ContextMenu.prototype.close = function(e)
+	ContextMenu.prototype.close = function(e, ignore_parent_menu)
 	{
 		if(this.root.parentNode)
 			this.root.parentNode.removeChild( this.root );
-		if(this.parentMenu)
+		if(this.parentMenu && !ignore_parent_menu)
 		{
 			this.parentMenu.lock = false;
-			this.parentMenu.openSubmenu = null;
+			this.parentMenu.current_submenu = null;
 			if( e === undefined )
 				this.parentMenu.close();
 			else if( e && !LiteGUI.isCursorOverElement( e, this.parentMenu.root) )
 				LiteGUI.trigger( this.parentMenu.root, "mouseleave", e );
 		}
+		if(this.current_submenu)
+			this.current_submenu.close(e, true);
 	}
 
 	LiteGUI.ContextMenu = ContextMenu;
@@ -7096,6 +7122,9 @@ Inspector.registerWidget = function(name, callback)
 **/
 Inspector.prototype.add = function( type, name, value, options )
 {
+	if(!type)
+		throw("Inspector: no type specified");
+
 	//type could be an object with every parameter contained inside
 	if( arguments.length == 1 && typeof(type) == "object" )
 	{
@@ -8157,11 +8186,15 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'></select>";
 	element.querySelector("span.inputcombo").innerHTML = code;
 	setValues(values);
+	
+	var stop_event = false; //used internally
 
 	var select = element.querySelector(".wcontent select");
 	select.addEventListener("change", function(e) { 
 		var index = e.target.value;
 		var value = values[index];
+		if(stop_event)
+			return;
 		Inspector.onWidgetChange.call( that,element,name,value, options );
 	});
 
@@ -8192,6 +8225,8 @@ Inspector.prototype.addCombo = function(name, value, options)
 
 		if(index == -1)
 			return;
+			
+		stop_event = skip_event;
 
 		for(var i in items)
 		{
@@ -8206,6 +8241,8 @@ Inspector.prototype.addCombo = function(name, value, options)
 			else
 				item.removeAttribute("selected");
 		}
+		
+		stop_event = false;
 	};
 
 	function setValues(v, selected){
@@ -8402,6 +8439,12 @@ Inspector.prototype.addList = function(name, values, options)
 		$(element).trigger("wadded",value);
 	}
 
+	function inner_item_dblclick(e) { 
+		var value = values[ this.dataset["pos"] ];
+		if(options.callback_dblclick)
+			options.callback_dblclick.call(that,value);
+	}
+
 	element.updateItems = function( new_values, item_selected )
 	{
 		item_selected = item_selected || options.selected;
@@ -8419,7 +8462,8 @@ Inspector.prototype.addList = function(name, values, options)
 					item_name = i;
 				var item_title = item_name.constructor === String ? item_name : i;
 				var item_style = null;
-				item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
+				if(item_name && item_name.constructor === String)
+					item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
 
 				var icon = "";
 				if( value === null || value === undefined )
@@ -8442,7 +8486,7 @@ Inspector.prototype.addList = function(name, values, options)
 				if( (typeof(values[i]) == "object" && values[i].selected) || (item_selected == values[i]) )
 					selected = true;
 				var li_element = document.createElement("li");
-				li_element.classList.add( 'item-' + i );
+				li_element.classList.add( 'item-' + LiteGUI.safeName(i) );
 				if( selected )
 					li_element.classList.add( 'selected' );
 				li_element.dataset["name"] = item_name;
@@ -8453,6 +8497,8 @@ Inspector.prototype.addList = function(name, values, options)
 				//code += "<li class='item-" + i + " " + (selected ? "selected":"") + "' data-name='" + item_name + "' data-pos='"+i+"' "+item_style+">" + icon + item_title + "</li>";
 				ul.appendChild( li_element );
 				li_element.addEventListener( "click", inner_item_click );
+				if(options.callback_dblclick)
+					li_element.addEventListener( "dblclick", inner_item_dblclick );
 			}
 
 		//ul.innerHTML = code;
@@ -9109,8 +9155,10 @@ Inspector.prototype.addSection = function( name, options )
 	this.root.appendChild( element );
 	this.sections.push( element );
 
+	element.sectiontitle = element.querySelector(".wsectiontitle");
+
 	if(name)
-		element.querySelector(".wsectiontitle").addEventListener("click",function(e) {
+		element.sectiontitle.addEventListener("click",function(e) {
 			if(e.target.localName == "button") 
 				return;
 			element.classList.toggle("collapsed");

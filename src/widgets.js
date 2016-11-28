@@ -564,13 +564,16 @@
 			that.setValue( range * norm + min );
 		}
 
+		var doc_binded = null;
+
 		canvas.addEventListener("mousedown", function(e) {
 			var mouseX, mouseY;
 			if(e.offsetX) { mouseX = e.offsetX; mouseY = e.offsetY; }
 			else if(e.layerX) { mouseX = e.layerX; mouseY = e.layerY; }	
 			setFromX(mouseX);
-			document.addEventListener("mousemove", onMouseMove );
-			document.addEventListener("mouseup", onMouseUp );
+			doc_binded = canvas.ownerDocument;
+			doc_binded.addEventListener("mousemove", onMouseMove );
+			doc_binded.addEventListener("mouseup", onMouseUp );
     	});
 
 		function onMouseMove(e)
@@ -585,8 +588,10 @@
 
 		function onMouseUp(e)
 		{
-			document.removeEventListener("mousemove", onMouseMove );
-			document.removeEventListener("mouseup", onMouseUp );
+			var doc = doc_binded || document;
+			doc_binded = null;
+			doc.removeEventListener("mousemove", onMouseMove );
+			doc.removeEventListener("mouseup", onMouseUp );
 			e.preventDefault();
 			return false;
 		}

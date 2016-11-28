@@ -2112,13 +2112,16 @@ function dataURItoBlob( dataURI ) {
 			that.setValue( range * norm + min );
 		}
 
+		var doc_binded = null;
+
 		canvas.addEventListener("mousedown", function(e) {
 			var mouseX, mouseY;
 			if(e.offsetX) { mouseX = e.offsetX; mouseY = e.offsetY; }
 			else if(e.layerX) { mouseX = e.layerX; mouseY = e.layerY; }	
 			setFromX(mouseX);
-			document.addEventListener("mousemove", onMouseMove );
-			document.addEventListener("mouseup", onMouseUp );
+			doc_binded = canvas.ownerDocument;
+			doc_binded.addEventListener("mousemove", onMouseMove );
+			doc_binded.addEventListener("mouseup", onMouseUp );
     	});
 
 		function onMouseMove(e)
@@ -2133,8 +2136,10 @@ function dataURItoBlob( dataURI ) {
 
 		function onMouseUp(e)
 		{
-			document.removeEventListener("mousemove", onMouseMove );
-			document.removeEventListener("mouseup", onMouseUp );
+			var doc = doc_binded || document;
+			doc_binded = null;
+			doc.removeEventListener("mousemove", onMouseMove );
+			doc.removeEventListener("mouseup", onMouseUp );
 			e.preventDefault();
 			return false;
 		}
@@ -4177,15 +4182,19 @@ function dataURItoBlob( dataURI ) {
 		input.addEventListener("wheel",inner_wheel,false);
 		input.addEventListener("mousewheel",inner_wheel,false);
 
+		var doc_binded = null;
+
 		function inner_down(e)
 		{
-			document.removeEventListener("mousemove", inner_move);
-			document.removeEventListener("mouseup", inner_up);
+			doc_binded = input.ownerDocument;
+
+			doc_binded.removeEventListener("mousemove", inner_move);
+			doc_binded.removeEventListener("mouseup", inner_up);
 
 			if(!options.disabled)
 			{
-				document.addEventListener("mousemove", inner_move);
-				document.addEventListener("mouseup", inner_up);
+				doc_binded.addEventListener("mousemove", inner_move);
+				doc_binded.addEventListener("mouseup", inner_up);
 
 				dragger.data = [e.screenX, e.screenY];
 
@@ -4223,8 +4232,10 @@ function dataURItoBlob( dataURI ) {
 		function inner_up(e)
 		{
 			LiteGUI.trigger(element, "stop_dragging");
-			document.removeEventListener("mousemove", inner_move);
-			document.removeEventListener("mouseup", inner_up);
+			var doc = doc_binded || document;
+			doc_binded = null;
+			doc.removeEventListener("mousemove", inner_move);
+			doc.removeEventListener("mouseup", inner_up);
 			LiteGUI.trigger(dragger,"blur");
 			e.stopPropagation();
 			e.preventDefault();

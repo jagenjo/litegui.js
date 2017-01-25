@@ -31,7 +31,7 @@
 
 	Menubar.prototype.attachToPanel = function(panel)
 	{
-		$(panel.content).prepend(this.root);
+		panel.content.insertBefore( this.root, panel.content.firstChild );
 	}
 
 	Menubar.prototype.add = function( path, data )
@@ -186,7 +186,6 @@
 
 				if(!that.is_open)
 				{
-					//$(document).bind("click",inner_outside);
 					that.is_open = true;
 					that.showMenu( item, e, this );
 				}
@@ -363,9 +362,9 @@
 		});
 
 		//compute X and Y for menu
-		var jQ = $(root); //$(menu.element);
-		element.style.left = jQ.offset().left + ( is_submenu ? 200 : 0 ) + "px";
-		element.style.top = jQ.offset().top + jQ.height() + ( is_submenu ? -20 : 10 ) + "px";
+		var box = root.getBoundingClientRect();
+		element.style.left = box.left + ( is_submenu ? 200 : 0 ) + "px";
+		element.style.top = box.top + box.height + ( is_submenu ? -20 : 10 ) + "px";
 		/* animation, not working well, flickers
 		element.style.opacity = "0.1";
 		element.style.transform = "translate(0,-10px)";

@@ -235,17 +235,15 @@
 			else if(e.type == "mousemove")
 			{
 				var rect = LiteGUI.getRect( root );
-				var w = rect.width; //$(root).width();
+				var w = rect.width;
 				var neww = w - (mouse[0] - e.pageX);
 	
-				var h = rect.height; //$(root).height();
+				var h = rect.height;
 				var newh = h - (mouse[1] - e.pageY);
 
 				if(is_corner)
 					root.style.width = neww + "px";
-					//$(root).width(neww + "px");
 				root.style.height = newh + "px";
-				//$(root).height(newh + "px");
 
 				mouse[0] = e.pageX;
 				mouse[1] = e.pageY;
@@ -322,7 +320,11 @@
 		}
 
 		if(this.draggable)
-			$(panel).draggable({disabled: true});
+		{
+			//$(panel).draggable({disabled: true});
+			LiteGUI.draggable(panel);
+		}
+		
 
 		if(parent.content)
 			parent.content.appendChild(panel);
@@ -396,10 +398,11 @@
 	Dialog.minimized = [];
 
 	Dialog.prototype.minimize = function() {
-		if(this.minimized) return;
+		if(this.minimized)
+			return;
 
 		this.minimized = true;
-		this.old_pos = $(this.root).position();
+		this.old_box = this.root.getBoundingClientRect();
 
 		this.root.querySelector(".content").style.display = "none";
 		
@@ -430,8 +433,10 @@
 		{
 			var dialog = LiteGUI.Dialog.minimized[i];
 			var parent = dialog.root.parentNode;
-			var pos = $(parent).height() - 20;
-			$(dialog.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+			var pos = parent.getBoundingClientRect().height - 20;
+			//$(dialog.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
+			dialog.root.style.left = LiteGUI.Dialog.MINIMIZED_WIDTH * i;
+			dialog.root.style.top = pos + "px";
 		}
 	}
 
@@ -441,8 +446,11 @@
 		this.minimized = false;
 
 		this.root.querySelector(".content").style.display = "";
-		$(this.root).draggable({ disabled: false });
-		$(this.root).animate({ left: this.old_pos.left+"px" , top: this.old_pos.top + "px", width: this.width },100);
+		LiteGUI.draggable(this.root);
+		this.root.style.left = this.old_box.left+"px";
+		this.root.style.top = this.old_box.top + "px";
+		this.root.style.width = this.old_box.width + "px";
+		this.root.style.height = this.old_box.height + "px";
 
 		var minimize_button = this.root.querySelector(".minimize-button");
 		if(minimize_button)
@@ -461,7 +469,6 @@
 	{
 		LiteGUI.showModalBackground(true);
 		LiteGUI.modalbg_div.appendChild( this.root ); //add panel
-		//$(this.root).draggable({ disabled: true });
 		this.show();
 		this.center();
 

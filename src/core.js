@@ -229,19 +229,25 @@ var LiteGUI = {
 
 	setWindowSize: function(w,h)
 	{
+		var style = this.root.style;
+
 		if(w && h)
 		{
-			$(this.root).css( {width: w+"px", height: h + "px", "box-shadow":"0 0 4px black"}).removeClass("fullscreen");
-
+			style.width = w+"px";
+			style.height = h + "px";
+			style.boxShadow = "0 0 4px black"
+			this.root.classList.remove("fullscreen");
 		}
 		else
 		{
-			if( $(this.root).hasClass("fullscreen") )
+			if( this.root.classList.contains("fullscreen") )
 				return;
-			$(this.root).addClass("fullscreen");
-			$(this.root).css( {width: "100%", height: "100%", "box-shadow":"0 0 0"});
+			this.root.classList.add("fullscreen");
+			style.width = "100%";
+			style.height = "100%";
+			style.boxShadow = "0 0 0";
 		}
-		$(LiteGUI).trigger("resized");
+		LiteGUI.trigger( LiteGUI, "resized");
 	},
 
 	maximizeWindow: function()
@@ -765,7 +771,7 @@ var LiteGUI = {
 		options.height = options.height || 140;
 		if (typeof(content) == "string")
 			content = "<p>" + content + "</p>";
-		$(".litepanel.alert").remove(); //kill other panels
+		LiteGUI.remove(".litepanel.alert"); //kill other panels
 		return LiteGUI.showMessage(content,options);
 	},
 

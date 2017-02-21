@@ -67,6 +67,10 @@ If you want to manipulate the DOM easily without having to use the standard long
 - ```addCSS```: adds some CSS code to the DOM
 - ```requireCSS```: requires a new CSS file and attachs it to the DOM
 
+### Script
+
+- ```requireScript```: requires a script (or several) and attachs them to the DOM
+
 ### HTTP
 - ```request( object )```: wrapper for XMLHttpRequest. Params are { url: String, data: Object, dataType: String, success: callback, error: callback }
 - ```requestText( url, callback )```: requires a text file 
@@ -75,6 +79,7 @@ If you want to manipulate the DOM easily without having to use the standard long
 
 ### Files
 - ```downloadFile( filename, data, dataType )```: Forces the system to show the download dialog to download the file with that filename.
+- ```downloadURL( url )```: Forces the system to show the download dialog for a file somewhere else
 
 ### URL
 - ```getUrlVars```: returns an object with all the url vars

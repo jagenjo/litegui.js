@@ -35,12 +35,14 @@ Where values is an array that contain all the possible values. They could be a `
 * icon: the url to an icon image
 
 Here are some useful methods you can call once the widget has been created:
-* updateItems: changes the items in the list
-* removeItem: remove one item
-* getSelected: returns the selected item
-* getIndex: returns the element given an index
-* selectIndex: select an element by its index
-* scrollToIndex: scrolls the list to a given index
+* __updateItems(items)__: changes the items in the list
+* __removeItem(name)__: remove one item
+* __getSelected()__: returns the array containing all selected elements
+* __getByIndex(index)__: returns the element given an index
+* __selectIndex(index, add_to_selection)__: select an element by its index (add_to_selection will select multiple elements)
+* __deselectIndex(index)__: remove the index element from the selection
+* __selectAll()__: mark all as selected
+* __scrollToIndex__: scrolls the list to a given index
 
 
 

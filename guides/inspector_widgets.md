@@ -42,6 +42,7 @@ Here are some useful methods you can call once the widget has been created:
 * __selectIndex(index, add_to_selection)__: select an element by its index (add_to_selection will select multiple elements)
 * __deselectIndex(index)__: remove the index element from the selection
 * __selectAll()__: mark all as selected
+* __getNumberOfItems()__: returns the number of items
 * __scrollToIndex__: scrolls the list to a given index
 
 

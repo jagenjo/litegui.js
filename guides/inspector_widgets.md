@@ -43,8 +43,8 @@ Here are some useful methods you can call once the widget has been created:
 * __deselectIndex(index)__: remove the index element from the selection
 * __selectAll()__: mark all as selected
 * __getNumberOfItems()__: returns the number of items
-* __filter(callback)__: you pass a callback which that will be called for every item as (item.value, item, selected) and if it returns true the item is shown, otherwise is hidden. If null is passed all are set visible.
-* __selectByFilter(callback)__: you pass a callback which that will be called for every item as (item.value, item, selected) and if it returns true the item is selecetd, if false is unselected, if undefined then state changes.
+* __filter(callback)__: you pass a callback which that will be called for every item as (index, item, selected) and if it returns true the item is shown, otherwise is hidden. If null is passed all are set visible.
+* __selectByFilter(callback)__: you pass a callback which that will be called for every item as (index, item, selected) and if it returns true the item is selecetd, if false is unselected, if undefined then state changes.
 * __scrollToIndex__: scrolls the list to a given index
 
 

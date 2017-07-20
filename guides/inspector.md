@@ -53,31 +53,33 @@ When creating a widget it will return the DOM object of the base container for t
 ## Widgets list ##
 
 Here is a list of all the widgets available (although there could be more if the website has created new ones):
-- **title** or ```addTitle```: to add a title to the widgets
-- **info** or ```addInfo```: to add HTML code
-- **number** or ```addNumber```: to edit a number (adds a dragger and allows to control precision)
-- **slider** or ```addSlider```: to edit a number between a range using a slider
-- **string**,**text** or ```addString```: to edit a short string
-- **textarea** or ```addTextarea```: to edit a long string
-- **color** or ```addColor```: to select a color
-- **boolean**, **checkbox** or ```addCheckbox```: to select between on or off (true false)
-- **icon** or ```addIcon```: to add a clickable icon (it allows to have two images)
-- **vec2**,**vector2** or ```addVector2```: to edit two numbers
-- **vec3**, **vector3** or ```addVector3```: to edit three numbers
-- **vec4**,**vector4** or ```addVector4```: to edit four numbers
-- **enum**, **combo** or ```addCombo```: to select between multiple choices
-- **button** or ```addButton```: a clickable button
-- **buttons** or ```addButtons```: several clickable buttons
-- **file** or ```addFile```: to choose a file from the hard drive
-- **line** or ```addLine```: to edit the points of a line
-- **list** or ```addList```: to select items from a list
-- **tree** or ```addTree```: to select items from a tree (it creates a LiteGUI.Tree widget)
+- **title** or ```addTitle```: to add a title to the widgets. Parameter String
+- **info** or ```addInfo```: to add HTML code. Parameter String.
+- **number** or ```addNumber```: to edit a number (adds a dragger and allows to control precision). Parameter Number.
+- **slider** or ```addSlider```: to edit a number between a range using a slider. Parameter Number.
+- **string**,**text** or ```addString```: to edit a short string. Parameter String.
+- **textarea** or ```addTextarea```: to edit a long string. Parameter String.
+- **color** or ```addColor```: to select a color. Parameter array of 3.
+- **boolean**, **checkbox** or ```addCheckbox```: to select between on or off (true false). Parameter Boolean.
+- **icon** or ```addIcon```: to add a clickable icon (it allows to have two images). Parameter String.
+- **vec2**,**vector2** or ```addVector2```: to edit two numbers. Parameter Array of 2.
+- **vec3**, **vector3** or ```addVector3```: to edit three numbers. Parameter Array of 3.
+- **vec4**,**vector4** or ```addVector4```: to edit four numbers. Parameter Array of 4.
+- **enum**, **combo** or ```addCombo```: to select between multiple choices. Parameter String.
+- **button** or ```addButton```: a clickable button. Parameter String.
+- **buttons** or ```addButtons```: several clickable buttons. Parameter Array of String.
+- **file** or ```addFile```: to choose a file from the hard drive. Parameter String.
+- **line** or ```addLine```: to edit the points of a line. Parameter Array of Vec2.
+- **list** or ```addList```: to select items from a list. Parameter Array or Object
+- **tree** or ```addTree```: to select items from a tree (it creates a LiteGUI.Tree widget). Parameter Object.
 - **datatree** or ```addDataTree```: to select items from a basic object
 - **pad** or ```addPad```: like a slider but with two dimensions
-- **array** or ```addArray```: to select the values of an array
+- **array** or ```addArray```: to select the values of an array. Parameter Array.
 - **separator** or ```addSeparator```: a separator between widgets
 - **null** or ```addNull```: it does not create anything (used in some special cases)
 - **default** or ```addDefault```: it guesses the best widget for this data type
+
+For a better explanation of the parameters for every widgets check the [guide for widgets](inspector_widgets.md) and the [documentation](http://webglstudio.org/doc/litegui/classes/Inspector.html).
 
 ## Capturing the user actions ##
 

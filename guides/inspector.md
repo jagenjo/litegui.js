@@ -126,11 +126,12 @@ Every widget function allows to pass an object containing parameters for the wid
 Once the widget is created it will return an object that you can keep to do changes in the future. Here are some examples:
 
 ```javascript
+var username_widget = inspector.addString( "Username", user.name, { callback: my_callback });
 username_widget.setValue("foo");
 var value = username_widget.getValue();
 ```
 
-When changing the value of a widget you can pass a secondary parameter of false if you dont want to trigger any event.
+Changing the value of a widget will trigger the events that call the callbacks associated, if you dont want to trigger any event pass false in the second parameter.
 
 ```javascript
 username_widget.setValue("foo",false);
@@ -146,7 +147,6 @@ inspector.addCheckbox(...);
 inspector.addCheckbox(...);
 inspector.widgets_per_row = 1;
 ```
-
 
 ## Clearing the Inspector 
 

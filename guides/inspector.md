@@ -31,10 +31,10 @@ myelement.addChild( inspector.root );
 ### Adding widgets ###
 
 When adding widgets you can call the method inspector.add(...) where the parameters are:
-- **widget**: the name of the widget, like number, textarea, slider, combo, checkbox...
-- **name**: the title that appears next to the widget, if null no title will be shown and the content will ocupy all the area.
-- **value**: the value to be shown on the widget
-- **options**: an object containing all the optional parameters for the widget.
+- **widget**: a String with the name of the widget, like "number", "textarea", "slider", "combo", "checkbox"...
+- **name**: a String with the title that appears next to the widget, if ```null``` no title will be shown and the content will ocupy all the area.
+- **value**: the value to be shown on the widget (depends on every widget)
+- **options**: an object containing all the optional parameters for the widget (it is optional).
 
 Here is an example:
 
@@ -45,14 +45,20 @@ inspector.add("string", "username", user.name, { name_width: 100 } );
 or the secondary way is by calling the method of the widget directly:
 
 ```javascript
-var username_widget = inspector.addString( "username", user.name, { name_width: 100 } );
+inspector.addString( "username", user.name, { name_width: 100 } );
 ```
 
 When creating a widget it will return the DOM object of the base container for that widget. You can use that object later to change the content.
 
+```javascript
+var username_widget = inspector.addString( "username", user.name, { name_width: 100 } );
+```
+
+
 ## Widgets list ##
 
 Here is a list of all the widgets available (although there could be more if the website has created new ones):
+
 - **title** or ```addTitle```: to add a title to the widgets. Parameter String
 - **info** or ```addInfo```: to add HTML code. Parameter String.
 - **number** or ```addNumber```: to edit a number (adds a dragger and allows to control precision). Parameter Number.
@@ -80,6 +86,8 @@ Here is a list of all the widgets available (although there could be more if the
 - **default** or ```addDefault```: it guesses the best widget for this data type
 
 For a better explanation of the parameters for every widgets check the [guide for widgets](inspector_widgets.md) and the [documentation](http://webglstudio.org/doc/litegui/classes/Inspector.html).
+
+And to see a complete list check the ```LiteGUI.Inspector.widget_constructors``` from the console of your browser.
 
 ## Capturing the user actions ##
 
@@ -110,7 +118,7 @@ function my_callback(event)
 
 ## Widgets common options ##
 
-Every widget function allows to pass an object containing parameters for the widget. All widgets support a base set of parameters, and some widget have some special parameters. Here is a list of the base parameters:
+Every widget function allows to pass an object containing parameters for the widget. All widgets support a base set of parameters, and some widgets have some special parameters. Here is a list of the base parameters supported by all widgets:
 
 - **width**: to select the widgets total width, this is used mostly in horizontal inspectors.
 - **height**: the height of the widget
@@ -122,6 +130,9 @@ Every widget function allows to pass an object containing parameters for the wid
 - **title**: used to show info when the user do a mouse over
 - **id**: to set an id to the container
 
+```js
+inspector.addString("name",username,{ width: "50%", disabled: true });
+```
 
 ## Manipulating a widget ##
 
@@ -158,13 +169,13 @@ You can clear the inspector at any time to remove all the widgets:
 inspector.clear();
 ```
 
-It wont generate any garbage so you can use it as much as you want.
-
 ## Inspecting an instance ##
 
 In case you want to edit the content of an instance but do not want to create the widgets manually you can use the ```inspectInstance```, but keep in mind that it only works for basic types or with object that contain info about the widgets to use with every property of the instance.
 
 ```javascript
+var my_instance = { name: "javi", age: 37 };
+
 inspector.inspectInstance( my_instance );
 ```
 

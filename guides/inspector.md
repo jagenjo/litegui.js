@@ -2,6 +2,9 @@
 
 The Inspector is the class in charge of creating a widgets panel. It makes it very easy to pack a bunch of widgets and their behaviour.
 
+![Example](imgs/inspector.png "Inspector example")
+
+
 ## Usage ##
 
 ### Creating the Inspector ###

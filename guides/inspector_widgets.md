@@ -24,7 +24,7 @@ The list with all the possible values could come in three forms:
 List help have a list of items that the user can select:
 
 ```
-var widget_list = inspector.addList("mylist", values, { callback: function(v) { ... } });
+var widget = inspector.addList("mylist", values, { callback: function(v) { ... } });
 ```
 
 Where values is an array that contain all the possible values. They could be a ```String``` or an object containing the next fields:
@@ -48,6 +48,21 @@ Here are some useful methods you can call once the widget has been created:
 * __scrollToIndex__: scrolls the list to a given index
 
 
+## AddFile
+
+This widget allows the user to selet files from the harddrive.
 
 
+```
+var widget = inspector.addFile("Select File", "", { read_file: true, callback: function(v) { ... } });
+```
 
+The callback will receive one object that contains:
+
+* __filename__ : the filename (no folders).
+* __file__ : the File object.
+* __files__ : Array in case the user selected several files.
+* __url__ : a local URL to the local file, if you want to read it using a HTTPRequest.
+* __data__ : the content of the file __only if the read_file is set in the options__.
+
+If you want that the object contains the data, you can pass ```read_file: true``` to receive the data in String format, if you want it in ```ArrayBuffer``` format use ```read_file: "binary"``` or if you want it in data_url format then  ```read_file:"data_url"```

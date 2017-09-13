@@ -7,7 +7,7 @@ Here is some help info to use the Inspector widgets
 
 This one is used to create a combobox (dropdown menu).
 
-```
+```js
 inspector.addCombo("mycombo", value, { values: values, callback: function(v) { ... } });
 ```
 
@@ -23,7 +23,7 @@ The list with all the possible values could come in three forms:
 
 List help have a list of items that the user can select:
 
-```
+```js
 var widget = inspector.addList("mylist", values, { callback: function(v) { ... } });
 ```
 
@@ -50,10 +50,10 @@ Here are some useful methods you can call once the widget has been created:
 
 ## AddFile
 
-This widget allows the user to selet files from the harddrive.
+This widget allows the user to select files from the harddrive.
 
 
-```
+```js
 var widget = inspector.addFile("Select File", "", { read_file: true, callback: function(v) { ... } });
 ```
 

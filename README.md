@@ -8,6 +8,8 @@ you're looking for a library that just needs some HTML and a couple of event han
 you're looking for. On the other hand, any advanced UI will need a lot of coding and in creating advanced UI's litegui
 shines.
 
+![Example](imgs/litegui.PNG "LiteGUI Example")
+
 Utils
 -----
 
@@ -18,7 +20,7 @@ Feedback
 
 You can write any feedback to javi.agenjo@gmail.com
 
-My first ui
+Creating a UI
 -----------
 
 So let's start with building something simple. This first introduction will show you how to create a menubar and add

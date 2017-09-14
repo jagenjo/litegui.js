@@ -31,12 +31,23 @@
 */
 
 	/*********** LiteTree *****************************/
-	function Tree( id, data, options )
+	function Tree( data, options, legacy )
 	{
+		if(legacy || (data && data.constructor === String) )
+		{
+			var id = data;
+			data = options;
+			options = legacy || {};
+			options.id = id;
+			console.warn("LiteGUI.Tree legacy parameter, use data as first parameter instead of id.");
+		}
+
+		options = options || {};
+
 		var root = document.createElement("div");
 		this.root = root;
-		if(id)
-			root.id = id;
+		if(options.id)
+			root.id = options.id;
 
 		root.className = "litetree";
 		this.tree = data;
@@ -70,6 +81,8 @@
 
 
 		var root_item = this.createAndInsert(data, options, null);
+		if(!root_item)
+			throw("Error in LiteGUI.Tree, createAndInsert returned null");
 		root_item.className += " root_item";
 		//this.root.appendChild(root_item);
 		this.root_item = root_item;
@@ -282,6 +295,9 @@
 
 	Tree.prototype._findElementLastChildIndex = function( start_index )
 	{
+		if(start_index == -1)
+			return -1;
+
 		var level = parseInt( this.root.childNodes[ start_index ].dataset["level"] );
 
 		for(var i = start_index+1; i < this.root.childNodes.length; ++i)
@@ -709,7 +725,7 @@
 		if(!id)
 			return null;
 
-		if( id.classList )
+		if( id.classList ) //if it is already a node
 			return id;
 
 		for(var i = 0; i < this.root.childNodes.length; ++i)
@@ -946,19 +962,61 @@
 	}
 
 	/**
+	* returns an array with all the ancestors
+	* @method getAncestors
+	* @param {string} id
+	* @return {Array}
+	*/
+	Tree.prototype.getAncestors = function( id_or_node, result )
+	{
+		result = result || [];
+		var element = this.getItem( id_or_node );
+		if(element)
+		{
+			result.push( element );
+			return this.getAncestors( element.parent_id, result );
+		}
+		return result;
+	}
+
+	/**
+	* returns an array with all the ancestors
+	* @method getAncestors
+	* @param {string} id
+	* @return {Array}
+	*/
+	Tree.prototype.isAncestor = function( child, node )
+	{
+		var element = this.getItem( child );
+		if(!element)
+			return false;
+		var dest = this.getItem( node );
+		var parent = this.getItem( element.parent_id );
+		if(!parent)
+			return false;
+		if(parent == dest)
+			return true;
+		return this.isAncestor( parent, node );
+	}
+
+	/**
 	* move item with id to be child of parent_id
 	* @method moveItem
 	* @param {string} id
 	* @param {string} parent_id
 	* @return {bool}
 	*/
-	Tree.prototype.moveItem = function(id, parent_id )
+	Tree.prototype.moveItem = function( id, parent_id )
 	{
 		if(id === parent_id)
 			return false;
 
 		var node = this.getItem( id );
 		var parent = this.getItem( parent_id );
+
+		if( this.isAncestor( parent, node ) )
+			return false;
+
 		var parent_index = this._findElementIndex( parent );
 		var parent_level = parseInt( parent.dataset["level"] );
 		var old_parent = this.getParent( node );

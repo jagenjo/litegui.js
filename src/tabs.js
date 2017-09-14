@@ -12,16 +12,24 @@
 	* @class Tabs
 	* @constructor
 	*/
-	function Tabs( id, options )
+	function Tabs( options, legacy )
 	{
+		if( legacy || (options && options.constructor === String) )
+		{
+			var id = options;
+			options = legacy || {};
+			options.id = id;
+			console.warn("LiteGUI.Dialog legacy parameter, use options as first parameter instead of id.");
+		}
+
 		options = options || {};
 		this.options = options;
 
 		var mode = this.mode = options.mode || "horizontal";
 
 		var root = document.createElement("DIV");
-		if(id) 
-			root.id = id;
+		if(options.id) 
+			root.id = options.id;
 		root.data = this;
 		root.className = "litetabs " + mode;
 		this.root = root;
@@ -285,7 +293,7 @@
 				that._timeout_mouseover = setTimeout((function(){
 					LiteGUI.trigger(this,"click");
 					that._timeout_mouseover = null;
-				}).bind(this),1500);
+				}).bind(this),500);
 			});
 			
 			element.addEventListener("dragleave",function(e){
@@ -558,9 +566,10 @@
 			var tab = tabs[i];
 			if(tab == this.plus_tab && keep_plus)
 				continue;
-
-			tab.tab.parentNode.removeChild( tab.tab );
-			tab.content.parentNode.removeChild( tab.content );
+			if(tab.tab.parentNode)
+				tab.tab.parentNode.removeChild( tab.tab );
+			if(tab.content.parentNode)
+				tab.content.parentNode.removeChild( tab.content );
 			delete this.tabs[ tab.id ];
 		}
 

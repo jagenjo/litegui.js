@@ -8,25 +8,25 @@
 	*
 	* @class Area
 	* @constructor
-	* @param {String} id
 	* @param {Object} options
 	*/
-	function Area( id, options )
+	function Area( options, legacy )
 	{
-		if(!options && id && id.constructor !== String)
+		//for legacy code
+		if( (options && options.constructor === String) || legacy )
 		{
-			options = id;
-			id = null;
+			var id = options;
+			options = legacy || {};
+			options.id = id;
+			console.warn("LiteGUI.Area legacy parameter, use options as first parameter instead of id.");
 		}
 
 		options = options || {};
 		/* the root element containing all sections */
 		var root = document.createElement("div");
 		root.className = "litearea";
-		if(id)
-			root.id = id;
 		if(options.id)
-			root.id = id;
+			root.id = options.id;
 		if(options.className)
 			root.className +=  " " + options.className;
 
@@ -70,6 +70,9 @@
 				that.onResize(); 
 			});
 	}
+
+	Area.VERTICAL = "vertical";
+	Area.HORIZONTAL = "horizontal";
 
 	Area.splitbar_size = 4;
 
@@ -163,7 +166,7 @@
 			throw ("First parameter must be a string: 'vertical' or 'horizontal'");
 
 		if( !sizes )
-			throw ("sizes must be an array");
+			sizes = ["50%",null];
 
 		if( direction != "vertical" && direction != "horizontal" )
 			throw ("First parameter must be a string: 'vertical' or 'horizontal'");
@@ -172,7 +175,7 @@
 			throw "cannot split twice";
 
 		//create areas
-		var area1 = new LiteGUI.Area(null, { content_id: this.content.id });
+		var area1 = new LiteGUI.Area({ content_id: this.content.id });
 		area1.root.style.display = "inline-block";
 		var area2 = new LiteGUI.Area();
 		area2.root.style.display = "inline-block";

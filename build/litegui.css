@@ -113,8 +113,20 @@
 	float: right;
 }
 
+.inspector .wsectiontitle {
+	position: relative;
+	/*border-top: 1px solid #777;*/
+	margin-top: 4px;
+	box-shadow: 0 -1px 1px rgba(0,0,0,0.5);
+	overflow: hidden;
+	/*max-height: 1.5em;*/
+	white-space: nowrap;
+}
+
 .inspector .wsectiontitle .buttons {
-	float: right;
+    position: absolute;
+	top: 4px;
+    right: 4px;
 }
 
 .inspector .wsectiontitle button {
@@ -125,6 +137,11 @@
 	box-shadow: 0 0 0;
 	padding: 0 1px 0 1px;
 	margin-left: 2px;
+}
+
+.inspector .wsectioncontent button {
+	white-space: nowrap;
+	overflow: hidden;
 }
 
 .inspector .wcontent button.single {
@@ -161,13 +178,6 @@
 	padding-bottom: 0;
 }
 
-.inspector .wsectiontitle {
-	position: relative;
-	/*border-top: 1px solid #777;*/
-	margin-top: 4px;
-	box-shadow: 0 -1px 1px rgba(0,0,0,0.5);
-}
-
 .inspector .wsection.collapsed .wsectiontitle {
 	border-bottom: 1px solid #222;
 }
@@ -181,22 +191,31 @@
 	border-left: 6px solid transparent;
 	border-right: 6px solid transparent;
 	border-bottom: 6px solid transparent;
-	/*
-	width: 10px;
-	height: 10px;
-	margin: 2px;
-	background-color: #333;
-	*/
 }
 
-.inspector .wsection.collapsed .switch-section-button {
-
+.inspector .collapsed .switch-section-button {
 	margin: 2px 0 0 2px;
 	border-left: 6px solid #333;
 	border-bottom: 6px solid transparent;
 	border-top: 6px solid transparent;
 	border-right: 6px solid transparent;
 }
+
+
+.inspector .wgroupheader:not(.collapsed) .switch-section-button {
+	border-top: 6px solid #777 ;
+	border-left: 6px solid transparent ;
+	border-right: 6px solid transparent ;
+	border-bottom: 6px solid transparent ;
+}
+
+.inspector .wgroupheader.collapsed .switch-section-button {
+	border-left: 6px solid #777;
+	border-bottom: 6px solid transparent;
+	border-top: 6px solid transparent;
+	border-right: 6px solid transparent;
+}
+
 
 .inspector .wsection.notitle {
 	margin: 0;
@@ -236,7 +255,6 @@
 	left: 0;
 	width: 8px;
 	height: 8px;
-	border: 1px solid #999;
 	text-align: center;
 	margin: 2px;
 	margin-right: 4px;
@@ -308,6 +326,23 @@
 	border-radius: 3px;	
 }
 
+.inspector .wcontent .inputfield input:focus, .inspector .wcontent .inputfield textarea:focus
+{
+	outline: none;
+}
+
+.inspector input::placeholder { 
+    color: #687177;
+}
+
+.inspector input::-webkit-input-placeholder { 
+    color: #687177;
+}
+
+.inspector input::-moz-input-placeholder { 
+    color: #687177;
+}
+
 .inspector .inputfield.disabled {
 	background-color: #333;
 }
@@ -359,6 +394,10 @@
 	/*font-size: 0.8em;*/
 	border: 0;
 	background-color: transparent;
+}
+
+.inspector .wcontent input:focus, .inspector .wcontent textarea:focus  {
+	direction: ltr !important;
 }
 
 .inspector .wcontent input.text {
@@ -690,7 +729,7 @@ button.wcombobutton.selected {
 }
 
 .inspector ul.lite-list li.selected {
-	background-color: #5AF;
+	background-color: #336da7;
 	color: white;
 }
 
@@ -1368,6 +1407,19 @@ a:hover {
 	border-right: 2px solid cyan;
 }
 
+.litemenu-title {
+	color: #DDE;
+	background-color: #111;	
+	margin: 0;
+	padding: 2px;
+	cursor: default;
+}
+
+.litemenu-entry:hover:not(.disabled):not(.separator) {
+	background-color: #555;
+	color: #EEE;
+}
+
 .litecontextmenu {
 	position: fixed;
 	top: 100px;
@@ -1393,27 +1445,6 @@ a:hover {
 .litecontextmenu .litemenu-entry.submenu {
 	background-color: #2E2E2E !important;
 }
-
-.litemenu-title {
-	color: #DDE;
-	background-color: #111;	
-	margin: 0;
-	padding: 2px;
-	cursor: default;
-}
-
-
-/*
-.litemenubar-panel .litemenu-entry.checked {
-	background-image: url();
-}
-*/
-
-.litemenu-entry:hover:not(.disabled):not(.separator) {
-	background-color: #555;
-	color: #EEE;
-}
-
 
 button.litebutton {
     background: -webkit-linear-gradient(#32302D, #4B4947) repeat scroll 0 0 transparent;
@@ -2196,4 +2227,52 @@ input[type="range"]::-moz-slider-thumb {
 	-moz-user-select: none;
 	-webkit-user-select: none;
 	cursor: pointer;
+}
+
+.liteconsole {
+	width: 100%;
+	height: 100%;
+	background-color: black;
+	border: 1px solid #222;
+}
+
+.liteconsole .log {
+	width: 100%;
+	height: calc( 100% - 26px );
+	overflow: auto;
+	color: #AAA;
+	padding: 4px;
+}
+
+.liteconsole .log .msg {
+    white-space: pre-wrap;
+	margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.liteconsole .log .msg.me {
+	color: white;
+}
+
+.liteconsole .foot {
+	width: 100%;
+	height: 24px;
+	color: #111;
+}
+
+.liteconsole .foot input {
+	width: 100%;
+	height: 24px;
+	color: white;
+	background-color: black;
+	border: 0;
+	border-top: 1px solid #444;
+	margin: 0;
+	padding-left: 10px;
+	resize: none;
+}
+
+.liteconsole .foot input:focus{
+    outline: none;
 }

@@ -4,13 +4,20 @@
 	* Dialog
 	*
 	* @class Dialog
-	* @param {string} id
 	* @param {Object} options useful options are { title, width, height, closable, on_close, scroll }
 	* @constructor
 	*/
-	function Dialog(id, options)
+	function Dialog( options, legacy )
 	{
-		this._ctor( id, options );
+		if( legacy || (options && options.constructor === String) )
+		{
+			var id = options;
+			options = legacy || {};
+			options.id = id;
+			console.warn("LiteGUI.Dialog legacy parameter, use options as first parameter instead of id.");
+		}
+
+		this._ctor( options );
 	}
 
 	Dialog.MINIMIZED_WIDTH = 200;
@@ -24,13 +31,9 @@
 		return element.dialog;
 	}
 
-	Dialog.prototype._ctor = function( id, options )
+	Dialog.prototype._ctor = function( options )
 	{
-		if(!options && id && id.constructor !== String)
-		{
-			options = id;
-			id = null;
-		}
+		options = options || {};
 
 		var that = this;
 		this.width = options.width;
@@ -40,8 +43,8 @@
 		this.content = options.content || "";
 
 		var panel = document.createElement("div");
-		if(id)
-			panel.id = id;
+		if(options.id)
+			panel.id = options.id;
 
 		panel.className = "litedialog " + (options.className || "");
 		panel.data = this;
@@ -591,8 +594,13 @@
 			return;
 		}
 
+		var extra = 0;
+		var footer = this.root.querySelector(".panel-footer");
+		if(footer)
+			extra += footer.offsetHeight;
+
 		var width = this.content.offsetWidth;
-		var height = this.content.offsetHeight + 20 + margin;
+		var height = this.content.offsetHeight + 20 + margin + extra;
 
 		this.setSize( width, height );
 	}

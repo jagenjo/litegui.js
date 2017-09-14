@@ -14,7 +14,7 @@
 		var that = this;
 		var precision = options.precision != undefined ? options.precision : 3; //num decimals
 
-		this.options = options = options || {};
+		this.options = options || {};
 		var element = document.createElement("div");
 		element.className = "dragger " + (options.extraclass ? options.extraclass : "");
 		this.root = element;
@@ -145,6 +145,12 @@
 				input.value += options.units;
 			LiteGUI.trigger(input,"change");
 		}
+	}
+
+	Dragger.prototype.setRange = function(min,max)
+	{
+		this.options.min = min;
+		this.options.max = max;
 	}
 
 	Dragger.prototype.setValue = function(v, skip_event) { 

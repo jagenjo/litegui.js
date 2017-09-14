@@ -89,13 +89,15 @@ var LiteGUI = {
 	* Triggers a simple event in an object (similar to jQuery.trigger)
 	* @method trigger
 	* @param {Object} element could be an HTMLEntity or a regular object
-	* @param {Object} element could be an HTMLEntity or a regular object
-	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {String} event_name the type of the event
+	* @param {*} params it will be stored in e.detail
+	* @param {*} origin it will be stored in e.srcElement
 	*/
-	trigger: function(element, event_name, params)
+	trigger: function(element, event_name, params, origin)
 	{
 		var evt = document.createEvent( 'CustomEvent' );
 		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
+		evt.srcElement = origin;
 		if( element.dispatchEvent )
 			element.dispatchEvent( evt );
 		else if( element.__events )
@@ -274,7 +276,7 @@ var LiteGUI = {
 	{
 		var left = event.pageX;
 		var top = event.pageY;
-		var rect = element.getClientRects()[0];
+		var rect = element.getBoundingClientRect();
 		if(!rect)
 			return false;
 		if(top > rect.top && top < (rect.top + rect.height) &&
@@ -285,7 +287,7 @@ var LiteGUI = {
 
 	getRect: function(element)
 	{
-		return element.getClientRects()[0];
+		return element.getBoundingClientRect();
 	},
 
 	/**
@@ -321,7 +323,16 @@ var LiteGUI = {
 		}
 
 		//old system
-		localStorage.setItem("litegui_clipboard", object );
+		try
+		{
+			this._safe_cliboard = null;
+			localStorage.setItem("litegui_clipboard", object );
+		}
+		catch (err)
+		{
+			this._safe_cliboard = object;
+			console.warn("cliboard quota excedeed");
+		}
 	},
 
 	/**
@@ -332,6 +343,8 @@ var LiteGUI = {
 	getLocalClipboard: function()
 	{
 		var data = localStorage.getItem("litegui_clipboard");
+		if(!data && this._safe_cliboard)
+			data = this._safe_cliboard;
 		if(!data) 
 			return null;
 		if(data[0] == "{")
@@ -412,11 +425,14 @@ var LiteGUI = {
 
 		//regular case, use AJAX call
         var xhr = new XMLHttpRequest();
-        xhr.open(request.data ? 'POST' : 'GET', request.url, true);
+        xhr.open( request.data ? 'POST' : 'GET', request.url, true);
         if(dataType)
             xhr.responseType = dataType;
         if (request.mimeType)
             xhr.overrideMimeType( request.mimeType );
+		if( request.nocache )
+			xhr.setRequestHeader('Cache-Control', 'no-cache');
+
         xhr.onload = function(load)
 		{
 			var response = this.response;
@@ -465,7 +481,15 @@ var LiteGUI = {
 			if(request.error)
 				request.error(err);
 		}
-        xhr.send(request.data);
+
+		var data = new FormData();
+		if( request.data )
+		{
+			for(var i in request.data)
+				data.append(i,request.data[i]);
+		}
+
+        xhr.send( data );
 		return xhr;
 	},	
 
@@ -509,12 +533,12 @@ var LiteGUI = {
 	/**
 	* Request script and inserts it in the DOM
 	* @method requireScript
-	* @param {String} url
+	* @param {String|Array} url the url of the script or an array containing several urls
 	* @param {Function} on_complete
 	* @param {Function} on_error
 	* @param {Function} on_progress (if several files are required, on_progress is called after every file is added to the DOM)
 	**/
-	requireScript: function(url, on_complete, on_error, on_progress )
+	requireScript: function(url, on_complete, on_error, on_progress, version )
 	{
 		if(!url)
 			throw("invalid URL");
@@ -531,7 +555,8 @@ var LiteGUI = {
 			var script = document.createElement('script');
 			script.num = i;
 			script.type = 'text/javascript';
-			script.src = url[i];
+			script.src = url[i] + ( version ? "?version=" + version : "" );
+			script.original_src = url[i];
 			script.async = false;
 			script.onload = function(e) { 
 				total--;
@@ -539,14 +564,14 @@ var LiteGUI = {
 				if(total)
 				{
 					if(on_progress)
-						on_progress(this.src, this.num);
+						on_progress(this.original_src, this.num);
 				}
 				else if(on_complete)
 					on_complete( loaded_scripts );
 			};
 			if(on_error)
 				script.onerror = function(err) { 
-					on_error(err, this.src, this.num );
+					on_error(err, this.original_src, this.num );
 				}
 			document.getElementsByTagName('head')[0].appendChild(script);
 		}
@@ -722,7 +747,7 @@ var LiteGUI = {
 		options.title = options.title || "Attention";
 		options.content = content;
 		options.close = 'fade';
-		var dialog = new LiteGUI.Dialog(null,options);
+		var dialog = new LiteGUI.Dialog( options );
 		if(!options.noclose)
 			dialog.addButton("Close",{ close: true });
 		dialog.makeModal('fade');
@@ -746,7 +771,7 @@ var LiteGUI = {
 		options.content = content;
 		options.close = 'fade';
 
-		var dialog = new LiteGUI.Dialog("info_message",options);
+		var dialog = new LiteGUI.Dialog(options);
 		if(!options.noclose)
 			dialog.addButton("Close",{ close: true });
 		dialog.show();
@@ -782,7 +807,7 @@ var LiteGUI = {
 	* @param {Function} callback
 	* @param {Object} options ( title, width, height, content, noclose )
 	**/
-	confirm: function(content, callback, options)
+	confirm: function( content, callback, options )
 	{
 		options = options || {};
 		options.className = "alert";
@@ -863,10 +888,61 @@ var LiteGUI = {
 				inner();
 				return false;
 			}		
+			if (keyCode == '29')
+				dialog.close();
 		};
 
 		input.focus();
 		return dialog;
+	},
+
+	/**
+	* Shows a choice dialog with a message
+	* @method choice
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	choice: function( content, choices, callback, options )
+	{
+		options = options || {};
+		options.className = "alert";
+		options.title = options.title || "Select one option";
+		options.width = options.width || 280;
+		//options.height = 100;
+		if (typeof(content) == "string")
+			content = "<p>" + content + "</p>";
+
+		for(var i in choices)
+		{
+			content +="<button class='litebutton' data-value='"+i+"' style='width:45%; margin-left: 10px'>"+(choices[i].content || choices[i])+"</button>";
+		}
+		options.noclose = true;
+
+		var dialog = this.showMessage(content,options);
+		dialog.content.style.paddingBottom = "10px";
+		var buttons = dialog.content.querySelectorAll("button");
+		for(var i = 0; i < buttons.length; i++)
+			buttons[i].addEventListener("click", inner);
+
+		function inner(v) {
+			var v = choices[ this.dataset["value"] ];
+			dialog.close(); //close before callback
+			if(callback) 
+				callback(v);
+		}
+
+		return dialog;
+	},
+
+	downloadURL: function( url, filename )
+	{
+		var link = document.createElement('a');
+		link.href = url;
+		link.download = filename;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
 	},
 
 	downloadFile: function( filename, data, dataType )
@@ -1146,6 +1222,21 @@ var LiteGUI = {
 	}
 };
 
+//low quality templating system
+Object.defineProperty( String.prototype, "template", {
+	value: function( data, eval_code )
+	{
+		var tpl = this;
+		var re = /{{([^}}]+)?}}/g, match;
+	    while(match = re.exec(tpl)) {
+			var str = eval_code ? (new Function("with(this) { try { return " + match[1] +"} catch(e) { return 'error';} }")).call(data) : data[match[1]];
+		    tpl = tpl.replace(match[0], str);
+	    }
+	    return tpl;		
+	},
+	enumerable: false
+});
+
 
 function purgeElement(d, skip) {
     var a = d.attributes, i, l, n;
@@ -1166,17 +1257,6 @@ function purgeElement(d, skip) {
             purgeElement(d.childNodes[i]);
         }
     }
-
-	/*
-	if(!skip)
-	{
-		for (i in d) {
-			if (typeof d[i] === 'function') {
-				d[i] = null;
-			}
-		}
-	}
-	*/
 }
 
 //useful functions

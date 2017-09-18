@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
-    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <link rel="icon" href="../assets/favicon.ico">
     <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
 </head>
 <body class="yui3-skin-sam">
@@ -14,9 +14,7 @@
 <div id="doc">
     <div id="hd" class="yui3-g header">
         <div class="yui3-u-3-4">
-            
-                <h1><img src="../assets/css/logo.png" title=""></h1>
-            
+                <h1><img src="../assets/css/logo.png" title="" width="117" height="52"></h1>
         </div>
         <div class="yui3-u-1-4 version">
             <em>API Docs for: </em>
@@ -27,84 +25,69 @@
         <div class="yui3-u-1-4">
             <div id="docs-sidebar" class="sidebar apidocs">
                 <div id="api-list">
-    <h2 class="off-left">APIs</h2>
-    <div id="api-tabview" class="tabview">
-        <ul class="tabs">
-            <li><a href="#api-classes">Classes</a></li>
-            <li><a href="#api-modules">Modules</a></li>
-        </ul>
-
-        <div id="api-tabview-filter">
-            <input type="search" id="api-filter" placeholder="Type to filter APIs">
-        </div>
-
-        <div id="api-tabview-panel">
-            <ul id="api-classes" class="apis classes">
-            
-                <li><a href="../classes/Area.html">Area</a></li>
-            
-                <li><a href="../classes/ContextualMenu.html">ContextualMenu</a></li>
-            
-                <li><a href="../classes/Dialog.html">Dialog</a></li>
-            
-                <li><a href="../classes/Inspector.html">Inspector</a></li>
-            
-                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
-            
-                <li><a href="../classes/List.html">List</a></li>
-            
-                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
-            
-                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
-            
-                <li><a href="../classes/Slider.html">Slider</a></li>
-            
-                <li><a href="../classes/Split.html">Split</a></li>
-            
-                <li><a href="../classes/Tabs.html">Tabs</a></li>
-            
-                <li><a href="../classes/Tree.html">Tree</a></li>
-            
-            </ul>
-
-            <ul id="api-modules" class="apis modules">
-            
-            </ul>
-        </div>
-    </div>
-</div>
-
+                    <h2 class="off-left">APIs</h2>
+                    <div id="api-tabview" class="tabview">
+                        <ul class="tabs">
+                            <li><a href="#api-classes">Classes</a></li>
+                            <li><a href="#api-modules">Modules</a></li>
+                        </ul>
+                
+                        <div id="api-tabview-filter">
+                            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                        </div>
+                
+                        <div id="api-tabview-panel">
+                            <ul id="api-classes" class="apis classes">
+                                <li><a href="../classes/Area.html">Area</a></li>
+                                <li><a href="../classes/ContextMenu.html">ContextMenu</a></li>
+                                <li><a href="../classes/Dialog.html">Dialog</a></li>
+                                <li><a href="../classes/Inspector.html">Inspector</a></li>
+                                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
+                                <li><a href="../classes/List.html">List</a></li>
+                                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
+                                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
+                                <li><a href="../classes/Slider.html">Slider</a></li>
+                                <li><a href="../classes/Split.html">Split</a></li>
+                                <li><a href="../classes/Tabs.html">Tabs</a></li>
+                                <li><a href="../classes/Tree.html">Tree</a></li>
+                            </ul>
+                
+                
+                            <ul id="api-modules" class="apis modules">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="yui3-u-3-4">
                 <div id="api-options">
-        Show:
-        <label for="api-show-inherited">
-            <input type="checkbox" id="api-show-inherited" checked>
-            Inherited
-        </label>
-
-        <label for="api-show-protected">
-            <input type="checkbox" id="api-show-protected">
-            Protected
-        </label>
-
-        <label for="api-show-private">
-            <input type="checkbox" id="api-show-private">
-            Private
-        </label>
-        <label for="api-show-deprecated">
-            <input type="checkbox" id="api-show-deprecated">
-            Deprecated
-        </label>
-
-    </div>
-
-
+                    Show:
+                    <label for="api-show-inherited">
+                        <input type="checkbox" id="api-show-inherited" checked>
+                        Inherited
+                    </label>
+            
+                    <label for="api-show-protected">
+                        <input type="checkbox" id="api-show-protected">
+                        Protected
+                    </label>
+            
+                    <label for="api-show-private">
+                        <input type="checkbox" id="api-show-private">
+                        Private
+                    </label>
+                    <label for="api-show-deprecated">
+                        <input type="checkbox" id="api-show-deprecated">
+                        Deprecated
+                    </label>
+            
+                </div>
+            
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-                        <h1 class="file-heading">File: ../src/widgets.js</h1>
+<h1 class="file-heading">File: ../src/widgets.js</h1>
 
 <div class="file">
     <pre class="code prettyprint linenums">
@@ -112,794 +95,965 @@
 (function(){
 
 
-	function Button(value,options)
+function Button( value, options )
+{
+	options = options || {};
+
+	if(typeof(options) === &quot;function&quot;)
+		options = { callback: options };
+
+	var that = this;
+	var element = document.createElement(&quot;div&quot;);
+	element.className = &quot;litegui button&quot;;
+
+	this.root = element;
+	var button = document.createElement(&quot;button&quot;);
+	button.className = &quot;litebutton&quot;;
+	this.content = button;
+	element.appendChild(button);
+
+	button.innerHTML = value;		
+	button.addEventListener(&quot;click&quot;, function(e) { 
+		that.click();
+	});
+
+	this.click = function()
 	{
-		options = options || {};
+		if(options.callback)
+			options.callback.call(that);
+	}
+}
 
-		if(typeof(options) === &quot;function&quot;)
-			options = { callback: options };
+LiteGUI.Button = Button;
 
-		var that = this;
-		var element = document.createElement(&quot;div&quot;);
-		element.className = &quot;litegui button&quot;;
+/**
+* SearchBox 
+*
+* @class SearchBox
+* @constructor
+* @param {*} value
+* @param {Object} options
+*/
 
-		this.root = element;
-		var button = document.createElement(&quot;button&quot;);
-		this.content = button;
-		element.appendChild(button);
+function SearchBox( value, options )
+{
+	options = options || {};
+	var element = document.createElement(&quot;div&quot;);
+	element.className = &quot;litegui searchbox&quot;;
+	var placeholder = (options.placeholder != null ? options.placeholder : &quot;Search&quot;);
+	element.innerHTML = &quot;&lt;input value=&#x27;&quot;+value+&quot;&#x27; placeholder=&#x27;&quot;+ placeholder +&quot;&#x27;/&gt;&quot;;
+	this.input = element.querySelector(&quot;input&quot;);
+	this.root = element;
+	var that = this;
 
-		button.innerHTML = value;		
-		button.addEventListener(&quot;click&quot;, function(e) { 
-			that.click();
-		});
+	$(this.input).change( function(e) { 
+		var value = e.target.value;
+		if(options.callback)
+			options.callback.call(that,value);
+	});
+}
 
-		this.click = function()
+SearchBox.prototype.setValue = function(v) { $(this.input).val(v).change(); };
+SearchBox.prototype.getValue = function() { return $(this.input).val(); };
+
+LiteGUI.SearchBox = SearchBox;
+
+
+/**
+* ContextMenu 
+*
+* @class ContextMenu 
+* @constructor
+* @param {Array} values (allows object { title: &quot;Nice text&quot;, callback: function ... })
+* @param {Object} options [optional] Some options:\
+* - title: title to show on top of the menu
+* - callback: function to call when an option is clicked, it receives the item information
+* - ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback 
+* - event: you can pass a MouseEvent, this way the ContextMenu appears in that position
+*/
+function ContextMenu( values, options )
+{
+	options = options || {};
+	this.options = options;
+	var that = this;
+
+	//to link a menu with its parent
+	if(options.parentMenu)
+	{
+		if( options.parentMenu.constructor !== this.constructor )
 		{
-			if(options.callback)
-				options.callback.call(that);
+			console.error(&quot;parentMenu must be of class ContextMenu, ignoring it&quot;);
+			options.parentMenu = null;
+		}
+		else
+		{
+			this.parentMenu = options.parentMenu;
+			this.parentMenu.lock = true;
+			this.parentMenu.current_submenu = this;
 		}
 	}
 
-	LiteGUI.Button = Button;
-
-	/**
-	* SearchBox 
-	*
-	* @class SearchBox
-	* @constructor
-	* @param {*} value
-	* @param {Object} options
-	*/
-
-	function SearchBox(value, options)
+	if(options.event &amp;&amp; options.event.constructor !== MouseEvent &amp;&amp; options.event.constructor !== CustomEvent)
 	{
-		options = options || {};
-		var element = document.createElement(&quot;div&quot;);
-		element.className = &quot;litegui searchbox&quot;;
-		var placeholder = (options.placeholder != null ? options.placeholder : &quot;Search&quot;);
-		element.innerHTML = &quot;&lt;input value=&#x27;&quot;+value+&quot;&#x27; placeholder=&#x27;&quot;+ placeholder +&quot;&#x27;/&gt;&quot;;
-		this.input = element.querySelector(&quot;input&quot;);
-		this.root = element;
-		var that = this;
-
-		$(this.input).change( function(e) { 
-			var value = e.target.value;
-			if(options.callback)
-				options.callback.call(that,value);
-		});
+		console.error(&quot;Event passed to ContextMenu is not of type MouseEvent or CustomEvent. Ignoring it.&quot;);
+		options.event = null;
 	}
 
-	SearchBox.prototype.setValue = function(v) { $(this.input).val(v).change(); };
-	SearchBox.prototype.getValue = function() { return $(this.input).val(); };
+	var root = document.createElement(&quot;div&quot;);
+	root.className = &quot;litecontextmenu litemenubar-panel&quot;;
+	root.style.minWidth = 100;
+	root.style.minHeight = 100;
+	root.style.pointerEvents = &quot;none&quot;;
+	setTimeout( function() { root.style.pointerEvents = &quot;auto&quot;; },100); //delay so the mouse up event is not caugh by this element
 
-	LiteGUI.SearchBox = SearchBox;
-
-
-	/**
-	* ContextualMenu 
-	*
-	* @class ContextualMenu
-	* @constructor
-	* @param {Array} values (allows object { title: &quot;Nice text&quot;, callback: function ... })
-	* @param {Object} options [optional] Some options:\
-	* - title: title to show on top of the menu
-	* - callback: function to call when an option is clicked, it receives the item information
-	* - ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback 
-	* - event: you can pass a MouseEvent, this way the ContextualMenu appears in that position
-	*/
-	function ContextualMenu( values, options )
-	{
-		options = options || {};
-		this.options = options;
-		var that = this;
-
-		var root = document.createElement(&quot;div&quot;);
-		root.className = &quot;litecontextualmenu litemenubar-panel&quot;;
-		root.style.minWidth = 100;
-		root.style.minHeight = 100;
-		root.style.pointerEvents = &quot;none&quot;;
-		setTimeout( function() { root.style.pointerEvents = &quot;auto&quot;; },100); //delay so the mouse up event is not caugh by this element
-
-		//this prevents the default contextual browser menu to open in case this menu was created when pressing right button 
-		root.addEventListener(&quot;mouseup&quot;, function(e){ 
-			e.preventDefault(); return true; 
-		}, true);
-		root.addEventListener(&quot;contextmenu&quot;, function(e) { 
-			if(e.button != 2) //right button
-				return false;
-			e.preventDefault(); 
+	//this prevents the default context browser menu to open in case this menu was created when pressing right button 
+	root.addEventListener(&quot;mouseup&quot;, function(e){ 
+		e.preventDefault(); return true; 
+	}, true);
+	root.addEventListener(&quot;contextmenu&quot;, function(e) { 
+		if(e.button != 2) //right button
 			return false;
-		},true);
+		e.preventDefault(); 
+		return false;
+	},true);
 
-		this.root = root;
-
-		//title
-		if(options.title)
+	root.addEventListener(&quot;mousedown&quot;, function(e){ 
+		if(e.button == 2)
 		{
-			var element = document.createElement(&quot;div&quot;);
-			element.className = &quot;litemenu-title&quot;;
-			element.innerHTML = options.title;
-			root.appendChild(element);
+			that.close();
+			e.preventDefault(); return true; 
 		}
+	}, true);
 
-		//entries
-		var num = 0;
-		for(var i in values)
+
+	this.root = root;
+
+	//title
+	if(options.title)
+	{
+		var element = document.createElement(&quot;div&quot;);
+		element.className = &quot;litemenu-title&quot;;
+		element.innerHTML = options.title;
+		root.appendChild(element);
+	}
+
+	//entries
+	var num = 0;
+	for(var i in values)
+	{
+		var name = values.constructor == Array ? values[i] : i;
+		if( name != null &amp;&amp; name.constructor !== String )
+			name = name.content === undefined ? String(name) : name.content;
+		var value = values[i];
+		this.addItem( name, value, options );
+		num++;
+	}
+
+	//close on leave
+	root.addEventListener(&quot;mouseleave&quot;, function(e) {
+		if(that.lock)
+			return;
+		that.close(e);
+	});
+
+	//insert before checking position
+	var root_document = document;
+	if(options.event)
+		root_document = options.event.target.ownerDocument; 
+
+	if(!root_document)
+		root_document = document;
+	root_document.body.appendChild(root);
+
+	//compute best position
+	var left = options.left || 0;
+	var top = options.top || 0;
+	if(options.event)
+	{
+		if( options.event.constructor !== MouseEvent &amp;&amp; options.event.constructor !== CustomEvent )
 		{
-			var element = document.createElement(&quot;div&quot;);
-			element.className = &quot;litemenu-entry submenu&quot;;
-
-			var name = values.constructor == Array ? values[i] : i;
-			var value = values[i];
-
-			if(value === null)
-			{
-				element.className += &quot;separator&quot;;
-				element.innerHTML = &quot;&lt;hr/&gt;&quot;
-				//continue;
-			}
-			else
-			{
-				element.innerHTML = value &amp;&amp; value.title ? value.title : name;
-				element.value = value;
-
-				if(typeof(value) == &quot;function&quot;)
-				{
-					element.dataset[&quot;value&quot;] = name;
-					element.onclick_callback = value;
-				}
-				else if(typeof(value) == &quot;object&quot;)
-				{
-					if(value.callback &amp;&amp; !options.ignore_item_callbacks)
-						element.addEventListener(&quot;click&quot;, function(e) { this.value.callback.apply( this, this.value ); });
-				}
-				else
-					element.dataset[&quot;value&quot;] = value;
-			}
-
-			root.appendChild(element);
-			element.addEventListener(&quot;click&quot;, inner_onclick);
-			num++;
+			console.warn(&quot;Event passed to ContextMenu is not of type MouseEvent&quot;);
+			options.event = null;
 		}
-
-		//if(num == 0)
-		//	return;
-
-		//option clicked
-		function inner_onclick(e) {
-			var value = this.value;
-			if(options.callback)
-				options.callback.call(that, value, options, e );
-			if(root.parentNode)
-				root.parentNode.removeChild( root );
-		}
-
-		//if(0)
-		root.addEventListener(&quot;mouseleave&quot;, function(e) {
-			if(this.parentNode)
-				this.parentNode.removeChild( this );
-		});
-
-		//insert before checking position
-		var root_document = document;
-		if(options.event)
-			root_document = options.event.target.ownerDocument; 
-
-		if(!root_document)
-			root_document = document;
-		root_document.body.appendChild(root);
-
-		var left = options.left || 0;
-		var top = options.top || 0;
-		if(options.event)
+		else
 		{
 			left = (options.event.pageX - 10);
 			top = (options.event.pageY - 10);
 			if(options.title)
 				top -= 20;
 
-			var rect = document.body.getClientRects()[0];
-			if(left &gt; (rect.width - $(root).width() - 10))
-				left = (rect.width - $(root).width() - 10);
-			if(top &gt; (rect.height - $(root).height() - 10))
-				top = (rect.height - $(root).height() - 10);
-		}
+			if(options.parentMenu)
+			{
+				var rect = options.parentMenu.root.getBoundingClientRect();
+				left = rect.left + rect.width;
+			}
 
-		root.style.left = left + &quot;px&quot;;
-		root.style.top = top  + &quot;px&quot;;
+			var body_rect = document.body.getBoundingClientRect();
+			var root_rect = root.getBoundingClientRect();
+
+			if(left &gt; (body_rect.width - root_rect.width - 10))
+				left = (body_rect.width - root_rect.width - 10);
+			if(top &gt; (body_rect.height - root_rect.height - 10))
+				top = (body_rect.height - root_rect.height - 10);
+		}
 	}
 
-	LiteGUI.ContextualMenu = ContextualMenu;
+	root.style.left = left + &quot;px&quot;;
+	root.style.top = top  + &quot;px&quot;;
+}
 
+ContextMenu.prototype.addItem = function( name, value, options )
+{
+	var that = this;
+	options = options || {};
 
-	//the tiny box to expand the children of a node
-	function Checkbox( value, on_change)
+	var element = document.createElement(&quot;div&quot;);
+	element.className = &quot;litemenu-entry submenu&quot;;
+
+	var disabled = false;
+
+	if(value === null)
 	{
-		var that = this;
+		element.classList.add(&quot;separator&quot;);
+		//element.innerHTML = &quot;&lt;hr/&gt;&quot;
+		//continue;
+	}
+	else
+	{
+		element.innerHTML = value &amp;&amp; value.title ? value.title : name;
+		element.value = value;
 
-		var root = this.root = document.createElement(&quot;span&quot;);
-		root.className = &quot;litecheckbox inputfield&quot;;
-		root.dataset[&quot;value&quot;] = value;
+		if(value)
+		{
+			if(value.disabled)
+			{
+				disabled = true;
+				element.classList.add(&quot;disabled&quot;);
+			}
+			if(value.submenu || value.has_submenu)
+				element.classList.add(&quot;has_submenu&quot;);
+		}
 
-		var element = this.element =document.createElement(&quot;span&quot;);
-		element.className = &quot;fixed flag checkbox &quot;+(value ? &quot;on&quot; : &quot;off&quot;);
-		root.appendChild( element );
-		
-		root.addEventListener(&quot;click&quot;, onClick.bind(this) );
+		if(typeof(value) == &quot;function&quot;)
+		{
+			element.dataset[&quot;value&quot;] = name;
+			element.onclick_callback = value;
+		}
+		else
+			element.dataset[&quot;value&quot;] = value;
+	}
 
-		function onClick(e) {
-			this.setValue( this.root.dataset[&quot;value&quot;] != &quot;true&quot; );
-			e.preventDefault();
+	this.root.appendChild(element);
+	if(!disabled)
+		element.addEventListener(&quot;click&quot;, inner_onclick);
+	if(options.autoopen)
+		element.addEventListener(&quot;mouseenter&quot;, inner_over);
+
+	function inner_over(e)
+	{
+		var value = this.value;
+		if(!value || !value.has_submenu)
+			return;
+		inner_onclick.call(this,e);
+	}
+
+	//menu option clicked
+	function inner_onclick(e) {
+		var value = this.value;
+		var close_parent = true;
+
+		if(that.current_submenu)
+			that.current_submenu.close(e);
+
+		//global callback
+		if(options.callback) 
+		{
+			var r = options.callback.call(that, value, options, e );
+			if(r === true)
+				close_parent = false;
+		}
+
+		//special cases
+		if(value)
+		{
+			if (value.callback &amp;&amp; !options.ignore_item_callbacks &amp;&amp; value.disabled !== true )  //item callback
+			{
+				var r = value.callback.call( this, value, options, e, that );
+				if(r === true)
+					close_parent = false;
+			}
+			if(value.submenu)
+			{
+				if(!value.submenu.options)
+					throw(&quot;ContextMenu submenu needs options&quot;);
+				var submenu = new LiteGUI.ContextMenu( value.submenu.options, {
+					callback: value.submenu.callback,
+					event: e,
+					parentMenu: that,
+					ignore_item_callbacks: value.submenu.ignore_item_callbacks,
+					title: value.submenu.title,
+					autoopen: options.autoopen
+				});
+				close_parent = false;
+			}
+		}
+	
+		if(close_parent &amp;&amp; !that.lock)
+			that.close();
+	}
+
+	return element;
+}
+
+ContextMenu.prototype.close = function(e, ignore_parent_menu)
+{
+	if(this.root.parentNode)
+		this.root.parentNode.removeChild( this.root );
+	if(this.parentMenu &amp;&amp; !ignore_parent_menu)
+	{
+		this.parentMenu.lock = false;
+		this.parentMenu.current_submenu = null;
+		if( e === undefined )
+			this.parentMenu.close();
+		else if( e &amp;&amp; !LiteGUI.isCursorOverElement( e, this.parentMenu.root) )
+			LiteGUI.trigger( this.parentMenu.root, &quot;mouseleave&quot;, e );
+	}
+	if(this.current_submenu)
+		this.current_submenu.close(e, true);
+}
+
+//returns the top most menu
+ContextMenu.prototype.getTopMenu = function()
+{
+	if( this.options.parentMenu )
+		return this.options.parentMenu.getTopMenu();
+	return this;
+}
+
+ContextMenu.prototype.getFirstEvent = function()
+{
+	if( this.options.parentMenu )
+		return this.options.parentMenu.getFirstEvent();
+	return this.options.event;
+}
+
+LiteGUI.ContextMenu = ContextMenu;
+LiteGUI.ContextualMenu = ContextMenu; //LEGACY: REMOVE
+
+
+//the tiny box to expand the children of a node
+function Checkbox( value, on_change)
+{
+	var that = this;
+	this.value = value;
+
+	var root = this.root = document.createElement(&quot;span&quot;);
+	root.className = &quot;litecheckbox inputfield&quot;;
+	root.dataset[&quot;value&quot;] = value;
+
+	var element = this.element = document.createElement(&quot;span&quot;);
+	element.className = &quot;fixed flag checkbox &quot;+(value ? &quot;on&quot; : &quot;off&quot;);
+	root.appendChild( element );
+	
+	root.addEventListener(&quot;click&quot;, onClick.bind(this) );
+
+	function onClick(e) {
+		this.setValue( this.root.dataset[&quot;value&quot;] != &quot;true&quot; );
+		e.preventDefault();
+		e.stopPropagation();
+	}
+
+	this.setValue = function(v)
+	{
+		if(this.value === v)
+			return;
+
+		if( this.root.dataset[&quot;value&quot;] == v.toString())
+			return;
+
+		this.root.dataset[&quot;value&quot;] = v;
+		if(v)
+		{
+			this.element.classList.remove(&quot;off&quot;);
+			this.element.classList.add(&quot;on&quot;);
+		}
+		else
+		{
+			this.element.classList.remove(&quot;on&quot;);
+			this.element.classList.add(&quot;off&quot;);
+		}
+		var old_value = this.value;
+		this.value = v;
+
+		if(on_change)
+			on_change( v, old_value );
+	}
+
+	this.getValue = function()
+	{
+		return this.value;
+		//return this.root.dataset[&quot;value&quot;] == &quot;true&quot;;
+	}
+}	
+
+LiteGUI.Checkbox = Checkbox;
+
+
+//the tiny box to expand the children of a node
+function createLitebox(state, on_change)
+{
+	var element = document.createElement(&quot;span&quot;);
+	element.className = &quot;listbox &quot; + (state ? &quot;listopen&quot; : &quot;listclosed&quot;);
+	element.innerHTML = state ? &quot;&amp;#9660;&quot; : &quot;&amp;#9658;&quot;;
+	element.dataset[&quot;value&quot;] = state ? &quot;open&quot; : &quot;closed&quot;;
+	element.addEventListener(&quot;click&quot;, onClick );
+	element.on_change_callback = on_change;
+
+	element.setEmpty = function(v)
+	{
+		if(v)
+			this.classList.add(&quot;empty&quot;);
+		else
+			this.classList.remove(&quot;empty&quot;);
+	}
+
+	element.expand = function()
+	{
+		this.setValue(true);
+	}
+
+	element.collapse = function()
+	{
+		this.setValue(false);
+	}
+
+	element.setValue = function(v)
+	{
+		if(this.dataset[&quot;value&quot;] == (v ? &quot;open&quot; : &quot;closed&quot;))
+			return;
+
+		if(!v)
+		{
+			this.dataset[&quot;value&quot;] = &quot;closed&quot;;
+			this.innerHTML = &quot;&amp;#9658;&quot;;
+			this.classList.remove(&quot;listopen&quot;);
+			this.classList.add(&quot;listclosed&quot;);
+		}
+		else
+		{
+			this.dataset[&quot;value&quot;] = &quot;open&quot;;
+			this.innerHTML = &quot;&amp;#9660;&quot;;
+			this.classList.add(&quot;listopen&quot;);
+			this.classList.remove(&quot;listclosed&quot;);
+		}
+
+		if(on_change)
+			on_change( this.dataset[&quot;value&quot;] );
+	}
+
+	element.getValue = function()
+	{
+		return this.dataset[&quot;value&quot;];
+	}
+
+	function onClick(e) {
+		//console.log(&quot;CLICK&quot;);
+		var box = e.target;
+		box.setValue( this.dataset[&quot;value&quot;] == &quot;open&quot; ? false : true );
+		if(this.stopPropagation)
 			e.stopPropagation();
-		}
-
-		this.setValue = function(v)
-		{
-			if( this.root.dataset[&quot;value&quot;] == v.toString())
-				return;
-
-			this.root.dataset[&quot;value&quot;] = v;
-			if(v)
-			{
-				this.element.classList.remove(&quot;off&quot;);
-				this.element.classList.add(&quot;on&quot;);
-			}
-			else
-			{
-				this.element.classList.remove(&quot;on&quot;);
-				this.element.classList.add(&quot;off&quot;);
-			}
-
-			if(on_change)
-				on_change( v );
-		}
-
-		this.getValue = function()
-		{
-			return this.root.dataset[&quot;value&quot;] == &quot;true&quot;;
-		}
-	}	
-
-	LiteGUI.Checkbox = Checkbox;
-
-
-	//the tiny box to expand the children of a node
-	function createLitebox(state, on_change)
-	{
-		var element = document.createElement(&quot;span&quot;);
-		element.className = &quot;listbox &quot; + (state ? &quot;listopen&quot; : &quot;listclosed&quot;);
-		element.innerHTML = state ? &quot;&amp;#9660;&quot; : &quot;&amp;#9658;&quot;;
-		element.dataset[&quot;value&quot;] = state ? &quot;open&quot; : &quot;closed&quot;;
-		element.addEventListener(&quot;click&quot;, onClick );
-		element.on_change_callback = on_change;
-
-		element.setEmpty = function(v)
-		{
-			if(v)
-				this.classList.add(&quot;empty&quot;);
-			else
-				this.classList.remove(&quot;empty&quot;);
-		}
-
-		element.setValue = function(v)
-		{
-			if(this.dataset[&quot;value&quot;] == (v ? &quot;open&quot; : &quot;closed&quot;))
-				return;
-
-			if(!v)
-			{
-				this.dataset[&quot;value&quot;] = &quot;closed&quot;;
-				this.innerHTML = &quot;&amp;#9658;&quot;;
-				this.classList.remove(&quot;listopen&quot;);
-				this.classList.add(&quot;listclosed&quot;);
-			}
-			else
-			{
-				this.dataset[&quot;value&quot;] = &quot;open&quot;;
-				this.innerHTML = &quot;&amp;#9660;&quot;;
-				this.classList.add(&quot;listopen&quot;);
-				this.classList.remove(&quot;listclosed&quot;);
-			}
-
-			if(on_change)
-				on_change( this.dataset[&quot;value&quot;] );
-		}
-
-		element.getValue = function()
-		{
-			return this.dataset[&quot;value&quot;];
-		}
-
-		function onClick(e) {
-			console.log(&quot;CLICK&quot;);
-			var box = e.target;
-			box.setValue( this.dataset[&quot;value&quot;] == &quot;open&quot; ? false : true );
-			if(this.stopPropagation)
-				e.stopPropagation();
-		}
-
-		return element;
-	}	
-
-	LiteGUI.createLitebox = createLitebox;
-
-	/**
-	* List 
-	*
-	* @class List
-	* @constructor
-	* @param {String} id
-	* @param {Array} values
-	* @param {Object} options
-	*/
-	function List( id, items, options )
-	{
-		options = options || {};
-
-		var root = this.root = document.createElement(&quot;ul&quot;);
-		root.id = id;
-		root.className = &quot;litelist&quot;;
-		this.items = [];
-		var that = this;
-
-		this.callback = options.callback;
-
-		//walk over every item in the list
-		for(var i in items)
-		{
-			var item = document.createElement(&quot;li&quot;);
-			item.className = &quot;list-item&quot;;
-			item.data = items[i];
-			item.dataset[&quot;value&quot;] = items[i];
-
-			var content = &quot;&quot;;
-			if(typeof(items[i]) == &quot;string&quot;)
-				content = items[i] + &quot;&lt;span class=&#x27;arrow&#x27;&gt;&lt;/span&gt;&quot;;
-			else
-			{
-				content = (items[i].name || items[i].title || &quot;&quot;) + &quot;&lt;span class=&#x27;arrow&#x27;&gt;&lt;/span&gt;&quot;;
-				if(items[i].id)
-					item.id = items[i].id;
-			}
-			item.innerHTML = content;
-
-			item.addEventListener(&quot;click&quot;, function() {
-
-				$(root).find(&quot;.list-item.selected&quot;).removeClass(&quot;selected&quot;);
-				this.classList.add(&quot;selected&quot;);
-				$(that.root).trigger(&quot;wchanged&quot;, this);
-				if(that.callback)
-					that.callback( this.data  );
-			});
-
-			root.appendChild(item);
-		}
-
-
-		if(options.parent)
-		{
-			if(options.parent.root)
-				options.parent.root.appendChild( root );
-			else
-				options.parent.appendChild( root );
-		}
 	}
 
-	List.prototype.getSelectedItem = function()
+	return element;
+}	
+
+LiteGUI.createLitebox = createLitebox;
+
+/**
+* List 
+*
+* @class List
+* @constructor
+* @param {String} id
+* @param {Array} values
+* @param {Object} options
+*/
+function List( id, items, options )
+{
+	options = options || {};
+
+	var root = this.root = document.createElement(&quot;ul&quot;);
+	root.id = id;
+	root.className = &quot;litelist&quot;;
+	this.items = [];
+	var that = this;
+
+	this.callback = options.callback;
+
+	//walk over every item in the list
+	for(var i in items)
 	{
-		return this.root.querySelector(&quot;.list-item.selected&quot;);
+		var item = document.createElement(&quot;li&quot;);
+		item.className = &quot;list-item&quot;;
+		item.data = items[i];
+		item.dataset[&quot;value&quot;] = items[i];
+
+		var content = &quot;&quot;;
+		if(typeof(items[i]) == &quot;string&quot;)
+			content = items[i] + &quot;&lt;span class=&#x27;arrow&#x27;&gt;&lt;/span&gt;&quot;;
+		else
+		{
+			content = (items[i].name || items[i].title || &quot;&quot;) + &quot;&lt;span class=&#x27;arrow&#x27;&gt;&lt;/span&gt;&quot;;
+			if(items[i].id)
+				item.id = items[i].id;
+		}
+		item.innerHTML = content;
+
+		item.addEventListener(&quot;click&quot;, function() {
+
+			$(root).find(&quot;.list-item.selected&quot;).removeClass(&quot;selected&quot;);
+			this.classList.add(&quot;selected&quot;);
+			$(that.root).trigger(&quot;wchanged&quot;, this);
+			if(that.callback)
+				that.callback( this.data  );
+		});
+
+		root.appendChild(item);
 	}
 
-	List.prototype.setSelectedItem = function( name )
+
+	if(options.parent)
 	{
-		var items = this.root.querySelectorAll(&quot;.list-item&quot;);
-		for(var i = 0; i &lt; items.length; i++)
+		if(options.parent.root)
+			options.parent.root.appendChild( root );
+		else
+			options.parent.appendChild( root );
+	}
+}
+
+List.prototype.getSelectedItem = function()
+{
+	return this.root.querySelector(&quot;.list-item.selected&quot;);
+}
+
+List.prototype.setSelectedItem = function( name )
+{
+	var items = this.root.querySelectorAll(&quot;.list-item&quot;);
+	for(var i = 0; i &lt; items.length; i++)
+	{
+		var item = items[i];
+		if(item.data == name)
 		{
-			var item = items[i];
-			if(item.data == name)
+			LiteGUI.trigger( item, &quot;click&quot; );
+			break;
+		}
+	}
+}
+
+LiteGUI.List = List;
+
+/**
+* Slider 
+*
+* @class Slider
+* @constructor
+* @param {Number} value
+* @param {Object} options
+*/
+function Slider(value, options)
+{
+	options = options || {};
+	var canvas = document.createElement(&quot;canvas&quot;);
+	canvas.className = &quot;slider &quot; + (options.extraclass ? options.extraclass : &quot;&quot;);
+	canvas.width = 100;
+	canvas.height = 1;
+	canvas.style.position = &quot;relative&quot;;
+	canvas.style.width = &quot;calc( 100% - 2em )&quot;;
+	canvas.style.height = &quot;1.2em&quot;;
+	this.root = canvas;
+	var that = this;
+	this.value = value;
+
+	this.setValue = function(value, skip_event)
+	{
+		//var width = canvas.getClientRects()[0].width;
+		var ctx = canvas.getContext(&quot;2d&quot;);
+		var min = options.min || 0.0;
+		var max = options.max || 1.0;
+		if(value &lt; min) value = min;
+		else if(value &gt; max) value = max;
+		var range = max - min;
+		var norm = (value - min) / range;
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+		ctx.fillStyle = &quot;#999&quot;;
+		ctx.fillRect(0,0, canvas.width * norm, canvas.height);
+		ctx.fillStyle = &quot;#DA2&quot;;
+		ctx.fillRect(canvas.width * norm - 1,0,2, canvas.height);
+
+		if(value != this.value)
+		{
+			this.value = value;
+			if(!skip_event)
 			{
-				LiteGUI.trigger( item, &quot;click&quot; );
-				break;
+				LiteGUI.trigger(this.root, &quot;change&quot;, value );
+				if(this.onChange)
+					this.onChange( value );
 			}
 		}
 	}
 
-	LiteGUI.List = List;
-
-	/**
-	* Slider 
-	*
-	* @class Slider
-	* @constructor
-	* @param {Number} value
-	* @param {Object} options
-	*/
-	function Slider(value, options)
+	function setFromX(x)
 	{
-		options = options || {};
-		var canvas = document.createElement(&quot;canvas&quot;);
-		canvas.className = &quot;slider &quot; + (options.extraclass ? options.extraclass : &quot;&quot;);
-		canvas.width = 100;
-		canvas.height = 1;
-		canvas.style.position = &quot;relative&quot;;
-		canvas.style.width = &quot;calc( 100% - 2em )&quot;;
-		canvas.style.height = &quot;1.2em&quot;;
-		this.root = canvas;
-		var that = this;
-		this.value = value;
-
-		this.setValue = function(value, skip_event)
-		{
-			//var width = canvas.getClientRects()[0].width;
-			var ctx = canvas.getContext(&quot;2d&quot;);
-			var min = options.min || 0.0;
-			var max = options.max || 1.0;
-			if(value &lt; min) value = min;
-			else if(value &gt; max) value = max;
-			var range = max - min;
-			var norm = (value - min) / range;
-			ctx.clearRect(0,0,canvas.width,canvas.height);
-			ctx.fillStyle = &quot;#999&quot;;
-			ctx.fillRect(0,0, canvas.width * norm, canvas.height);
-			ctx.fillStyle = &quot;#DA2&quot;;
-			ctx.fillRect(canvas.width * norm - 1,0,2, canvas.height);
-
-			if(value != this.value)
-			{
-				this.value = value;
-				if(!skip_event)
-					LiteGUI.trigger(this.root, &quot;change&quot;, value );
-			}
-		}
-
-		function setFromX(x)
-		{
-			var width = canvas.getClientRects()[0].width;
-			var norm = x / width;
-			var min = options.min || 0.0;
-			var max = options.max || 1.0;
-			var range = max - min;
-			that.setValue( range * norm + min );
-		}
-
-		canvas.addEventListener(&quot;mousedown&quot;, function(e) {
-			var mouseX, mouseY;
-			if(e.offsetX) { mouseX = e.offsetX; mouseY = e.offsetY; }
-			else if(e.layerX) { mouseX = e.layerX; mouseY = e.layerY; }	
-			setFromX(mouseX);
-			document.addEventListener(&quot;mousemove&quot;, onMouseMove );
-			document.addEventListener(&quot;mouseup&quot;, onMouseUp );
-    	});
-
-		function onMouseMove(e)
-		{
-			var rect = canvas.getClientRects()[0];
-			var x = e.x === undefined ? e.pageX : e.x;
-			var mouseX = x - rect.left;
-			setFromX(mouseX);
-			e.preventDefault();
-			return false;
-		}
-
-		function onMouseUp(e)
-		{
-			document.removeEventListener(&quot;mousemove&quot;, onMouseMove );
-			document.removeEventListener(&quot;mouseup&quot;, onMouseUp );
-			e.preventDefault();
-			return false;
-		}
-
-		this.setValue(value);
+		var width = canvas.getClientRects()[0].width;
+		var norm = x / width;
+		var min = options.min || 0.0;
+		var max = options.max || 1.0;
+		var range = max - min;
+		that.setValue( range * norm + min );
 	}
 
-	LiteGUI.Slider = Slider;
+	var doc_binded = null;
 
-	/**
-	* LineEditor 
-	*
-	* @class LineEditor
-	* @constructor
-	* @param {Number} value
-	* @param {Object} options
-	*/
+	canvas.addEventListener(&quot;mousedown&quot;, function(e) {
+		var mouseX, mouseY;
+		if(e.offsetX) { mouseX = e.offsetX; mouseY = e.offsetY; }
+		else if(e.layerX) { mouseX = e.layerX; mouseY = e.layerY; }	
+		setFromX(mouseX);
+		doc_binded = canvas.ownerDocument;
+		doc_binded.addEventListener(&quot;mousemove&quot;, onMouseMove );
+		doc_binded.addEventListener(&quot;mouseup&quot;, onMouseUp );
+	});
 
-	function LineEditor(value, options)
+	function onMouseMove(e)
 	{
-		options = options || {};
-		var element = document.createElement(&quot;div&quot;);
-		element.className = &quot;curve &quot; + (options.extraclass ? options.extraclass : &quot;&quot;);
-		element.style.minHeight = &quot;50px&quot;;
-		element.style.width = options.width || &quot;100%&quot;;
+		var rect = canvas.getClientRects()[0];
+		var x = e.x === undefined ? e.pageX : e.x;
+		var mouseX = x - rect.left;
+		setFromX(mouseX);
+		e.preventDefault();
+		return false;
+	}
 
-		element.bgcolor = options.bgcolor || &quot;#222&quot;;
-		element.pointscolor = options.pointscolor || &quot;#5AF&quot;;
-		element.linecolor = options.linecolor || &quot;#444&quot;;
+	function onMouseUp(e)
+	{
+		var doc = doc_binded || document;
+		doc_binded = null;
+		doc.removeEventListener(&quot;mousemove&quot;, onMouseMove );
+		doc.removeEventListener(&quot;mouseup&quot;, onMouseUp );
+		e.preventDefault();
+		return false;
+	}
 
-		element.value = value || [];
-		element.xrange = options.xrange || [0,1]; //min,max
-		element.yrange = options.yrange || [0,1]; //min,max
-		element.defaulty = options.defaulty != null ? options.defaulty : 0.5;
-		element.no_trespassing = options.no_trespassing || false;
-		element.show_samples = options.show_samples || 0;
-		element.options = options;
+	this.setValue(value);
+}
 
-		var canvas = document.createElement(&quot;canvas&quot;);
-		canvas.width = options.width || 200;
-		canvas.height = options.height || 50;
-		element.appendChild(canvas);
-		element.canvas = canvas;
+LiteGUI.Slider = Slider;
 
-		$(canvas).bind(&quot;mousedown&quot;,onmousedown);
-		$(element).resize(onresize);
+/**
+* LineEditor 
+*
+* @class LineEditor
+* @constructor
+* @param {Number} value
+* @param {Object} options
+*/
 
-		element.getValueAt = function(x)
+function LineEditor(value, options)
+{
+	options = options || {};
+	var element = document.createElement(&quot;div&quot;);
+	element.className = &quot;curve &quot; + (options.extraclass ? options.extraclass : &quot;&quot;);
+	element.style.minHeight = &quot;50px&quot;;
+	element.style.width = options.width || &quot;100%&quot;;
+
+	element.bgcolor = options.bgcolor || &quot;#222&quot;;
+	element.pointscolor = options.pointscolor || &quot;#5AF&quot;;
+	element.linecolor = options.linecolor || &quot;#444&quot;;
+
+	element.value = value || [];
+	element.xrange = options.xrange || [0,1]; //min,max
+	element.yrange = options.yrange || [0,1]; //min,max
+	element.defaulty = options.defaulty != null ? options.defaulty : 0.5;
+	element.no_trespassing = options.no_trespassing || false;
+	element.show_samples = options.show_samples || 0;
+	element.options = options;
+
+	var canvas = document.createElement(&quot;canvas&quot;);
+	canvas.width = options.width || 200;
+	canvas.height = options.height || 50;
+	element.appendChild(canvas);
+	element.canvas = canvas;
+
+	$(canvas).bind(&quot;mousedown&quot;,onmousedown);
+	$(element).resize(onresize);
+
+	element.getValueAt = function(x)
+	{
+		if(x &lt; element.xrange[0] || x &gt; element.xrange[1])
+			return element.defaulty;
+
+		var last = [ element.xrange[0], element.defaulty ];
+		var f = 0;
+		for(var i = 0; i &lt; element.value.length; i += 1)
 		{
-			if(x &lt; element.xrange[0] || x &gt; element.xrange[1])
-				return element.defaulty;
-
-			var last = [ element.xrange[0], element.defaulty ];
-			var f = 0;
-			for(var i = 0; i &lt; element.value.length; i += 1)
+			var v = element.value[i];
+			if(x == v[0]) return v[1];
+			if(x &lt; v[0])
 			{
-				var v = element.value[i];
-				if(x == v[0]) return v[1];
-				if(x &lt; v[0])
-				{
-					f = (x - last[0]) / (v[0] - last[0]);
-					return last[1] * (1-f) + v[1] * f;
-				}
-				last = v;
+				f = (x - last[0]) / (v[0] - last[0]);
+				return last[1] * (1-f) + v[1] * f;
 			}
-
-			v = [ element.xrange[1], element.defaulty ];
-			f = (x - last[0]) / (v[0] - last[0]);
-			return last[1] * (1-f) + v[1] * f;
+			last = v;
 		}
 
-		element.resample = function(samples)
+		v = [ element.xrange[1], element.defaulty ];
+		f = (x - last[0]) / (v[0] - last[0]);
+		return last[1] * (1-f) + v[1] * f;
+	}
+
+	element.resample = function(samples)
+	{
+		var r = [];
+		var dx = (element.xrange[1] - element.xrange[0]) / samples;
+		for(var i = element.xrange[0]; i &lt;= element.xrange[1]; i += dx)
 		{
-			var r = [];
-			var dx = (element.xrange[1] - element.xrange[0]) / samples;
-			for(var i = element.xrange[0]; i &lt;= element.xrange[1]; i += dx)
-			{
-				r.push( element.getValueAt(i) );
-			}
-			return r;
+			r.push( element.getValueAt(i) );
 		}
+		return r;
+	}
 
-		element.addValue = function(v)
+	element.addValue = function(v)
+	{
+		for(var i = 0; i &lt; element.value; i++)
 		{
-			for(var i = 0; i &lt; element.value; i++)
-			{
-				var value = element.value[i];
-				if(value[0] &lt; v[0]) continue;
-				element.value.splice(i,0,v);
-				redraw();
-				return;
-			}
-
-			element.value.push(v);
+			var value = element.value[i];
+			if(value[0] &lt; v[0]) continue;
+			element.value.splice(i,0,v);
 			redraw();
+			return;
 		}
 
-		//value to canvas
-		function convert(v)
+		element.value.push(v);
+		redraw();
+	}
+
+	//value to canvas
+	function convert(v)
+	{
+		return [ canvas.width * ( (element.xrange[1] - element.xrange[0]) * v[0] + element.xrange[0]),
+			canvas.height * ((element.yrange[1] - element.yrange[0]) * v[1] + element.yrange[0])];
+	}
+
+	//canvas to value
+	function unconvert(v)
+	{
+		return [(v[0] / canvas.width - element.xrange[0]) / (element.xrange[1] - element.xrange[0]),
+				(v[1] / canvas.height - element.yrange[0]) / (element.yrange[1] - element.yrange[0])];
+	}
+
+	var selected = -1;
+
+	element.redraw = function()
+	{
+		var ctx = canvas.getContext(&quot;2d&quot;);
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.translate(0,canvas.height);
+		ctx.scale(1,-1);
+
+		ctx.fillStyle = element.bgcolor;
+		ctx.fillRect(0,0,canvas.width,canvas.height);
+
+		ctx.strokeStyle = element.linecolor;
+		ctx.beginPath();
+
+		//draw line
+		var pos = convert([element.xrange[0],element.defaulty]);
+		ctx.moveTo( pos[0], pos[1] );
+
+		for(var i in element.value)
 		{
-			return [ canvas.width * ( (element.xrange[1] - element.xrange[0]) * v[0] + element.xrange[0]),
-				canvas.height * ((element.yrange[1] - element.yrange[0]) * v[1] + element.yrange[0])];
-		}
-
-		//canvas to value
-		function unconvert(v)
-		{
-			return [(v[0] / canvas.width - element.xrange[0]) / (element.xrange[1] - element.xrange[0]),
-					(v[1] / canvas.height - element.yrange[0]) / (element.yrange[1] - element.yrange[0])];
-		}
-
-		var selected = -1;
-
-		element.redraw = function()
-		{
-			var ctx = canvas.getContext(&quot;2d&quot;);
-			ctx.setTransform(1, 0, 0, 1, 0, 0);
-			ctx.translate(0,canvas.height);
-			ctx.scale(1,-1);
-
-			ctx.fillStyle = element.bgcolor;
-			ctx.fillRect(0,0,canvas.width,canvas.height);
-
-			ctx.strokeStyle = element.linecolor;
-			ctx.beginPath();
-
-			//draw line
-			var pos = convert([element.xrange[0],element.defaulty]);
-			ctx.moveTo( pos[0], pos[1] );
-
-			for(var i in element.value)
-			{
-				var value = element.value[i];
-				pos = convert(value);
-				ctx.lineTo( pos[0], pos[1] );
-			}
-
-			pos = convert([element.xrange[1],element.defaulty]);
+			var value = element.value[i];
+			pos = convert(value);
 			ctx.lineTo( pos[0], pos[1] );
-			ctx.stroke();
+		}
 
-			//draw points
-			for(var i = 0; i &lt; element.value.length; i += 1)
+		pos = convert([element.xrange[1],element.defaulty]);
+		ctx.lineTo( pos[0], pos[1] );
+		ctx.stroke();
+
+		//draw points
+		for(var i = 0; i &lt; element.value.length; i += 1)
+		{
+			var value = element.value[i];
+			pos = convert(value);
+			if(selected == i)
+				ctx.fillStyle = &quot;white&quot;;
+			else
+				ctx.fillStyle = element.pointscolor;
+			ctx.beginPath();
+			ctx.arc( pos[0], pos[1], selected == i ? 4 : 2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		if(element.show_samples)
+		{
+			var samples = element.resample(element.show_samples);
+			ctx.fillStyle = &quot;#888&quot;;
+			for(var i = 0; i &lt; samples.length; i += 1)
 			{
-				var value = element.value[i];
+				var value = [ i * ((element.xrange[1] - element.xrange[0]) / element.show_samples) + element.xrange[0], samples[i] ];
 				pos = convert(value);
-				if(selected == i)
-					ctx.fillStyle = &quot;white&quot;;
-				else
-					ctx.fillStyle = element.pointscolor;
 				ctx.beginPath();
-				ctx.arc( pos[0], pos[1], selected == i ? 4 : 2, 0, Math.PI * 2);
+				ctx.arc( pos[0], pos[1], 2, 0, Math.PI * 2);
 				ctx.fill();
 			}
-
-			if(element.show_samples)
-			{
-				var samples = element.resample(element.show_samples);
-				ctx.fillStyle = &quot;#888&quot;;
-				for(var i = 0; i &lt; samples.length; i += 1)
-				{
-					var value = [ i * ((element.xrange[1] - element.xrange[0]) / element.show_samples) + element.xrange[0], samples[i] ];
-					pos = convert(value);
-					ctx.beginPath();
-					ctx.arc( pos[0], pos[1], 2, 0, Math.PI * 2);
-					ctx.fill();
-				}
-			}
 		}
-
-		var last_mouse = [0,0];
-		function onmousedown(evt)
-		{
-			$(document).bind(&quot;mousemove&quot;,onmousemove);
-			$(document).bind(&quot;mouseup&quot;,onmouseup);
-
-			var rect = canvas.getBoundingClientRect();
-			var mousex = evt.clientX - rect.left;
-			var mousey = evt.clientY - rect.top;
-
-			selected = computeSelected(mousex,canvas.height-mousey);
-
-			if(selected == -1)
-			{
-				var v = unconvert([mousex,canvas.height-mousey]);
-				element.value.push(v);
-				sortValues();
-				selected = element.value.indexOf(v);
-			}
-
-			last_mouse = [mousex,mousey];
-			element.redraw();
-			evt.preventDefault();
-			evt.stopPropagation();
-		}
-
-		function onmousemove(evt)
-		{
-			var rect = canvas.getBoundingClientRect();
-			var mousex = evt.clientX - rect.left;
-			var mousey = evt.clientY - rect.top;
-
-			if(mousex &lt; 0) mousex = 0;
-			else if(mousex &gt; canvas.width) mousex = canvas.width;
-			if(mousey &lt; 0) mousey = 0;
-			else if(mousey &gt; canvas.height) mousey = canvas.height;
-
-			//dragging to remove
-			if( selected != -1 &amp;&amp; distance( [evt.clientX - rect.left, evt.clientY - rect.top], [mousex,mousey] ) &gt; canvas.height * 0.5 )
-			{
-				element.value.splice(selected,1);
-				onmouseup(evt);
-				return;
-			}
-
-			var dx = last_mouse[0] - mousex;
-			var dy = last_mouse[1] - mousey;
-			var delta = unconvert([-dx,dy]);
-			if(selected != -1)
-			{
-				var minx = element.xrange[0];
-				var maxx = element.xrange[1];
-
-				if(element.no_trespassing)
-				{
-					if(selected &gt; 0) minx = element.value[selected-1][0];
-					if(selected &lt; (element.value.length-1) ) maxx = element.value[selected+1][0];
-				}
-
-				var v = element.value[selected];
-				v[0] += delta[0];
-				v[1] += delta[1];
-				if(v[0] &lt; minx) v[0] = minx;
-				else if(v[0] &gt; maxx) v[0] = maxx;
-				if(v[1] &lt; element.yrange[0]) v[1] = element.yrange[0];
-				else if(v[1] &gt; element.yrange[1]) v[1] = element.yrange[1];
-			}
-
-			sortValues();
-			element.redraw();
-			last_mouse[0] = mousex;
-			last_mouse[1] = mousey;
-			onchange();
-
-			evt.preventDefault();
-			evt.stopPropagation();
-		}
-
-		function onmouseup(evt)
-		{
-			selected = -1;
-			element.redraw();
-			$(document).unbind(&quot;mousemove&quot;,onmousemove);
-			$(document).unbind(&quot;mouseup&quot;,onmouseup);
-			onchange();
-			evt.preventDefault();
-			evt.stopPropagation();
-		}
-
-		function onresize(e)
-		{
-			canvas.width = $(this).width();
-			canvas.height = $(this).height();
-			element.redraw();
-		}
-		
-		function onchange()
-		{
-			if(options.callback)
-				options.callback.call(element,element.value);
-			else
-				$(element).change();
-		}
-
-		function distance(a,b) { return Math.sqrt( Math.pow(b[0]-a[0],2) + Math.pow(b[1]-a[1],2) ); };
-
-		function computeSelected(x,y)
-		{
-			var min_dist = 100000;
-			var max_dist = 8; //pixels
-			var selected = -1;
-			for(var i=0; i &lt; element.value.length; i++)
-			{
-				var value = element.value[i];
-				var pos = convert(value);
-				var dist = distance([x,y],pos);
-				if(dist &lt; min_dist &amp;&amp; dist &lt; max_dist)
-				{
-					min_dist = dist;
-					selected = i;
-				}
-			}
-			return selected;
-		}
-
-		function sortValues()
-		{
-			var v = null;
-			if(selected != -1)
-				v = element.value[selected];
-			element.value.sort(function(a,b) { return a[0] &gt; b[0]; });
-			if(v)
-				selected = element.value.indexOf(v);
-		}
-		
-		element.redraw();
-		return element;
 	}
 
-	LiteGUI.LineEditor = LineEditor;
+	var last_mouse = [0,0];
+	function onmousedown(evt)
+	{
+		$(document).bind(&quot;mousemove&quot;,onmousemove);
+		$(document).bind(&quot;mouseup&quot;,onmouseup);
+
+		var rect = canvas.getBoundingClientRect();
+		var mousex = evt.clientX - rect.left;
+		var mousey = evt.clientY - rect.top;
+
+		selected = computeSelected(mousex,canvas.height-mousey);
+
+		if(selected == -1)
+		{
+			var v = unconvert([mousex,canvas.height-mousey]);
+			element.value.push(v);
+			sortValues();
+			selected = element.value.indexOf(v);
+		}
+
+		last_mouse = [mousex,mousey];
+		element.redraw();
+		evt.preventDefault();
+		evt.stopPropagation();
+	}
+
+	function onmousemove(evt)
+	{
+		var rect = canvas.getBoundingClientRect();
+		var mousex = evt.clientX - rect.left;
+		var mousey = evt.clientY - rect.top;
+
+		if(mousex &lt; 0) mousex = 0;
+		else if(mousex &gt; canvas.width) mousex = canvas.width;
+		if(mousey &lt; 0) mousey = 0;
+		else if(mousey &gt; canvas.height) mousey = canvas.height;
+
+		//dragging to remove
+		if( selected != -1 &amp;&amp; distance( [evt.clientX - rect.left, evt.clientY - rect.top], [mousex,mousey] ) &gt; canvas.height * 0.5 )
+		{
+			element.value.splice(selected,1);
+			onmouseup(evt);
+			return;
+		}
+
+		var dx = last_mouse[0] - mousex;
+		var dy = last_mouse[1] - mousey;
+		var delta = unconvert([-dx,dy]);
+		if(selected != -1)
+		{
+			var minx = element.xrange[0];
+			var maxx = element.xrange[1];
+
+			if(element.no_trespassing)
+			{
+				if(selected &gt; 0) minx = element.value[selected-1][0];
+				if(selected &lt; (element.value.length-1) ) maxx = element.value[selected+1][0];
+			}
+
+			var v = element.value[selected];
+			v[0] += delta[0];
+			v[1] += delta[1];
+			if(v[0] &lt; minx) v[0] = minx;
+			else if(v[0] &gt; maxx) v[0] = maxx;
+			if(v[1] &lt; element.yrange[0]) v[1] = element.yrange[0];
+			else if(v[1] &gt; element.yrange[1]) v[1] = element.yrange[1];
+		}
+
+		sortValues();
+		element.redraw();
+		last_mouse[0] = mousex;
+		last_mouse[1] = mousey;
+		onchange();
+
+		evt.preventDefault();
+		evt.stopPropagation();
+	}
+
+	function onmouseup(evt)
+	{
+		selected = -1;
+		element.redraw();
+		$(document).unbind(&quot;mousemove&quot;,onmousemove);
+		$(document).unbind(&quot;mouseup&quot;,onmouseup);
+		onchange();
+		evt.preventDefault();
+		evt.stopPropagation();
+	}
+
+	function onresize(e)
+	{
+		canvas.width = $(this).width();
+		canvas.height = $(this).height();
+		element.redraw();
+	}
+	
+	function onchange()
+	{
+		if(options.callback)
+			options.callback.call(element,element.value);
+		else
+			$(element).change();
+	}
+
+	function distance(a,b) { return Math.sqrt( Math.pow(b[0]-a[0],2) + Math.pow(b[1]-a[1],2) ); };
+
+	function computeSelected(x,y)
+	{
+		var min_dist = 100000;
+		var max_dist = 8; //pixels
+		var selected = -1;
+		for(var i=0; i &lt; element.value.length; i++)
+		{
+			var value = element.value[i];
+			var pos = convert(value);
+			var dist = distance([x,y],pos);
+			if(dist &lt; min_dist &amp;&amp; dist &lt; max_dist)
+			{
+				min_dist = dist;
+				selected = i;
+			}
+		}
+		return selected;
+	}
+
+	function sortValues()
+	{
+		var v = null;
+		if(selected != -1)
+			v = element.value[selected];
+		element.value.sort(function(a,b) { return a[0] &gt; b[0]; });
+		if(v)
+			selected = element.value.indexOf(v);
+	}
+	
+	element.redraw();
+	return element;
+}
+
+LiteGUI.LineEditor = LineEditor;
 
 })();
     </pre>
 </div>
-
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@ YUI.add("yuidoc-meta", function(Y) {
    Y.YUIDoc = { meta: {
     "classes": [
         "Area",
-        "ContextualMenu",
+        "ContextMenu",
         "Dialog",
         "Inspector",
         "LineEditor",
@@ -15,6 +15,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "Tree"
     ],
     "modules": [],
-    "allModules": []
+    "allModules": [],
+    "elements": []
 } };
 });

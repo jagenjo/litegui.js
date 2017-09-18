@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
-    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <link rel="icon" href="../assets/favicon.ico">
     <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
 </head>
 <body class="yui3-skin-sam">
@@ -14,9 +14,7 @@
 <div id="doc">
     <div id="hd" class="yui3-g header">
         <div class="yui3-u-3-4">
-            
-                <h1><img src="../assets/css/logo.png" title=""></h1>
-            
+                <h1><img src="../assets/css/logo.png" title="" width="117" height="52"></h1>
         </div>
         <div class="yui3-u-1-4 version">
             <em>API Docs for: </em>
@@ -27,513 +25,327 @@
         <div class="yui3-u-1-4">
             <div id="docs-sidebar" class="sidebar apidocs">
                 <div id="api-list">
-    <h2 class="off-left">APIs</h2>
-    <div id="api-tabview" class="tabview">
-        <ul class="tabs">
-            <li><a href="#api-classes">Classes</a></li>
-            <li><a href="#api-modules">Modules</a></li>
-        </ul>
-
-        <div id="api-tabview-filter">
-            <input type="search" id="api-filter" placeholder="Type to filter APIs">
-        </div>
-
-        <div id="api-tabview-panel">
-            <ul id="api-classes" class="apis classes">
-            
-                <li><a href="../classes/Area.html">Area</a></li>
-            
-                <li><a href="../classes/ContextualMenu.html">ContextualMenu</a></li>
-            
-                <li><a href="../classes/Dialog.html">Dialog</a></li>
-            
-                <li><a href="../classes/Inspector.html">Inspector</a></li>
-            
-                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
-            
-                <li><a href="../classes/List.html">List</a></li>
-            
-                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
-            
-                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
-            
-                <li><a href="../classes/Slider.html">Slider</a></li>
-            
-                <li><a href="../classes/Split.html">Split</a></li>
-            
-                <li><a href="../classes/Tabs.html">Tabs</a></li>
-            
-                <li><a href="../classes/Tree.html">Tree</a></li>
-            
-            </ul>
-
-            <ul id="api-modules" class="apis modules">
-            
-            </ul>
-        </div>
-    </div>
-</div>
-
+                    <h2 class="off-left">APIs</h2>
+                    <div id="api-tabview" class="tabview">
+                        <ul class="tabs">
+                            <li><a href="#api-classes">Classes</a></li>
+                            <li><a href="#api-modules">Modules</a></li>
+                        </ul>
+                
+                        <div id="api-tabview-filter">
+                            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                        </div>
+                
+                        <div id="api-tabview-panel">
+                            <ul id="api-classes" class="apis classes">
+                                <li><a href="../classes/Area.html">Area</a></li>
+                                <li><a href="../classes/ContextMenu.html">ContextMenu</a></li>
+                                <li><a href="../classes/Dialog.html">Dialog</a></li>
+                                <li><a href="../classes/Inspector.html">Inspector</a></li>
+                                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
+                                <li><a href="../classes/List.html">List</a></li>
+                                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
+                                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
+                                <li><a href="../classes/Slider.html">Slider</a></li>
+                                <li><a href="../classes/Split.html">Split</a></li>
+                                <li><a href="../classes/Tabs.html">Tabs</a></li>
+                                <li><a href="../classes/Tree.html">Tree</a></li>
+                            </ul>
+                
+                
+                            <ul id="api-modules" class="apis modules">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="yui3-u-3-4">
                 <div id="api-options">
-        Show:
-        <label for="api-show-inherited">
-            <input type="checkbox" id="api-show-inherited" checked>
-            Inherited
-        </label>
-
-        <label for="api-show-protected">
-            <input type="checkbox" id="api-show-protected">
-            Protected
-        </label>
-
-        <label for="api-show-private">
-            <input type="checkbox" id="api-show-private">
-            Private
-        </label>
-        <label for="api-show-deprecated">
-            <input type="checkbox" id="api-show-deprecated">
-            Deprecated
-        </label>
-
-    </div>
-
-
+                    Show:
+                    <label for="api-show-inherited">
+                        <input type="checkbox" id="api-show-inherited" checked>
+                        Inherited
+                    </label>
+            
+                    <label for="api-show-protected">
+                        <input type="checkbox" id="api-show-protected">
+                        Protected
+                    </label>
+            
+                    <label for="api-show-private">
+                        <input type="checkbox" id="api-show-private">
+                        Private
+                    </label>
+                    <label for="api-show-deprecated">
+                        <input type="checkbox" id="api-show-deprecated">
+                        Deprecated
+                    </label>
+            
+                </div>
+            
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-                        <h1>Inspector Class</h1>
+<h1>Inspector Class</h1>
 <div class="box meta">
-    
 
-    
 
-    
         <div class="foundat">
-            Defined in: <a href="../files/.._src_inspector.js.html#l20"><code>..&#x2F;src&#x2F;inspector.js:20</code></a>
+            Defined in: <a href="../files/.._src_inspector.js.html#l1"><code>..&#x2F;src&#x2F;inspector.js:1</code></a>
         </div>
-    
 
-    
 
-    
 </div>
-
 
 
 <div class="box intro">
     <p>Inspector allows to create a list of widgets easily, it also provides methods to create the widgets automatically.<br/>
 Every widget is created calling the function add followed by the widget name, p.e. addSlider or addVector3 or addNumber.<br/>
-Widgets always receive three parameters:<br/>
-- name: String that defines the name at that it will be shown in the left side of the widget.<br/>
-- value: the value that will be displayed in the widget.<br/>
-- options: Object containing all the values .<br/></p>
+Widgets always receive three parameters:<br/></p>
+<ul>
+<li>name: String that defines the name at that it will be shown in the left side of the widget.<br/></li>
+<li>value: the value that will be displayed in the widget.<br/></li>
+<li>options: Object containing all the values .<br/></li>
+</ul>
 
 </div>
 
-
     <div class="constructor">
         <h2>Constructor</h2>
-        <div id="method_Inspector" class="method item">
+<div id="method_Inspector" class="method item">
     <h3 class="name"><code>Inspector</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
-                        <code>id</code>
-                    
-                </li>
-            
-                <li class="arg">
-                    
                         <code>options</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l20"><code>..&#x2F;src&#x2F;inspector.js:20</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1"><code>..&#x2F;src&#x2F;inspector.js:1</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
         
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
-                        <code class="param-name">id</code>
-                        <span class="type">String</span>
-                    
-
-                    
-
-                    <div class="param-description">
-                         
-                    </div>
-
-                    
-                </li>
-            
-                <li class="param">
-                    
                         <code class="param-name">options</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>object with a set of options { <br/>
-    width: total width <br/>
-    height: total height <br/>
-    widgets_width: width of every widget (used mostly in horizontal inspectors) <br/>
-    name_width: width of the name part of widgets <br/>
-    full: set to true if you want the inspector to use all the parent width and height <br/>
-    widgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes) <br/>
-    one_line: widgets are place one next to the other horizontaly <br/>
-    onchange: callback to call when something changes <br/>
-  } <br/></p>
+width: total width <br/>
+height: total height <br/>
+widgets_width: width of every widget (used mostly in horizontal inspectors) <br/>
+name_width: width of the name part of widgets <br/>
+full: set to true if you want the inspector to use all the parent width and height <br/>
+widgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes) <br/>
+one_line: widgets are place one next to the other horizontaly <br/>
+onchange: callback to call when something changes <br/>
+} <br/></p>
+<pre><code>Dependencies: 
+    - jscolor.js</code></pre>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
 
-    
+
 </div>
-
     </div>
-
 
 <div id="classdocs" class="tabview">
     <ul class="api-class-tabs">
         <li class="api-class-tab index"><a href="#index">Index</a></li>
 
-        
             <li class="api-class-tab methods"><a href="#methods">Methods</a></li>
-        
-        
-        
-        
     </ul>
 
     <div>
         <div id="index" class="api-class-tabpanel index">
             <h2 class="off-left">Item Index</h2>
 
-            
                 <div class="index-section methods">
                     <h3>Methods</h3>
 
                     <ul class="index-list methods">
-                        
                             <li class="index-item method">
                                 <a href="#method_add">add</a>
 
-                                
-                                
                             </li>
-                        
+                            <li class="index-item method">
+                                <a href="#method_addArray">addArray</a>
+
+                            </li>
                             <li class="index-item method">
                                 <a href="#method_addCheckbox">addCheckbox</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addCombo">addCombo</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addFlags">addFlags</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addInfo">addInfo</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addList">addList</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addNumber">addNumber</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addPad">addPad</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addSeparator">addSeparator</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addSlider">addSlider</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addString">addString</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addStringButton">addStringButton</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addTextarea">addTextarea</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addTitle">addTitle</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addVector2">addVector2</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addVector3">addVector3</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_addVector4">addVector4</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_assignValue">assignValue</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_clear">clear</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_collectPropertier">collectPropertier</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_createWidget">createWidget</a>
 
-                                
-                                
                             </li>
-                        
+                            <li class="index-item method">
+                                <a href="#method_getWidget">getWidget</a>
+
+                            </li>
                             <li class="index-item method">
                                 <a href="#method_inspectInstance">inspectInstance</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_refresh">refresh</a>
 
-                                
-                                
                             </li>
-                        
                             <li class="index-item method">
                                 <a href="#method_showProperties">showProperties</a>
 
-                                
-                                
                             </li>
-                        
                     </ul>
                 </div>
-            
 
-            
 
-            
 
-            
         </div>
 
-        
             <div id="methods" class="api-class-tabpanel">
                 <h2 class="off-left">Methods</h2>
 
-                
-                    <div id="method_add" class="method item">
+<div id="method_add" class="method item">
     <h3 class="name"><code>add</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>type</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options:</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l516"><code>..&#x2F;src&#x2F;inspector.js:516</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l618"><code>..&#x2F;src&#x2F;inspector.js:618</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -541,169 +353,207 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">type</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>string specifying the name of the widget to use (check Inspector.widget_constructors for a complete list)</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>the string to show at the left side of the widget, if null this element wont be created and the value part will use the full width</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>the value to assign to the widget</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options:</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>some generic options that any widget could have:
-- type: overwrites the type
-- callback: function to call when the user interacts with the widget and changes the value
-[For a bigger list check createWidget and every widget in particular]</p>
+                        <p>some generic options that any widget could have:</p>
+<ul>
+<li>type: overwrites the type</li>
+<li>callback: function to call when the user interacts with the widget and changes the value
+[For a bigger list check createWidget and every widget in particular]</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
+<div id="method_addArray" class="method item">
+    <h3 class="name"><code>addArray</code></h3>
 
-                
-                    <div id="method_addCheckbox" class="method item">
-    <h3 class="name"><code>addCheckbox</code></h3>
-
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1565"><code>..&#x2F;src&#x2F;inspector.js:1565</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l2656"><code>..&#x2F;src&#x2F;inspector.js:2656</code></a>
         </p>
 
 
-        
 
-        
+    </div>
+
+    <div class="description">
+        <p>Widget to edit an array of values of a certain type</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">name</code>
+                        <span class="type">String</span>
+
+
+                    <div class="param-description">
+                         
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">value</code>
+                        <span class="type">Array</span>
+
+
+                    <div class="param-description">
+                         
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">options,</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>data_type: the type of every value inside the array</li>
+<li>data_options: options for the widgets of every item in the array</li>
+<li>max_items: max number of items to show from the array, default is 100</li>
+<li>callback: function to call once an items inside the array has changed</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">HTMLElement</span>:
+                    <p>the widget in the form of the DOM element that contains it</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_addCheckbox" class="method item">
+    <h3 class="name"><code>addCheckbox</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>name</code>
+                </li>
+                <li class="arg">
+                        <code>value</code>
+                </li>
+                <li class="arg">
+                        <code>options,</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">HTMLElement</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/.._src_inspector.js.html#l1631"><code>..&#x2F;src&#x2F;inspector.js:1631</code></a>
+        </p>
+
+
+
     </div>
 
     <div class="description">
@@ -711,152 +561,97 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Boolean</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- label: text to show, otherwise it shows on/off
-- label_on: text to show when on
-- label_off: text to show when off
-- callback: function to call once the value changes</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>label: text to show, otherwise it shows on/off</li>
+<li>label_on: text to show when on</li>
+<li>label_off: text to show when off</li>
+<li>callback: function to call once the value changes</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addCombo" class="method item">
+<div id="method_addCombo" class="method item">
     <h3 class="name"><code>addCombo</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1652"><code>..&#x2F;src&#x2F;inspector.js:1652</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1723"><code>..&#x2F;src&#x2F;inspector.js:1723</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -864,145 +659,93 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type"></span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- values: a list with all the possible values, it could be an array, or an object, in case of an object, the key is the string to show, the value is the value to assign
-- disabled: true to disable
-- callback: function to call once an items is clicked</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>values: a list with all the possible values, it could be an array, or an object, in case of an object, the key is the string to show, the value is the value to assign</li>
+<li>disabled: true to disable</li>
+<li>callback: function to call once an items is clicked</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addFlags" class="method item">
+<div id="method_addFlags" class="method item">
     <h3 class="name"><code>addFlags</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>optional</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1624"><code>..&#x2F;src&#x2F;inspector.js:1624</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1690"><code>..&#x2F;src&#x2F;inspector.js:1690</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1010,134 +753,82 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>object that contains all the booleans</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">optional</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>object with extra flags to insert</p>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addInfo" class="method item">
+<div id="method_addInfo" class="method item">
     <h3 class="name"><code>addInfo</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1439"><code>..&#x2F;src&#x2F;inspector.js:1439</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1494"><code>..&#x2F;src&#x2F;inspector.js:1494</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1145,151 +836,96 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>HTML code</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- className: to specify a classname of the content
-- height: to specify a height</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>className: to specify a classname of the content</li>
+<li>height: to specify a height</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addList" class="method item">
+<div id="method_addList" class="method item">
     <h3 class="name"><code>addList</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1843"><code>..&#x2F;src&#x2F;inspector.js:1843</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1957"><code>..&#x2F;src&#x2F;inspector.js:1957</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1297,151 +933,97 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type"></span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>[Array or Object]</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- multiselection: allow multiple selection
-- callback: function to call once an items is clicked</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>multiselection: allow multiple selection</li>
+<li>callback: function to call once an items is clicked</li>
+<li>selected: the item selected</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addNumber" class="method item">
+<div id="method_addNumber" class="method item">
     <h3 class="name"><code>addNumber</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l917"><code>..&#x2F;src&#x2F;inspector.js:917</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l942"><code>..&#x2F;src&#x2F;inspector.js:942</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1449,155 +1031,100 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Number</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- disabled: shows the widget disabled
-- callback: function to call when the string is edited
-- precision: number of digits after the colon
-- units: string to show after the number
-- min: minimum value accepted
-- max: maximum value accepted
-- step: increments when draggin the mouse (default is 0.1)</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>disabled: shows the widget disabled</li>
+<li>callback: function to call when the string is edited</li>
+<li>precision: number of digits after the colon</li>
+<li>units: string to show after the number</li>
+<li>min: minimum value accepted</li>
+<li>max: maximum value accepted</li>
+<li>step: increments when draggin the mouse (default is 0.1)</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addPad" class="method item">
+<div id="method_addPad" class="method item">
     <h3 class="name"><code>addPad</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1292"><code>..&#x2F;src&#x2F;inspector.js:1292</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1343"><code>..&#x2F;src&#x2F;inspector.js:1343</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1605,139 +1132,94 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Vec2</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- callback: function to call once the value changes
-- disabled: shows the widget disabled
-- callback: function to call when the string is edited
-- precision: number of digits after the colon
-- units: string to show after the number
-- min: minimum value accepted
-- minx: minimum x value accepted
-- miny: minimum y value accepted
-- max: maximum value accepted
-- maxx: maximum x value accepted
-- maxy: maximum y value accepted
-- step: increments when draggin the mouse (default is 0.1)
-- background: url of image to use as background (it will be streched)</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>callback: function to call once the value changes</li>
+<li>disabled: shows the widget disabled</li>
+<li>callback: function to call when the string is edited</li>
+<li>precision: number of digits after the colon</li>
+<li>units: string to show after the number</li>
+<li>min: minimum value accepted</li>
+<li>minx: minimum x value accepted</li>
+<li>miny: minimum y value accepted</li>
+<li>max: maximum value accepted</li>
+<li>maxx: maximum x value accepted</li>
+<li>maxy: maximum y value accepted</li>
+<li>step: increments when draggin the mouse (default is 0.1)</li>
+<li>background: url of image to use as background (it will be streched)</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addSeparator" class="method item">
+<div id="method_addSeparator" class="method item">
     <h3 class="name"><code>addSeparator</code></h3>
 
-    
         <span class="paren">()</span>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l747"><code>..&#x2F;src&#x2F;inspector.js:747</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l685"><code>..&#x2F;src&#x2F;inspector.js:685</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1745,94 +1227,54 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addSlider" class="method item">
+<div id="method_addSlider" class="method item">
     <h3 class="name"><code>addSlider</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1494"><code>..&#x2F;src&#x2F;inspector.js:1494</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1559"><code>..&#x2F;src&#x2F;inspector.js:1559</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1840,152 +1282,97 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Number</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- min: min value
-- max: max value
-- step: increments when dragging
-- callback: function to call once the value changes</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>min: min value</li>
+<li>max: max value</li>
+<li>step: increments when dragging</li>
+<li>callback: function to call once the value changes</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addString" class="method item">
+<div id="method_addString" class="method item">
     <h3 class="name"><code>addString</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l760"><code>..&#x2F;src&#x2F;inspector.js:760</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l726"><code>..&#x2F;src&#x2F;inspector.js:726</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -1993,153 +1380,98 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- focus: true if you want the cursor to be here
-- password: true if you want to hide the string 
-- immediate: calls the callback once every keystroke
-- disabled: shows the widget disabled
-- callback: function to call when the widget changes</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>focus: true if you want the cursor to be here</li>
+<li>password: true if you want to hide the string</li>
+<li>immediate: calls the callback once every keystroke</li>
+<li>disabled: shows the widget disabled</li>
+<li>callback: function to call when the widget changes</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addStringButton" class="method item">
+<div id="method_addStringButton" class="method item">
     <h3 class="name"><code>addStringButton</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l824"><code>..&#x2F;src&#x2F;inspector.js:824</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l815"><code>..&#x2F;src&#x2F;inspector.js:815</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -2147,153 +1479,98 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>the string to show</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- disabled: shows the widget disabled
-- button: string to show inside the button, default is &quot;...&quot;
-- callback: function to call when the string is edited
-- callback_button: function to call when the button is pressed</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>disabled: shows the widget disabled</li>
+<li>button: string to show inside the button, default is &quot;...&quot;</li>
+<li>callback: function to call when the string is edited</li>
+<li>callback_button: function to call when the button is pressed</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addTextarea" class="method item">
+<div id="method_addTextarea" class="method item">
     <h3 class="name"><code>addTextarea</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l873"><code>..&#x2F;src&#x2F;inspector.js:873</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l889"><code>..&#x2F;src&#x2F;inspector.js:889</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -2301,147 +1578,95 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- focus: true if you want the cursor to be here
-- password: true if you want to hide the string 
-- immediate: calls the callback once every keystroke
-- disabled: shows the widget disabled
-- callback: function to call when the widget changes</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>focus: true if you want the cursor to be here</li>
+<li>password: true if you want to hide the string</li>
+<li>immediate: calls the callback once every keystroke</li>
+<li>disabled: shows the widget disabled</li>
+<li>callback: function to call when the widget changes</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addTitle" class="method item">
+<div id="method_addTitle" class="method item">
     <h3 class="name"><code>addTitle</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>title</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l720"><code>..&#x2F;src&#x2F;inspector.js:720</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l2971"><code>..&#x2F;src&#x2F;inspector.js:2971</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -2449,132 +1674,80 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">title</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addVector2" class="method item">
+<div id="method_addVector2" class="method item">
     <h3 class="name"><code>addVector2</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1002"><code>..&#x2F;src&#x2F;inspector.js:1002</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1035"><code>..&#x2F;src&#x2F;inspector.js:1035</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -2582,156 +1755,101 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Vec2</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- callback: function to call once the value changes
-- disabled: shows the widget disabled
-- callback: function to call when the string is edited
-- precision: number of digits after the colon
-- units: string to show after the number
-- min: minimum value accepted
-- max: maximum value accepted
-- step: increments when draggin the mouse (default is 0.1)</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>callback: function to call once the value changes</li>
+<li>disabled: shows the widget disabled</li>
+<li>callback: function to call when the string is edited</li>
+<li>precision: number of digits after the colon</li>
+<li>units: string to show after the number</li>
+<li>min: minimum value accepted</li>
+<li>max: maximum value accepted</li>
+<li>step: increments when draggin the mouse (default is 0.1)</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addVector3" class="method item">
+<div id="method_addVector3" class="method item">
     <h3 class="name"><code>addVector3</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1098"><code>..&#x2F;src&#x2F;inspector.js:1098</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1138"><code>..&#x2F;src&#x2F;inspector.js:1138</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -2739,156 +1857,101 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Vec3</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- callback: function to call once the value changes
-- disabled: shows the widget disabled
-- callback: function to call when the string is edited
-- precision: number of digits after the colon
-- units: string to show after the number
-- min: minimum value accepted
-- max: maximum value accepted
-- step: increments when draggin the mouse (default is 0.1)</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>callback: function to call once the value changes</li>
+<li>disabled: shows the widget disabled</li>
+<li>callback: function to call when the string is edited</li>
+<li>precision: number of digits after the colon</li>
+<li>units: string to show after the number</li>
+<li>min: minimum value accepted</li>
+<li>max: maximum value accepted</li>
+<li>step: increments when draggin the mouse (default is 0.1)</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_addVector4" class="method item">
+<div id="method_addVector4" class="method item">
     <h3 class="name"><code>addVector4</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>value</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options,</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
         <span class="returns-inline">
             <span class="type">HTMLElement</span>
         </span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l1200"><code>..&#x2F;src&#x2F;inspector.js:1200</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l1246"><code>..&#x2F;src&#x2F;inspector.js:1246</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -2896,130 +1959,86 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">value</code>
                         <span class="type">Vec4</span>
-                    
 
-                    
 
                     <div class="param-description">
                          
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options,</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>here is a list for this widget (check createWidget for a list of generic options):
-- callback: function to call once the value changes
-- disabled: shows the widget disabled
-- callback: function to call when the string is edited
-- precision: number of digits after the colon
-- units: string to show after the number
-- min: minimum value accepted
-- max: maximum value accepted
-- step: increments when draggin the mouse (default is 0.1)</p>
+                        <p>here is a list for this widget (check createWidget for a list of generic options):</p>
+<ul>
+<li>callback: function to call once the value changes</li>
+<li>disabled: shows the widget disabled</li>
+<li>callback: function to call when the string is edited</li>
+<li>precision: number of digits after the colon</li>
+<li>units: string to show after the number</li>
+<li>min: minimum value accepted</li>
+<li>max: maximum value accepted</li>
+<li>step: increments when draggin the mouse (default is 0.1)</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                
-                    
                         <span class="type">HTMLElement</span>:
-                    
                     <p>the widget in the form of the DOM element that contains it</p>
 
-                
             </div>
         </div>
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_assignValue" class="method item">
+<div id="method_assignValue" class="method item">
     <h3 class="name"><code>assignValue</code></h3>
 
-    
         <span class="paren">()</span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l341"><code>..&#x2F;src&#x2F;inspector.js:341</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l401"><code>..&#x2F;src&#x2F;inspector.js:401</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -3027,54 +2046,30 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
 
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_clear" class="method item">
+<div id="method_clear" class="method item">
     <h3 class="name"><code>clear</code></h3>
 
-    
         <span class="paren">()</span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l97"><code>..&#x2F;src&#x2F;inspector.js:97</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l96"><code>..&#x2F;src&#x2F;inspector.js:96</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -3082,165 +2077,96 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
 
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_collectPropertier" class="method item">
+<div id="method_collectPropertier" class="method item">
     <h3 class="name"><code>collectPropertier</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>instance</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l265"><code>..&#x2F;src&#x2F;inspector.js:265</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l320"><code>..&#x2F;src&#x2F;inspector.js:320</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
         
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">instance</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>extract enumerable and public (name do not start with &#39;_&#39; ) properties from an object
- return {Object} object with &quot;name&quot; : value for every property</p>
+                        <p>extract enumerable and public (name do not start with '_' ) properties from an object
+return {Object} object with &quot;name&quot; : value for every property</p>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_createWidget" class="method item">
+<div id="method_createWidget" class="method item">
     <h3 class="name"><code>createWidget</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>name</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>content</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>options</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l367"><code>..&#x2F;src&#x2F;inspector.js:367</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l427"><code>..&#x2F;src&#x2F;inspector.js:427</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -3248,269 +2174,238 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">name</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>the string to show at the left side of the widget, if null this element wont be created and the value part will use the full width</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">content</code>
                         <span class="type">String</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>the string with the html of the elements that conform the interactive part of the widget</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">options</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>some generic options that any widget could have:
-- width: the width of the widget (if omited it will use the Inspector widgets_width, otherwise 100%
-- name_width: the width of the name part of the widget, if not specified it will use Inspector name_width, otherwise css default
-- pre_title: string to append to the left side of the name, this is helpful if you want to add icons with behaviour when clicked
-- title: string to replace the name, sometimes you want to supply a different name than the one you want to show (this is helpful to retrieve values from an inspector)</p>
+                        <p>some generic options that any widget could have:</p>
+<ul>
+<li>widget_name: the name used to store this widget in the widgets_by_name container, if omited the parameter name is used</li>
+<li>width: the width of the widget (if omited it will use the Inspector widgets_width, otherwise 100%</li>
+<li>name_width: the width of the name part of the widget, if not specified it will use Inspector name_width, otherwise css default</li>
+<li>content_width: the width of the widget content area</li>
+<li>pre_title: string to append to the left side of the name, this is helpful if you want to add icons with behaviour when clicked</li>
+<li>title: string to replace the name, sometimes you want to supply a different name than the one you want to show (this is helpful to retrieve values from an inspector)</li>
+</ul>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
 
-    
+
 </div>
+<div id="method_getWidget" class="method item">
+    <h3 class="name"><code>getWidget</code></h3>
 
-                
-                    <div id="method_inspectInstance" class="method item">
-    <h3 class="name"><code>inspectInstance</code></h3>
-
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
-                        <code>instance</code>
-                    
+                        <code>name</code>
                 </li>
-            
-                <li class="arg">
-                    
-                        <code>properties</code>
-                    
-                </li>
-            
-                <li class="arg">
-                    
-                        <code>properties_info_example</code>
-                    
-                </li>
-            
-                <li class="arg">
-                    
-                        <code>properties_to_skip</code>
-                    
-                </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
+        <span class="returns-inline">
+            <span class="type">Object</span>
+        </span>
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l173"><code>..&#x2F;src&#x2F;inspector.js:173</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l205"><code>..&#x2F;src&#x2F;inspector.js:205</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
         
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
+                        <code class="param-name">name</code>
+                        <span class="type">String</span>
+
+
+                    <div class="param-description">
+                        <p>the name of the widget supplied when creating it or the number of the widget</p>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Object</span>:
+                    <p>widget object</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_inspectInstance" class="method item">
+    <h3 class="name"><code>inspectInstance</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>instance</code>
+                </li>
+                <li class="arg">
+                        <code>properties</code>
+                </li>
+                <li class="arg">
+                        <code>properties_info_example</code>
+                </li>
+                <li class="arg">
+                        <code>properties_to_skip</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/.._src_inspector.js.html#l218"><code>..&#x2F;src&#x2F;inspector.js:218</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
                         <code class="param-name">instance</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>the instance that you want to inspect, attributes will be collected from this object</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">properties</code>
                         <span class="type">Array</span>
-                    
 
-                    
 
                     <div class="param-description">
-                        <p>an array with all the names of the properties you want to inspect, 
-          if not specified then it calls getProperties, othewise collect them and tries to guess the type</p>
+                        <p>an array with all the names of the properties you want to inspect,
+if not specified then it calls getProperties, othewise collect them and tries to guess the type</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">properties_info_example</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>it overwrites the info about properties found in the object (in case the automaticaly guessed type is wrong)</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">properties_to_skip</code>
                         <span class="type">Array</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>this properties will be ignored</p>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_refresh" class="method item">
+<div id="method_refresh" class="method item">
     <h3 class="name"><code>refresh</code></h3>
 
-    
         <span class="paren">()</span>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l117"><code>..&#x2F;src&#x2F;inspector.js:117</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l120"><code>..&#x2F;src&#x2F;inspector.js:120</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
@@ -3518,157 +2413,97 @@ Widgets always receive three parameters:<br/>
 
     </div>
 
-    
 
-    
 
-    
+
 </div>
-
-                
-                    <div id="method_showProperties" class="method item">
+<div id="method_showProperties" class="method item">
     <h3 class="name"><code>showProperties</code></h3>
 
-    
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
-            
                 <li class="arg">
-                    
                         <code>instance</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>properties_info</code>
-                    
                 </li>
-            
                 <li class="arg">
-                    
                         <code>properties_to_skip</code>
-                    
                 </li>
-            
             </ul><span class="paren">)</span>
         </div>
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
     <div class="meta">
-        
-            
-                
                 <p>
-                
                 Defined in
-                
-            
-        
-        
-        <a href="../files/.._src_inspector.js.html#l288"><code>..&#x2F;src&#x2F;inspector.js:288</code></a>
-        
+        <a href="../files/.._src_inspector.js.html#l343"><code>..&#x2F;src&#x2F;inspector.js:343</code></a>
         </p>
 
 
-        
 
-        
     </div>
 
     <div class="description">
         
     </div>
 
-    
         <div class="params">
             <h4>Parameters:</h4>
 
             <ul class="params-list">
-            
                 <li class="param">
-                    
                         <code class="param-name">instance</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>the instance that you want to inspect</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">properties_info</code>
                         <span class="type">Object</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>object containing   &quot;property_name&quot; :{ type: value, widget:..., min:..., max:... }  or just &quot;property&quot;:&quot;type&quot;</p>
 
                     </div>
 
-                    
                 </li>
-            
                 <li class="param">
-                    
                         <code class="param-name">properties_to_skip</code>
                         <span class="type">Array</span>
-                    
 
-                    
 
                     <div class="param-description">
                         <p>this properties will be ignored</p>
 
                     </div>
 
-                    
                 </li>
-            
             </ul>
         </div>
-    
 
-    
 
-    
+
 </div>
-
-                
             </div>
-        
 
-        
 
-        
 
-        
     </div>
 </div>
-
                     </div>
                 </div>
             </div>

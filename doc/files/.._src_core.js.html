@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
-    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <link rel="icon" href="../assets/favicon.ico">
     <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
 </head>
 <body class="yui3-skin-sam">
@@ -14,9 +14,7 @@
 <div id="doc">
     <div id="hd" class="yui3-g header">
         <div class="yui3-u-3-4">
-            
-                <h1><img src="../assets/css/logo.png" title=""></h1>
-            
+                <h1><img src="../assets/css/logo.png" title="" width="117" height="52"></h1>
         </div>
         <div class="yui3-u-1-4 version">
             <em>API Docs for: </em>
@@ -27,84 +25,69 @@
         <div class="yui3-u-1-4">
             <div id="docs-sidebar" class="sidebar apidocs">
                 <div id="api-list">
-    <h2 class="off-left">APIs</h2>
-    <div id="api-tabview" class="tabview">
-        <ul class="tabs">
-            <li><a href="#api-classes">Classes</a></li>
-            <li><a href="#api-modules">Modules</a></li>
-        </ul>
-
-        <div id="api-tabview-filter">
-            <input type="search" id="api-filter" placeholder="Type to filter APIs">
-        </div>
-
-        <div id="api-tabview-panel">
-            <ul id="api-classes" class="apis classes">
-            
-                <li><a href="../classes/Area.html">Area</a></li>
-            
-                <li><a href="../classes/ContextualMenu.html">ContextualMenu</a></li>
-            
-                <li><a href="../classes/Dialog.html">Dialog</a></li>
-            
-                <li><a href="../classes/Inspector.html">Inspector</a></li>
-            
-                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
-            
-                <li><a href="../classes/List.html">List</a></li>
-            
-                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
-            
-                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
-            
-                <li><a href="../classes/Slider.html">Slider</a></li>
-            
-                <li><a href="../classes/Split.html">Split</a></li>
-            
-                <li><a href="../classes/Tabs.html">Tabs</a></li>
-            
-                <li><a href="../classes/Tree.html">Tree</a></li>
-            
-            </ul>
-
-            <ul id="api-modules" class="apis modules">
-            
-            </ul>
-        </div>
-    </div>
-</div>
-
+                    <h2 class="off-left">APIs</h2>
+                    <div id="api-tabview" class="tabview">
+                        <ul class="tabs">
+                            <li><a href="#api-classes">Classes</a></li>
+                            <li><a href="#api-modules">Modules</a></li>
+                        </ul>
+                
+                        <div id="api-tabview-filter">
+                            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                        </div>
+                
+                        <div id="api-tabview-panel">
+                            <ul id="api-classes" class="apis classes">
+                                <li><a href="../classes/Area.html">Area</a></li>
+                                <li><a href="../classes/ContextMenu.html">ContextMenu</a></li>
+                                <li><a href="../classes/Dialog.html">Dialog</a></li>
+                                <li><a href="../classes/Inspector.html">Inspector</a></li>
+                                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
+                                <li><a href="../classes/List.html">List</a></li>
+                                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
+                                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
+                                <li><a href="../classes/Slider.html">Slider</a></li>
+                                <li><a href="../classes/Split.html">Split</a></li>
+                                <li><a href="../classes/Tabs.html">Tabs</a></li>
+                                <li><a href="../classes/Tree.html">Tree</a></li>
+                            </ul>
+                
+                
+                            <ul id="api-modules" class="apis modules">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="yui3-u-3-4">
                 <div id="api-options">
-        Show:
-        <label for="api-show-inherited">
-            <input type="checkbox" id="api-show-inherited" checked>
-            Inherited
-        </label>
-
-        <label for="api-show-protected">
-            <input type="checkbox" id="api-show-protected">
-            Protected
-        </label>
-
-        <label for="api-show-private">
-            <input type="checkbox" id="api-show-private">
-            Private
-        </label>
-        <label for="api-show-deprecated">
-            <input type="checkbox" id="api-show-deprecated">
-            Deprecated
-        </label>
-
-    </div>
-
-
+                    Show:
+                    <label for="api-show-inherited">
+                        <input type="checkbox" id="api-show-inherited" checked>
+                        Inherited
+                    </label>
+            
+                    <label for="api-show-protected">
+                        <input type="checkbox" id="api-show-protected">
+                        Protected
+                    </label>
+            
+                    <label for="api-show-private">
+                        <input type="checkbox" id="api-show-private">
+                        Private
+                    </label>
+                    <label for="api-show-deprecated">
+                        <input type="checkbox" id="api-show-deprecated">
+                        Deprecated
+                    </label>
+            
+                </div>
+            
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-                        <h1 class="file-heading">File: ../src/core.js</h1>
+<h1 class="file-heading">File: ../src/core.js</h1>
 
 <div class="file">
     <pre class="code prettyprint linenums">
@@ -199,13 +182,15 @@ var LiteGUI = {
 	* Triggers a simple event in an object (similar to jQuery.trigger)
 	* @method trigger
 	* @param {Object} element could be an HTMLEntity or a regular object
-	* @param {Object} element could be an HTMLEntity or a regular object
-	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {String} event_name the type of the event
+	* @param {*} params it will be stored in e.detail
+	* @param {*} origin it will be stored in e.srcElement
 	*/
-	trigger: function(element, event_name, params)
+	trigger: function(element, event_name, params, origin)
 	{
 		var evt = document.createEvent( &#x27;CustomEvent&#x27; );
 		evt.initCustomEvent( event_name, true,true, params ); //canBubble, cancelable, detail
+		evt.srcElement = origin;
 		if( element.dispatchEvent )
 			element.dispatchEvent( evt );
 		else if( element.__events )
@@ -218,31 +203,49 @@ var LiteGUI = {
 	* Binds an event in an object (similar to jQuery.bind)
 	* If the element is not an HTML entity a new one is created, attached to the object (as non-enumerable, called __events) and used
 	* @method trigger
-	* @param {Object} element could be an HTMLEntity or a regular object
+	* @param {Object} element could be an HTMLEntity, a regular object, a query string or a regular Array of entities
 	* @param {String} event the string defining the event
 	* @param {Function} callback where to call
 	*/
 	bind: function( element, event, callback )
 	{
+		if(!element)
+			throw(&quot;Cannot bind to null&quot;);
+		if(!event)
+			throw(&quot;Event bind missing&quot;);
 		if(!callback)
-			throw(&quot;bind callback missing&quot;);
-		if(element.addEventListener)
-			element.addEventListener(event, callback);
-		else if(element.__events)
-			element.__events.addEventListener( event, callback );
-		else
-		{
-			//create a dummy HTMLentity so we can use it to bind HTML events
-			var dummy = document.createElement(&quot;span&quot;);
-			dummy.widget = element; //double link
-			Object.defineProperty( element, &quot;__events&quot;, {
-				enumerable: false,
-				configurable: false,
-				writable: false,
-				value: dummy
-			});
+			throw(&quot;Bind callback missing&quot;);
 
-			element.__events.addEventListener( event, callback );
+		if(element.constructor === String)
+			element = document.querySelectorAll( element );
+			
+		if(element.constructor === NodeList || element.constructor === Array)
+		{
+			for(var i = 0; i &lt; element.length; ++i)
+				inner( element[i] );
+		}
+		else
+			inner( element );
+
+		function inner( element )
+		{
+			if(element.addEventListener)
+				element.addEventListener(event, callback);
+			else if(element.__events)
+				element.__events.addEventListener( event, callback );
+			else
+			{
+				//create a dummy HTMLentity so we can use it to bind HTML events
+				var dummy = document.createElement(&quot;span&quot;);
+				dummy.widget = element; //double link
+				Object.defineProperty( element, &quot;__events&quot;, {
+					enumerable: false,
+					configurable: false,
+					writable: false,
+					value: dummy
+				});
+				element.__events.addEventListener( event, callback );
+			}
 		}
 	},
 
@@ -274,11 +277,14 @@ var LiteGUI = {
 	/**
 	* Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.
 	* @method remove
-	* @param {Object} litegui_element it also supports HTMLentity or selector string
+	* @param {Object} litegui_element it also supports HTMLentity, selector string or Array of elements
 	*/
 	remove: function( element )
 	{
-		if(element &amp;&amp; element.constructor === String) //selector
+		if(!element)
+			return;
+
+		if( element.constructor === String) //selector
 		{
 			var elements = document.querySelectorAll( element );
 			for(var i = 0; i &lt; elements.length; ++i)
@@ -287,6 +293,11 @@ var LiteGUI = {
 				if(element &amp;&amp; element.parentNode)
 					element.parentNode.removeChild(element);
 			}
+		}
+		if( element.constructor === Array || element.constructor === NodeList ) 
+		{
+			for(var i = 0; i &lt; element.length; ++i)
+				LiteGUI.remove( element[i] );
 		}
 		else if( element.root &amp;&amp; element.root.parentNode ) //ltiegui widget
 			element.root.parentNode.removeChild( element.root );
@@ -313,19 +324,25 @@ var LiteGUI = {
 
 	setWindowSize: function(w,h)
 	{
+		var style = this.root.style;
+
 		if(w &amp;&amp; h)
 		{
-			$(this.root).css( {width: w+&quot;px&quot;, height: h + &quot;px&quot;, &quot;box-shadow&quot;:&quot;0 0 4px black&quot;}).removeClass(&quot;fullscreen&quot;);
-
+			style.width = w+&quot;px&quot;;
+			style.height = h + &quot;px&quot;;
+			style.boxShadow = &quot;0 0 4px black&quot;
+			this.root.classList.remove(&quot;fullscreen&quot;);
 		}
 		else
 		{
-			if( $(this.root).hasClass(&quot;fullscreen&quot;) )
+			if( this.root.classList.contains(&quot;fullscreen&quot;) )
 				return;
-			$(this.root).addClass(&quot;fullscreen&quot;);
-			$(this.root).css( {width: &quot;100%&quot;, height: &quot;100%&quot;, &quot;box-shadow&quot;:&quot;0 0 0&quot;});
+			this.root.classList.add(&quot;fullscreen&quot;);
+			style.width = &quot;100%&quot;;
+			style.height = &quot;100%&quot;;
+			style.boxShadow = &quot;0 0 0&quot;;
 		}
-		$(LiteGUI).trigger(&quot;resized&quot;);
+		LiteGUI.trigger( LiteGUI, &quot;resized&quot;);
 	},
 
 	maximizeWindow: function()
@@ -344,17 +361,42 @@ var LiteGUI = {
 	},
 
 	/**
+	* Test if the cursor is inside an element
+	* @method setCursor
+	* @param {String} cursor
+	**/
+	isCursorOverElement: function( event, element )
+	{
+		var left = event.pageX;
+		var top = event.pageY;
+		var rect = element.getBoundingClientRect();
+		if(!rect)
+			return false;
+		if(top &gt; rect.top &amp;&amp; top &lt; (rect.top + rect.height) &amp;&amp;
+			left &gt; rect.left &amp;&amp; left &lt; (rect.left + rect.width) )
+			return true;
+		return false;
+	},
+
+	getRect: function(element)
+	{
+		return element.getBoundingClientRect();
+	},
+
+	/**
 	* Copy a string to the clipboard (it needs to be invoqued from a click event)
 	* @method toClipboard
 	* @param {String} data
+	* @param {Boolean} force_local force to store the data in the browser clipboard (this one can be read back)
 	**/
-	toClipboard: function( object )
+	toClipboard: function( object, force_local )
 	{
 		if(object &amp;&amp; object.constructor !== String )
 			object = JSON.stringify( object );
 
 		var input = null;
 		var in_clipboard = false;
+		if( !force_local )
 		try
 		{
 			var copySupported = document.queryCommandSupported(&#x27;copy&#x27;);
@@ -370,21 +412,32 @@ var LiteGUI = {
 		} catch (err) {
 			if(input)
 				document.body.removeChild( input );
-			console.log(&#x27;Oops, unable to copy using the true clipboard&#x27;);
+			console.warn(&#x27;Oops, unable to copy using the true clipboard&#x27;);
 		}
 
 		//old system
-		localStorage.setItem(&quot;litegui_clipboard&quot;, object );
+		try
+		{
+			this._safe_cliboard = null;
+			localStorage.setItem(&quot;litegui_clipboard&quot;, object );
+		}
+		catch (err)
+		{
+			this._safe_cliboard = object;
+			console.warn(&quot;cliboard quota excedeed&quot;);
+		}
 	},
 
 	/**
 	* Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)
-	* @method getClipboard
+	* @method getLocalClipboard
 	* @return {String} clipboard
 	**/
-	getClipboard: function()
+	getLocalClipboard: function()
 	{
 		var data = localStorage.getItem(&quot;litegui_clipboard&quot;);
+		if(!data &amp;&amp; this._safe_cliboard)
+			data = this._safe_cliboard;
 		if(!data) 
 			return null;
 		if(data[0] == &quot;{&quot;)
@@ -465,11 +518,14 @@ var LiteGUI = {
 
 		//regular case, use AJAX call
         var xhr = new XMLHttpRequest();
-        xhr.open(request.data ? &#x27;POST&#x27; : &#x27;GET&#x27;, request.url, true);
+        xhr.open( request.data ? &#x27;POST&#x27; : &#x27;GET&#x27;, request.url, true);
         if(dataType)
             xhr.responseType = dataType;
         if (request.mimeType)
             xhr.overrideMimeType( request.mimeType );
+		if( request.nocache )
+			xhr.setRequestHeader(&#x27;Cache-Control&#x27;, &#x27;no-cache&#x27;);
+
         xhr.onload = function(load)
 		{
 			var response = this.response;
@@ -518,7 +574,15 @@ var LiteGUI = {
 			if(request.error)
 				request.error(err);
 		}
-        xhr.send(request.data);
+
+		var data = new FormData();
+		if( request.data )
+		{
+			for(var i in request.data)
+				data.append(i,request.data[i]);
+		}
+
+        xhr.send( data );
 		return xhr;
 	},	
 
@@ -562,12 +626,12 @@ var LiteGUI = {
 	/**
 	* Request script and inserts it in the DOM
 	* @method requireScript
-	* @param {String} url
+	* @param {String|Array} url the url of the script or an array containing several urls
 	* @param {Function} on_complete
 	* @param {Function} on_error
 	* @param {Function} on_progress (if several files are required, on_progress is called after every file is added to the DOM)
 	**/
-	requireScript: function(url, on_complete, on_error, on_progress )
+	requireScript: function(url, on_complete, on_error, on_progress, version )
 	{
 		if(!url)
 			throw(&quot;invalid URL&quot;);
@@ -577,27 +641,30 @@ var LiteGUI = {
 
 		var total = url.length;
 		var size = total;
+		var loaded_scripts = [];
 
 		for(var i in url)
 		{
 			var script = document.createElement(&#x27;script&#x27;);
 			script.num = i;
 			script.type = &#x27;text/javascript&#x27;;
-			script.src = url[i];
+			script.src = url[i] + ( version ? &quot;?version=&quot; + version : &quot;&quot; );
+			script.original_src = url[i];
 			script.async = false;
 			script.onload = function(e) { 
 				total--;
+				loaded_scripts.push(this);
 				if(total)
 				{
 					if(on_progress)
-						on_progress(this.src, this.num);
+						on_progress(this.original_src, this.num);
 				}
 				else if(on_complete)
-					on_complete();
+					on_complete( loaded_scripts );
 			};
 			if(on_error)
 				script.onerror = function(err) { 
-					on_error(err, this.src, this.num );
+					on_error(err, this.original_src, this.num );
 				}
 			document.getElementsByTagName(&#x27;head&#x27;)[0].appendChild(script);
 		}
@@ -610,6 +677,7 @@ var LiteGUI = {
 		if(typeof(url)==&quot;string&quot;)
 			url = [url];
 
+		var loaded_scripts = [];
 		function addScript()
 		{
 			var script = document.createElement(&#x27;script&#x27;);
@@ -624,9 +692,11 @@ var LiteGUI = {
 					addScript();
 					return;
 				}
+
+				loaded_scripts.push(this);
 				
 				if(on_complete)
-					on_complete();
+					on_complete( loaded_scripts );
 			};
 			document.getElementsByTagName(&#x27;head&#x27;)[0].appendChild(script);
 		}
@@ -691,17 +761,38 @@ var LiteGUI = {
 	* @param {String} id
 	* @param {String} content
 	* @param {Function} callback when the button is pressed
+	* @param {Object|String} style
 	**/
-	createButton: function( id, content, callback )
+	createButton: function( id_class, content, callback, style )
 	{
 		var elem = document.createElement(&quot;button&quot;);
-		elem.id = id;
+		elem.className = &quot;litegui litebutton button&quot;;
+		if(id_class)
+		{
+			var t = id_class.split(&quot; &quot;);
+			for(var i = 0; i &lt; t.length; i++)
+			{
+				if(t[i][0] == &quot;.&quot;)
+					elem.classList.add( t[i].substr(1) );
+				else if(t[i][0] == &quot;#&quot;)
+					elem.id = t[i].substr(1);
+				else
+					elem.id = t[i];
+			}
+		}
 		elem.root = elem;
-		elem.className = &quot;litegui button&quot;;
 		if(content !== undefined)
 			elem.innerHTML = content;
 		if(callback)
 			elem.addEventListener(&quot;click&quot;, callback );
+		if(style)
+		{
+			if(style.constructor === String)
+				elem.setAttribute(&quot;style&quot;,style);
+			else
+				for(var i in style)
+					elem.style[i] = style[i];
+		}
 		return elem;
 	},
 
@@ -738,7 +829,8 @@ var LiteGUI = {
 	//* DIALOGS *******************
 	showModalBackground: function(v)
 	{
-		LiteGUI.modalbg_div.style.display = v ? &quot;block&quot; : &quot;none&quot;;
+		if(LiteGUI.modalbg_div)
+			LiteGUI.modalbg_div.style.display = v ? &quot;block&quot; : &quot;none&quot;;
 	},
 
 	showMessage: function(content, options)
@@ -748,7 +840,7 @@ var LiteGUI = {
 		options.title = options.title || &quot;Attention&quot;;
 		options.content = content;
 		options.close = &#x27;fade&#x27;;
-		var dialog = new LiteGUI.Dialog(null,options);
+		var dialog = new LiteGUI.Dialog( options );
 		if(!options.noclose)
 			dialog.addButton(&quot;Close&quot;,{ close: true });
 		dialog.makeModal(&#x27;fade&#x27;);
@@ -772,7 +864,7 @@ var LiteGUI = {
 		options.content = content;
 		options.close = &#x27;fade&#x27;;
 
-		var dialog = new LiteGUI.Dialog(&quot;info_message&quot;,options);
+		var dialog = new LiteGUI.Dialog(options);
 		if(!options.noclose)
 			dialog.addButton(&quot;Close&quot;,{ close: true });
 		dialog.show();
@@ -797,7 +889,7 @@ var LiteGUI = {
 		options.height = options.height || 140;
 		if (typeof(content) == &quot;string&quot;)
 			content = &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;;
-		$(&quot;.litepanel.alert&quot;).remove(); //kill other panels
+		LiteGUI.remove(&quot;.litepanel.alert&quot;); //kill other panels
 		return LiteGUI.showMessage(content,options);
 	},
 
@@ -808,7 +900,7 @@ var LiteGUI = {
 	* @param {Function} callback
 	* @param {Object} options ( title, width, height, content, noclose )
 	**/
-	confirm: function(content, callback, options)
+	confirm: function( content, callback, options )
 	{
 		options = options || {};
 		options.className = &quot;alert&quot;;
@@ -818,7 +910,7 @@ var LiteGUI = {
 		if (typeof(content) == &quot;string&quot;)
 			content = &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;;
 
-		content +=&quot;&lt;button data-value=&#x27;yes&#x27; style=&#x27;width:45%; margin-left: 10px&#x27;&gt;Yes&lt;/button&gt;&lt;button data-value=&#x27;no&#x27; style=&#x27;width:45%&#x27;&gt;No&lt;/button&gt;&quot;;
+		content +=&quot;&lt;button class=&#x27;litebutton&#x27; data-value=&#x27;yes&#x27; style=&#x27;width:45%; margin-left: 10px&#x27;&gt;Yes&lt;/button&gt;&lt;button class=&#x27;litebutton&#x27; data-value=&#x27;no&#x27; style=&#x27;width:45%&#x27;&gt;No&lt;/button&gt;&quot;;
 		options.noclose = true;
 
 		var dialog = this.showMessage(content,options);
@@ -860,7 +952,7 @@ var LiteGUI = {
 		if (options.textarea)
 			textinput = &quot;&lt;textarea class=&#x27;textfield&#x27; style=&#x27;width:95%&#x27;&gt;&quot;+value+&quot;&lt;/textarea&gt;&quot;;
 
-		content +=&quot;&lt;p&gt;&quot;+textinput+&quot;&lt;/p&gt;&lt;button data-value=&#x27;accept&#x27; style=&#x27;width:45%; margin-left: 10px; margin-bottom: 10px&#x27;&gt;Accept&lt;/button&gt;&lt;button data-value=&#x27;cancel&#x27; style=&#x27;width:45%&#x27;&gt;Cancel&lt;/button&gt;&quot;;
+		content +=&quot;&lt;p&gt;&quot;+textinput+&quot;&lt;/p&gt;&lt;button class=&#x27;litebutton&#x27; data-value=&#x27;accept&#x27; style=&#x27;width:45%; margin-left: 10px; margin-bottom: 10px&#x27;&gt;Accept&lt;/button&gt;&lt;button class=&#x27;litebutton&#x27; data-value=&#x27;cancel&#x27; style=&#x27;width:45%&#x27;&gt;Cancel&lt;/button&gt;&quot;;
 		options.noclose = true;
 		var dialog = this.showMessage( content, options );
 
@@ -889,10 +981,94 @@ var LiteGUI = {
 				inner();
 				return false;
 			}		
+			if (keyCode == &#x27;29&#x27;)
+				dialog.close();
 		};
 
 		input.focus();
 		return dialog;
+	},
+
+	/**
+	* Shows a choice dialog with a message
+	* @method choice
+	* @param {String} content
+	* @param {Function} callback
+	* @param {Object} options ( title, width, height, content, noclose )
+	**/
+	choice: function( content, choices, callback, options )
+	{
+		options = options || {};
+		options.className = &quot;alert&quot;;
+		options.title = options.title || &quot;Select one option&quot;;
+		options.width = options.width || 280;
+		//options.height = 100;
+		if (typeof(content) == &quot;string&quot;)
+			content = &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;;
+
+		for(var i in choices)
+		{
+			content +=&quot;&lt;button class=&#x27;litebutton&#x27; data-value=&#x27;&quot;+i+&quot;&#x27; style=&#x27;width:45%; margin-left: 10px&#x27;&gt;&quot;+(choices[i].content || choices[i])+&quot;&lt;/button&gt;&quot;;
+		}
+		options.noclose = true;
+
+		var dialog = this.showMessage(content,options);
+		dialog.content.style.paddingBottom = &quot;10px&quot;;
+		var buttons = dialog.content.querySelectorAll(&quot;button&quot;);
+		for(var i = 0; i &lt; buttons.length; i++)
+			buttons[i].addEventListener(&quot;click&quot;, inner);
+
+		function inner(v) {
+			var v = choices[ this.dataset[&quot;value&quot;] ];
+			dialog.close(); //close before callback
+			if(callback) 
+				callback(v);
+		}
+
+		return dialog;
+	},
+
+	downloadURL: function( url, filename )
+	{
+		var link = document.createElement(&#x27;a&#x27;);
+		link.href = url;
+		link.download = filename;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	},
+
+	downloadFile: function( filename, data, dataType )
+	{
+		if(!data)
+		{
+			console.warn(&quot;No file provided to download&quot;);
+			return;
+		}
+
+		if(!dataType)
+		{
+			if(data.constructor === String )
+				dataType = &#x27;text/plain&#x27;;
+			else
+				dataType = &#x27;application/octet-stream&#x27;;
+		}
+
+		var file = null;
+		if(data.constructor !== File &amp;&amp; data.constructor !== Blob)
+			file = new Blob( [ data ], {type : dataType});
+		else
+			file = data;
+
+		var url = URL.createObjectURL( file );
+		var element = document.createElement(&quot;a&quot;);
+		element.setAttribute(&#x27;href&#x27;, url);
+		element.setAttribute(&#x27;download&#x27;, filename );
+		element.style.display = &#x27;none&#x27;;
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		setTimeout( function(){ URL.revokeObjectURL( url ); }, 1000*60 ); //wait one minute to revoke url
 	},
 
 	/**
@@ -920,13 +1096,18 @@ var LiteGUI = {
 		element.focus();
 	},
 
+	blur: function( element )
+	{
+		element.blur();
+	},
+
 	/**
 	* Makes one element draggable
 	* @method draggable
 	* @param {HTMLEntity} container the element that will be dragged
 	* @param {HTMLEntity} dragger the area to start the dragging
 	**/
-	draggable: function(container, dragger)
+	draggable: function( container, dragger, on_start, on_finish, on_is_draggable )
 	{
 		dragger = dragger || container;
 		dragger.addEventListener(&quot;mousedown&quot;, inner_mouse);
@@ -953,10 +1134,19 @@ var LiteGUI = {
 					y = rect ? rect.top : 0;
 				}
 
+				if(on_is_draggable &amp;&amp; on_is_draggable(container,e) == false )
+				{
+					e.stopPropagation();
+					e.preventDefault();
+					return false;
+				}
+
 				prev_x = e.clientX;
 				prev_y = e.clientY;
 				document.addEventListener(&quot;mousemove&quot;,inner_mouse);
 				document.addEventListener(&quot;mouseup&quot;,inner_mouse);
+				if(on_start)
+					on_start( container, e );
 				e.stopPropagation();
 				e.preventDefault();
 				return false;
@@ -966,6 +1156,9 @@ var LiteGUI = {
 			{
 				document.removeEventListener(&quot;mousemove&quot;,inner_mouse);
 				document.removeEventListener(&quot;mouseup&quot;,inner_mouse);
+
+				if( on_finish )
+					on_finish( container, e );
 				return;
 			}
 
@@ -1029,23 +1222,113 @@ var LiteGUI = {
 		return o;
 	},
 
-	special_codes: {
-		close: &quot;&amp;#10005;&quot;
+	safeName: function( str )
+	{
+		return String(str).replace(/[\s\.]/g, &#x27;&#x27;);
 	},
 
-	//used to convert sizes
+	//those useful HTML unicode codes that I never remeber but I always need
+	special_codes: {
+		close: &quot;&amp;#10005;&quot;,
+		navicon: &quot;&amp;#9776;&quot;,
+		refresh: &quot;&amp;#8634;&quot;,
+		gear: &quot;&amp;#9881;&quot;,
+		open_folder: &quot;&amp;#128194;&quot;
+	},
+	
+	//given a html entity string it returns the equivalent unicode character
+	htmlEncode: function( html_code )
+	{
+		var e = document.createElement(&quot;div&quot;);
+		e.innerHTML = html_code;
+		return e.innerText;
+	},
+
+	//given a unicode character it returns the equivalent html encoded string
+	htmlDecode: function( unicode_character )
+	{
+		var e = document.createElement(&quot;div&quot;);
+		e.innerText = unicode_character;
+		return e.innerHTML;
+	},
+
+	/**
+	* Convert sizes in any format to a valid CSS format (number to string, negative number to calc( 100% - number px )
+	* @method sizeToCSS
+	* @param {String||Number} size
+	* @return {String} valid css size string
+	**/
 	sizeToCSS: function( v )
 	{
 		if( v ===  undefined || v === null )
 			return null;
 		if(v.constructor === String )
 			return v;
-		if(v &gt; 0 )
+		if(v &gt;= 0 )
 			return (v|0) + &quot;px&quot;;
-		if(v &lt; 0 )
-			return &quot;calc( 100% - &quot; + Math.abs(v|0) + &quot;px )&quot;;
+		return &quot;calc( 100% - &quot; + Math.abs(v|0) + &quot;px )&quot;;
+	},
+
+	/**
+	* Helper, makes drag and drop easier by enabling drag and drop in a given element
+	* @method createDropArea
+	* @param {HTMLElement} element the element where users could drop items
+	* @param {Function} callback_drop function to call when the user drops the item
+	* @param {Function} callback_enter [optional] function to call when the user drags something inside
+	**/
+	createDropArea: function( element, callback_drop, callback_enter, callback_exit )
+	{
+		element.addEventListener(&quot;dragenter&quot;, onDragEvent);
+
+		function onDragEvent(evt)
+		{
+			element.addEventListener(&quot;dragexit&quot;, onDragEvent);
+			element.addEventListener(&quot;dragover&quot;, onDragEvent);
+			element.addEventListener(&quot;drop&quot;, onDrop);
+			evt.stopPropagation();
+			evt.preventDefault();
+			if(evt.type == &quot;dragenter&quot; &amp;&amp; callback_enter)
+				callback_enter(evt, this);
+			if(evt.type == &quot;dragexit&quot; &amp;&amp; callback_exit)
+				callback_exit(evt, this);
+		}
+
+		function onDrop(evt)
+		{
+			evt.stopPropagation();
+			evt.preventDefault();
+
+			element.removeEventListener(&quot;dragexit&quot;, onDragEvent);
+			element.removeEventListener(&quot;dragover&quot;, onDragEvent);
+			element.removeEventListener(&quot;drop&quot;, onDrop);
+
+			var r = undefined;
+			if(callback_drop)
+				r = callback_drop(evt);
+			if(r)
+			{
+				evt.stopPropagation();
+				evt.stopImmediatePropagation();
+				return true;
+			}
+		}
 	}
 };
+
+//low quality templating system
+Object.defineProperty( String.prototype, &quot;template&quot;, {
+	value: function( data, eval_code )
+	{
+		var tpl = this;
+		var re = /{{([^}}]+)?}}/g, match;
+	    while(match = re.exec(tpl)) {
+			var str = eval_code ? (new Function(&quot;with(this) { try { return &quot; + match[1] +&quot;} catch(e) { return &#x27;error&#x27;;} }&quot;)).call(data) : data[match[1]];
+		    tpl = tpl.replace(match[0], str);
+	    }
+	    return tpl;		
+	},
+	enumerable: false
+});
 
 
 function purgeElement(d, skip) {
@@ -1067,17 +1350,6 @@ function purgeElement(d, skip) {
             purgeElement(d.childNodes[i]);
         }
     }
-
-	/*
-	if(!skip)
-	{
-		for (i in d) {
-			if (typeof d[i] === &#x27;function&#x27;) {
-				d[i] = null;
-			}
-		}
-	}
-	*/
 }
 
 //useful functions
@@ -1435,9 +1707,25 @@ function beautifyJSON( code, skip_css )
 
 	return code;
 }
+
+function dataURItoBlob( dataURI ) {
+	var pos = dataURI.indexOf(&quot;,&quot;);
+	//convert to binary
+    var byteString = atob( dataURI.substr(pos+1) ); 
+	//copy from string to array
+    var ab = new ArrayBuffer( byteString.length ); 
+    var ia = new Uint8Array(ab);
+	var l = byteString.length;
+    for (var i = 0; i &lt; l; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+	var mime = dataURI.substr(5,pos-5);
+	mime = mime.substr(0, mime.length - 7); //strip &quot;;base64&quot;
+    return new Blob([ab], { type: mime });
+}
     </pre>
 </div>
-
                     </div>
                 </div>
             </div>

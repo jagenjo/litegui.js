@@ -20,6 +20,15 @@
             "fors": {},
             "namespaces": {}
         },
+        "../src/dialog.js": {
+            "name": "../src/dialog.js",
+            "modules": {},
+            "classes": {
+                "Dialog": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        },
         "../src/dragger.js": {
             "name": "../src/dragger.js",
             "modules": {},
@@ -46,9 +55,7 @@
         "../src/panel.js": {
             "name": "../src/panel.js",
             "modules": {},
-            "classes": {
-                "Dialog": 1
-            },
+            "classes": {},
             "fors": {},
             "namespaces": {}
         },
@@ -82,7 +89,7 @@
             "modules": {},
             "classes": {
                 "SearchBox": 1,
-                "ContextualMenu": 1,
+                "ContextMenu": 1,
                 "List": 1,
                 "Slider": 1,
                 "LineEditor": 1
@@ -104,7 +111,14 @@
             "file": "../src/area.js",
             "line": 6,
             "description": "Areas can be split several times horizontally or vertically to fit different colums or rows",
-            "is_constructor": 1
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                }
+            ]
         },
         "Split": {
             "name": "Split",
@@ -115,7 +129,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/area.js",
-            "line": 528,
+            "line": 552,
             "description": "Split",
             "is_constructor": 1
         },
@@ -132,6 +146,26 @@
             "description": "Core namespace of LiteGUI library, it holds some useful functions",
             "is_constructor": 1
         },
+        "Dialog": {
+            "name": "Dialog",
+            "shortname": "Dialog",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "../src/dialog.js",
+            "line": 3,
+            "description": "Dialog",
+            "params": [
+                {
+                    "name": "options",
+                    "description": "useful options are { title, width, height, closable, on_close, scroll }",
+                    "type": "Object"
+                }
+            ],
+            "is_constructor": 1
+        },
         "Inspector": {
             "name": "Inspector",
             "shortname": "Inspector",
@@ -141,42 +175,12 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/inspector.js",
-            "line": 20,
+            "line": 1,
             "description": "Inspector allows to create a list of widgets easily, it also provides methods to create the widgets automatically.<br/>\nEvery widget is created calling the function add followed by the widget name, p.e. addSlider or addVector3 or addNumber.<br/>\nWidgets always receive three parameters:<br/>\n- name: String that defines the name at that it will be shown in the left side of the widget.<br/>\n- value: the value that will be displayed in the widget.<br/>\n- options: Object containing all the values .<br/>",
             "params": [
                 {
-                    "name": "id",
-                    "description": "",
-                    "type": "String"
-                },
-                {
                     "name": "options",
-                    "description": "object with a set of options { <br/>\n\twidth: total width <br/>\n\theight: total height <br/>\n\twidgets_width: width of every widget (used mostly in horizontal inspectors) <br/>\n\tname_width: width of the name part of widgets <br/>\n\tfull: set to true if you want the inspector to use all the parent width and height <br/>\n\twidgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes) <br/>\n\tone_line: widgets are place one next to the other horizontaly <br/>\n\tonchange: callback to call when something changes <br/>\n  } <br/>",
-                    "type": "Object"
-                }
-            ],
-            "is_constructor": 1
-        },
-        "Dialog": {
-            "name": "Dialog",
-            "shortname": "Dialog",
-            "classitems": [],
-            "plugins": [],
-            "extensions": [],
-            "plugin_for": [],
-            "extension_for": [],
-            "file": "../src/panel.js",
-            "line": 48,
-            "description": "Dialog",
-            "params": [
-                {
-                    "name": "id",
-                    "description": "",
-                    "type": "String"
-                },
-                {
-                    "name": "options",
-                    "description": "useful options are { title, width, height, closable, on_close, }",
+                    "description": "object with a set of options { <br/>\n\twidth: total width <br/>\n\theight: total height <br/>\n\twidgets_width: width of every widget (used mostly in horizontal inspectors) <br/>\n\tname_width: width of the name part of widgets <br/>\n\tfull: set to true if you want the inspector to use all the parent width and height <br/>\n\twidgets_per_row: number of widgets per row, default is 1 but you can change it if you want to pack several widgets in a row (useful for small widgets like checkboxes) <br/>\n\tone_line: widgets are place one next to the other horizontaly <br/>\n\tonchange: callback to call when something changes <br/>\n  } <br/>\n\n\tDependencies: \n\t\t- jscolor.js",
                     "type": "Object"
                 }
             ],
@@ -192,7 +196,7 @@
             "extension_for": [],
             "file": "../src/tabs.js",
             "line": 5,
-            "description": "Widget that contains several tabs and their content",
+            "description": "Widget that contains several tabs and their content\nOptions:\n- mode: \"vertical\",\"horizontal\"\n- size\n- width,height\n- autoswitch: allow autoswitch (switch when mouse over)",
             "is_constructor": 1
         },
         "Tree": {
@@ -217,7 +221,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 35,
+            "line": 36,
             "description": "SearchBox",
             "is_constructor": 1,
             "params": [
@@ -233,17 +237,17 @@
                 }
             ]
         },
-        "ContextualMenu": {
-            "name": "ContextualMenu",
-            "shortname": "ContextualMenu",
+        "ContextMenu": {
+            "name": "ContextMenu",
+            "shortname": "ContextMenu",
             "classitems": [],
             "plugins": [],
             "extensions": [],
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 68,
-            "description": "ContextualMenu",
+            "line": 69,
+            "description": "ContextMenu",
             "is_constructor": 1,
             "params": [
                 {
@@ -253,7 +257,7 @@
                 },
                 {
                     "name": "options",
-                    "description": "[optional] Some options:\\\n- title: title to show on top of the menu\n- callback: function to call when an option is clicked, it receives the item information\n- ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback \n- event: you can pass a MouseEvent, this way the ContextualMenu appears in that position",
+                    "description": "[optional] Some options:\\\n- title: title to show on top of the menu\n- callback: function to call when an option is clicked, it receives the item information\n- ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback \n- event: you can pass a MouseEvent, this way the ContextMenu appears in that position",
                     "type": "Object"
                 }
             ]
@@ -267,7 +271,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 316,
+            "line": 479,
             "description": "List",
             "is_constructor": 1,
             "params": [
@@ -297,7 +301,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 399,
+            "line": 562,
             "description": "Slider",
             "is_constructor": 1,
             "params": [
@@ -322,7 +326,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "../src/widgets.js",
-            "line": 487,
+            "line": 659,
             "description": "LineEditor",
             "is_constructor": 1,
             "params": [
@@ -339,6 +343,7 @@
             ]
         }
     },
+    "elements": {},
     "classitems": [
         {
             "file": "../src/area.js",
@@ -347,7 +352,7 @@
         },
         {
             "file": "../src/area.js",
-            "line": 526,
+            "line": 550,
             "class": "Area"
         },
         {
@@ -378,28 +383,33 @@
                     "type": "Object"
                 },
                 {
-                    "name": "element",
-                    "description": "could be an HTMLEntity or a regular object",
-                    "type": "Object"
+                    "name": "event_name",
+                    "description": "the type of the event",
+                    "type": "String"
                 },
                 {
-                    "name": "element",
-                    "description": "could be an HTMLEntity or a regular object",
-                    "type": "Object"
+                    "name": "params",
+                    "description": "it will be stored in e.detail",
+                    "type": "*"
+                },
+                {
+                    "name": "origin",
+                    "description": "it will be stored in e.srcElement",
+                    "type": "*"
                 }
             ],
             "class": "LiteGUI"
         },
         {
             "file": "../src/core.js",
-            "line": 107,
+            "line": 109,
             "description": "Binds an event in an object (similar to jQuery.bind)\nIf the element is not an HTML entity a new one is created, attached to the object (as non-enumerable, called __events) and used",
             "itemtype": "method",
             "name": "trigger",
             "params": [
                 {
                     "name": "element",
-                    "description": "could be an HTMLEntity or a regular object",
+                    "description": "could be an HTMLEntity, a regular object, a query string or a regular Array of entities",
                     "type": "Object"
                 },
                 {
@@ -417,7 +427,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 139,
+            "line": 159,
             "description": "Unbinds an event in an object (similar to jQuery.unbind)",
             "itemtype": "method",
             "name": "unbind",
@@ -442,7 +452,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 154,
+            "line": 174,
             "description": "Appends litegui widget to the global interface",
             "itemtype": "method",
             "name": "add",
@@ -457,14 +467,14 @@
         },
         {
             "file": "../src/core.js",
-            "line": 164,
+            "line": 184,
             "description": "Remove from the interface, it is is an HTML element it is removed from its parent, if it is a widget the same.",
             "itemtype": "method",
             "name": "remove",
             "params": [
                 {
                     "name": "litegui_element",
-                    "description": "it also supports HTMLentity or selector string",
+                    "description": "it also supports HTMLentity, selector string or Array of elements",
                     "type": "Object"
                 }
             ],
@@ -472,13 +482,13 @@
         },
         {
             "file": "../src/core.js",
-            "line": 187,
+            "line": 215,
             "description": "wrapper of document.getElementById",
             "itemtype": "method",
             "name": "getById",
             "params": [
                 {
-                    "name": "id!~YUIDOC_LINE~!return",
+                    "name": "id\nreturn",
                     "description": "{HTMLEntity}",
                     "type": "String"
                 }
@@ -487,7 +497,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 226,
+            "line": 260,
             "description": "Change cursor",
             "itemtype": "method",
             "name": "setCursor",
@@ -502,13 +512,13 @@
         },
         {
             "file": "../src/core.js",
-            "line": 236,
-            "description": "Copy a string to the clipboard (it needs to be invoqued from a click event)",
+            "line": 270,
+            "description": "Test if the cursor is inside an element",
             "itemtype": "method",
-            "name": "toClipboard",
+            "name": "setCursor",
             "params": [
                 {
-                    "name": "data",
+                    "name": "cursor",
                     "description": "",
                     "type": "String"
                 }
@@ -517,10 +527,30 @@
         },
         {
             "file": "../src/core.js",
-            "line": 270,
+            "line": 293,
+            "description": "Copy a string to the clipboard (it needs to be invoqued from a click event)",
+            "itemtype": "method",
+            "name": "toClipboard",
+            "params": [
+                {
+                    "name": "data",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "force_local",
+                    "description": "force to store the data in the browser clipboard (this one can be read back)",
+                    "type": "Boolean"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 338,
             "description": "Reads from the secondary clipboard (only can read if the data was stored using the toClipboard)",
             "itemtype": "method",
-            "name": "getClipboard",
+            "name": "getLocalClipboard",
             "return": {
                 "description": "clipboard",
                 "type": "String"
@@ -529,7 +559,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 285,
+            "line": 355,
             "description": "Insert some CSS code to the website",
             "itemtype": "method",
             "name": "addCSS",
@@ -544,7 +574,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 310,
+            "line": 380,
             "description": "Requires a new CSS",
             "itemtype": "method",
             "name": "requireCSS",
@@ -564,7 +594,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 336,
+            "line": 406,
             "description": "Request file from url (it could be a binary, text, etc.). If you want a simplied version use",
             "itemtype": "method",
             "name": "request",
@@ -584,7 +614,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 415,
+            "line": 496,
             "description": "Request file from url",
             "itemtype": "method",
             "name": "requestText",
@@ -609,7 +639,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 427,
+            "line": 508,
             "description": "Request file from url",
             "itemtype": "method",
             "name": "requestJSON",
@@ -634,7 +664,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 439,
+            "line": 520,
             "description": "Request binary file from url",
             "itemtype": "method",
             "name": "requestBinary",
@@ -659,15 +689,15 @@
         },
         {
             "file": "../src/core.js",
-            "line": 452,
+            "line": 533,
             "description": "Request script and inserts it in the DOM",
             "itemtype": "method",
             "name": "requireScript",
             "params": [
                 {
                     "name": "url",
-                    "description": "",
-                    "type": "String"
+                    "description": "the url of the script or an array containing several urls",
+                    "type": "String|Array"
                 },
                 {
                     "name": "on_complete",
@@ -689,7 +719,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 532,
+            "line": 619,
             "description": "Request script and inserts it in the DOM",
             "itemtype": "method",
             "name": "createElement",
@@ -719,7 +749,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 578,
+            "line": 665,
             "description": "Request script and inserts it in the DOM",
             "itemtype": "method",
             "name": "createButton",
@@ -738,13 +768,18 @@
                     "name": "callback",
                     "description": "when the button is pressed",
                     "type": "Function"
+                },
+                {
+                    "name": "style",
+                    "description": "",
+                    "type": "Object|String"
                 }
             ],
             "class": "LiteGUI"
         },
         {
             "file": "../src/core.js",
-            "line": 648,
+            "line": 757,
             "description": "Shows a dialog with a message",
             "itemtype": "method",
             "name": "popup",
@@ -764,7 +799,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 673,
+            "line": 782,
             "description": "Shows an alert dialog with a message",
             "itemtype": "method",
             "name": "alert",
@@ -784,7 +819,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 694,
+            "line": 803,
             "description": "Shows a confirm dialog with a message",
             "itemtype": "method",
             "name": "confirm",
@@ -809,7 +844,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 730,
+            "line": 839,
             "description": "Shows a prompt dialog with a message",
             "itemtype": "method",
             "name": "prompt",
@@ -834,7 +869,32 @@
         },
         {
             "file": "../src/core.js",
-            "line": 788,
+            "line": 899,
+            "description": "Shows a choice dialog with a message",
+            "itemtype": "method",
+            "name": "choice",
+            "params": [
+                {
+                    "name": "content",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "",
+                    "type": "Function"
+                },
+                {
+                    "name": "options",
+                    "description": "( title, width, height, content, noclose )",
+                    "type": "Object"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 981,
             "description": "Returns the URL vars ( ?foo=faa&foo2=etc )",
             "itemtype": "method",
             "name": "getUrlVars",
@@ -842,7 +902,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 813,
+            "line": 1011,
             "description": "Makes one element draggable",
             "itemtype": "method",
             "name": "draggable",
@@ -862,7 +922,7 @@
         },
         {
             "file": "../src/core.js",
-            "line": 876,
+            "line": 1086,
             "description": "Clones object content",
             "itemtype": "method",
             "name": "cloneObject",
@@ -881,13 +941,109 @@
             "class": "LiteGUI"
         },
         {
+            "file": "../src/core.js",
+            "line": 1162,
+            "description": "Convert sizes in any format to a valid CSS format (number to string, negative number to calc( 100% - number px )",
+            "itemtype": "method",
+            "name": "sizeToCSS",
+            "params": [
+                {
+                    "name": "size",
+                    "description": "",
+                    "type": "String||Number"
+                }
+            ],
+            "return": {
+                "description": "valid css size string",
+                "type": "String"
+            },
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/core.js",
+            "line": 1179,
+            "description": "Helper, makes drag and drop easier by enabling drag and drop in a given element",
+            "itemtype": "method",
+            "name": "createDropArea",
+            "params": [
+                {
+                    "name": "element",
+                    "description": "the element where users could drop items",
+                    "type": "HTMLElement"
+                },
+                {
+                    "name": "callback_drop",
+                    "description": "function to call when the user drops the item",
+                    "type": "Function"
+                },
+                {
+                    "name": "callback_enter",
+                    "description": "[optional] function to call when the user drags something inside",
+                    "type": "Function"
+                }
+            ],
+            "class": "LiteGUI"
+        },
+        {
+            "file": "../src/dialog.js",
+            "line": 2,
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/dialog.js",
+            "line": 147,
+            "description": "add widget or html to the content of the dialog",
+            "itemtype": "method",
+            "name": "add",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/dialog.js",
+            "line": 371,
+            "description": "destroys the dialog",
+            "itemtype": "method",
+            "name": "close",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/dialog.js",
+            "line": 493,
+            "description": "shows a hidden dialog",
+            "itemtype": "method",
+            "name": "show",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/dialog.js",
+            "line": 522,
+            "description": "hides the dialog",
+            "itemtype": "method",
+            "name": "hide",
+            "class": "Dialog"
+        },
+        {
+            "file": "../src/dialog.js",
+            "line": 580,
+            "description": "Adjust the size of the dialog to the size of the content",
+            "itemtype": "method",
+            "name": "adjustSize",
+            "params": [
+                {
+                    "name": "margin",
+                    "description": "",
+                    "type": "Number"
+                }
+            ],
+            "class": "Dialog"
+        },
+        {
             "file": "../src/dragger.js",
             "line": 3,
             "class": "Inspector"
         },
         {
             "file": "../src/inspector.js",
-            "line": 97,
+            "line": 96,
             "description": "Removes all the widgets inside the inspector",
             "itemtype": "method",
             "name": "clear",
@@ -895,7 +1051,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 117,
+            "line": 120,
             "description": "Tryes to refresh (calls on_refresh)",
             "itemtype": "method",
             "name": "refresh",
@@ -903,7 +1059,25 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 173,
+            "line": 205,
+            "itemtype": "method",
+            "name": "getWidget",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "the name of the widget supplied when creating it or the number of the widget",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "widget object",
+                "type": "Object"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 218,
             "itemtype": "method",
             "name": "inspectInstance",
             "params": [
@@ -932,7 +1106,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 265,
+            "line": 320,
             "itemtype": "method",
             "name": "collectPropertier",
             "params": [
@@ -946,7 +1120,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 288,
+            "line": 343,
             "itemtype": "method",
             "name": "showProperties",
             "params": [
@@ -970,7 +1144,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 341,
+            "line": 401,
             "description": "Tryes to assigns a value to the instance stored in this.instance",
             "itemtype": "method",
             "name": "assignValue",
@@ -978,7 +1152,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 367,
+            "line": 427,
             "description": "Used by all widgets to create the container of one widget",
             "itemtype": "method",
             "name": "createWidget",
@@ -995,7 +1169,7 @@
                 },
                 {
                     "name": "options",
-                    "description": "some generic options that any widget could have:\n- width: the width of the widget (if omited it will use the Inspector widgets_width, otherwise 100%\n- name_width: the width of the name part of the widget, if not specified it will use Inspector name_width, otherwise css default\n- pre_title: string to append to the left side of the name, this is helpful if you want to add icons with behaviour when clicked\n- title: string to replace the name, sometimes you want to supply a different name than the one you want to show (this is helpful to retrieve values from an inspector)",
+                    "description": "some generic options that any widget could have:\n- widget_name: the name used to store this widget in the widgets_by_name container, if omited the parameter name is used\n- width: the width of the widget (if omited it will use the Inspector widgets_width, otherwise 100%\n- name_width: the width of the name part of the widget, if not specified it will use Inspector name_width, otherwise css default\n- content_width: the width of the widget content area\n- pre_title: string to append to the left side of the name, this is helpful if you want to add icons with behaviour when clicked\n- title: string to replace the name, sometimes you want to supply a different name than the one you want to show (this is helpful to retrieve values from an inspector)",
                     "type": "Object"
                 }
             ],
@@ -1003,7 +1177,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 516,
+            "line": 618,
             "description": "Adds a widgete to the inspector, its a way to provide the widget type from a string",
             "itemtype": "method",
             "name": "add",
@@ -1037,31 +1211,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 720,
-            "description": "Creates a title bar in the widgets list to help separate widgets",
-            "itemtype": "method",
-            "name": "addTitle",
-            "params": [
-                {
-                    "name": "title",
-                    "description": "",
-                    "type": "String"
-                },
-                {
-                    "name": "options",
-                    "description": "",
-                    "type": "Object"
-                }
-            ],
-            "return": {
-                "description": "the widget in the form of the DOM element that contains it",
-                "type": "HTMLElement"
-            },
-            "class": "Inspector"
-        },
-        {
-            "file": "../src/inspector.js",
-            "line": 747,
+            "line": 685,
             "description": "Creates a line",
             "itemtype": "method",
             "name": "addSeparator",
@@ -1073,7 +1223,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 760,
+            "line": 726,
             "description": "Widget to edit strings",
             "itemtype": "method",
             "name": "addString",
@@ -1102,7 +1252,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 824,
+            "line": 815,
             "description": "Widget to edit strings, but it adds a button behind (useful to search values somewhere in case the user do not remember the name)",
             "itemtype": "method",
             "name": "addStringButton",
@@ -1131,7 +1281,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 873,
+            "line": 889,
             "description": "Widget to edit strings with multiline support",
             "itemtype": "method",
             "name": "addTextarea",
@@ -1160,7 +1310,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 917,
+            "line": 942,
             "description": "Widget to edit numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addNumber",
@@ -1189,7 +1339,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1002,
+            "line": 1035,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector2",
@@ -1218,7 +1368,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1098,
+            "line": 1138,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector3",
@@ -1247,7 +1397,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1200,
+            "line": 1246,
             "description": "Widget to edit two numbers (it adds a dragging mini widget in the right side)",
             "itemtype": "method",
             "name": "addVector4",
@@ -1276,7 +1426,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1292,
+            "line": 1343,
             "description": "Widget to edit two numbers using a rectangular pad where you can drag horizontaly and verticaly a handler",
             "itemtype": "method",
             "name": "addPad",
@@ -1305,7 +1455,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1439,
+            "line": 1494,
             "description": "Widget to show plain information in HTML (not interactive)",
             "itemtype": "method",
             "name": "addInfo",
@@ -1334,7 +1484,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1494,
+            "line": 1559,
             "description": "Widget to edit a number using a slider",
             "itemtype": "method",
             "name": "addSlider",
@@ -1363,7 +1513,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1565,
+            "line": 1631,
             "description": "Widget to edit a boolean value using a checkbox",
             "itemtype": "method",
             "name": "addCheckbox",
@@ -1392,7 +1542,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1624,
+            "line": 1690,
             "description": "Widget to edit a set of boolean values using checkboxes",
             "itemtype": "method",
             "name": "addFlags",
@@ -1416,7 +1566,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1652,
+            "line": 1723,
             "description": "Widget to edit an enumeration using a combobox",
             "itemtype": "method",
             "name": "addCombo",
@@ -1445,7 +1595,7 @@
         },
         {
             "file": "../src/inspector.js",
-            "line": 1843,
+            "line": 1957,
             "description": "Widget to select from a list of items",
             "itemtype": "method",
             "name": "addList",
@@ -1462,7 +1612,60 @@
                 },
                 {
                     "name": "options,",
-                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- multiselection: allow multiple selection\n- callback: function to call once an items is clicked",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- multiselection: allow multiple selection\n- callback: function to call once an items is clicked\n- selected: the item selected",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 2656,
+            "description": "Widget to edit an array of values of a certain type",
+            "itemtype": "method",
+            "name": "addArray",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Array"
+                },
+                {
+                    "name": "options,",
+                    "description": "here is a list for this widget (check createWidget for a list of generic options):\n- data_type: the type of every value inside the array\n- data_options: options for the widgets of every item in the array\n- max_items: max number of items to show from the array, default is 100\n- callback: function to call once an items inside the array has changed",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "the widget in the form of the DOM element that contains it",
+                "type": "HTMLElement"
+            },
+            "class": "Inspector"
+        },
+        {
+            "file": "../src/inspector.js",
+            "line": 2971,
+            "description": "Creates a title bar in the widgets list to help separate widgets",
+            "itemtype": "method",
+            "name": "addTitle",
+            "params": [
+                {
+                    "name": "title",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "",
                     "type": "Object"
                 }
             ],
@@ -1475,64 +1678,12 @@
         {
             "file": "../src/menubar.js",
             "line": 3,
-            "class": "Dialog"
+            "class": "Tabs"
         },
         {
             "file": "../src/panel.js",
             "line": 4,
-            "class": "Dialog"
-        },
-        {
-            "file": "../src/panel.js",
-            "line": 47,
-            "class": "Dialog"
-        },
-        {
-            "file": "../src/panel.js",
-            "line": 155,
-            "description": "add widget or html to the content of the dialog",
-            "itemtype": "method",
-            "name": "add",
-            "class": "Dialog"
-        },
-        {
-            "file": "../src/panel.js",
-            "line": 369,
-            "description": "destroys the dialog",
-            "itemtype": "method",
-            "name": "close",
-            "class": "Dialog"
-        },
-        {
-            "file": "../src/panel.js",
-            "line": 483,
-            "description": "shows a hidden dialog",
-            "itemtype": "method",
-            "name": "show",
-            "class": "Dialog"
-        },
-        {
-            "file": "../src/panel.js",
-            "line": 500,
-            "description": "hides the dialog",
-            "itemtype": "method",
-            "name": "hide",
-            "class": "Dialog"
-        },
-        {
-            "file": "../src/panel.js",
-            "line": 544,
-            "description": "Adjust the size of the dialog to the size of the content",
-            "itemtype": "method",
-            "name": "adjustSize",
-            "params": [
-                {
-                    "name": "margin",
-                    "description": "",
-                    "type": "Number"
-                }
-            ],
-            "class": "Dialog"
+            "class": "Tabs"
         },
         {
             "file": "../src/tabs.js",
@@ -1541,7 +1692,7 @@
         },
         {
             "file": "../src/tabs.js",
-            "line": 89,
+            "line": 110,
             "description": "Returns the currently selected tab in the form of a tab object",
             "itemtype": "method",
             "name": "getCurrentTab",
@@ -1553,7 +1704,7 @@
         },
         {
             "file": "../src/tabs.js",
-            "line": 106,
+            "line": 127,
             "description": "Returns the last tab pressed before this one. used to know from which tab we come",
             "itemtype": "method",
             "name": "getCurrentTab",
@@ -1565,8 +1716,8 @@
         },
         {
             "file": "../src/tabs.js",
-            "line": 126,
-            "description": "Returns a tab",
+            "line": 147,
+            "description": "Returns a tab given its id",
             "itemtype": "method",
             "name": "getTab",
             "params": [
@@ -1584,7 +1735,26 @@
         },
         {
             "file": "../src/tabs.js",
-            "line": 137,
+            "line": 158,
+            "description": "Returns a tab given its index in the tabs list",
+            "itemtype": "method",
+            "name": "getTabByIndex",
+            "params": [
+                {
+                    "name": "index",
+                    "description": "",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "the tab in the form of an object with {id,tab,content}",
+                "type": "Object"
+            },
+            "class": "Tabs"
+        },
+        {
+            "file": "../src/tabs.js",
+            "line": 169,
             "description": "Returns how many tabs there is",
             "itemtype": "method",
             "name": "getNumOfTabs",
@@ -1596,7 +1766,7 @@
         },
         {
             "file": "../src/tabs.js",
-            "line": 150,
+            "line": 182,
             "description": "Returns the content HTML element of a tab",
             "itemtype": "method",
             "name": "getTabContent",
@@ -1615,7 +1785,7 @@
         },
         {
             "file": "../src/tabs.js",
-            "line": 163,
+            "line": 195,
             "description": "Returns the index of a tab (the position in the tabs list)",
             "itemtype": "method",
             "name": "getTabIndex",
@@ -1634,19 +1804,19 @@
         },
         {
             "file": "../src/tabs.js",
-            "line": 181,
+            "line": 213,
             "description": "Create a new tab, where id is a unique identifier",
             "itemtype": "method",
             "name": "addTab",
             "params": [
                 {
                     "name": "id",
-                    "description": "",
+                    "description": "could be null then a random id is generated",
                     "type": "String"
                 },
                 {
                     "name": "options",
-                    "description": "{ title: tab text, callback: called when selected, callback_leave: callback when leaving, content: HTML content, closable: if it can be closed (callback is onclose), tab_width: size of the tab, tab_className: classes for the tab element, id: content id, size: full means all, mode: \"vertical\" or \"horizontal\", button: if it is a button tab, not a selectable tab}",
+                    "description": "{ \n\ttitle: tab text, \n\tcallback: called when selected, \n\tcallback_leave: callback when leaving, \n  callback_context: on right click on tab\n  callback_canopen: used to block if this tab can be opened or not (if it returns true then yes)\n\tcontent: HTML content, \n  closable: if it can be closed (callback is onclose), \n\ttab_width: size of the tab,\n\ttab_className: classes for the tab element,\n\tid: content id,\n\tsize: full means all,\n\tmode: \"vertical\" or \"horizontal\",\n\tbutton: if it is a button tab, not a selectable tab\n\t}",
                     "type": "Object"
                 },
                 {
@@ -1668,7 +1838,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 80,
+            "line": 94,
             "description": "update tree with new data (old data will be thrown away)",
             "itemtype": "method",
             "name": "updateTree",
@@ -1683,7 +1853,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 99,
+            "line": 113,
             "description": "update tree with new data (old data will be thrown away)",
             "itemtype": "method",
             "name": "insertItem",
@@ -1717,7 +1887,37 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 620,
+            "line": 638,
+            "description": "remove from the tree the items that do not have a name that matches the string",
+            "itemtype": "method",
+            "name": "filterByName",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 677,
+            "description": "remove from the tree the items that do not have a name that matches the string",
+            "itemtype": "method",
+            "name": "filterByName",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 717,
             "description": "get the item with that id, returns the HTML element",
             "itemtype": "method",
             "name": "getItem",
@@ -1736,7 +1936,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 657,
+            "line": 754,
             "description": "in case an item is collapsed, it expands it to show children",
             "itemtype": "method",
             "name": "expandItem",
@@ -1751,7 +1951,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 674,
+            "line": 771,
             "description": "in case an item is expanded, it collapses it to hide children",
             "itemtype": "method",
             "name": "collapseItem",
@@ -1766,7 +1966,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 692,
+            "line": 789,
             "description": "Tells you if the item its out of the view due to the scrolling",
             "itemtype": "method",
             "name": "isInsideArea",
@@ -1781,7 +1981,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 715,
+            "line": 812,
             "description": "Scrolls to center this item",
             "itemtype": "method",
             "name": "scrollToItem",
@@ -1796,7 +1996,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 740,
+            "line": 837,
             "description": "mark item as selected",
             "itemtype": "method",
             "name": "setSelectedItem",
@@ -1811,7 +2011,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 772,
+            "line": 869,
             "description": "adds item to selection (multiple selection)",
             "itemtype": "method",
             "name": "addItemToSelection",
@@ -1826,7 +2026,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 790,
+            "line": 887,
             "description": "remove item from selection (multiple selection)",
             "itemtype": "method",
             "name": "removeItemFromSelection",
@@ -1841,7 +2041,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 805,
+            "line": 902,
             "description": "returns the first selected item (its HTML element)",
             "itemtype": "method",
             "name": "getSelectedItem",
@@ -1853,7 +2053,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 815,
+            "line": 912,
             "description": "returns an array with the selected items (its HTML elements)",
             "itemtype": "method",
             "name": "getSelectedItems",
@@ -1865,7 +2065,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 825,
+            "line": 922,
             "description": "returns if an item is selected",
             "itemtype": "method",
             "name": "isItemSelected",
@@ -1884,14 +2084,14 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 839,
+            "line": 936,
             "description": "returns the children of an item",
             "itemtype": "method",
             "name": "getChildren",
             "params": [
                 {
                     "name": "id",
-                    "description": "",
+                    "description": "could be string or node directly",
                     "type": "String"
                 },
                 {
@@ -1910,7 +2110,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 851,
+            "line": 950,
             "description": "returns the parent of a item",
             "itemtype": "method",
             "name": "getParent",
@@ -1929,7 +2129,45 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 865,
+            "line": 964,
+            "description": "returns an array with all the ancestors",
+            "itemtype": "method",
+            "name": "getAncestors",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "Array"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 982,
+            "description": "returns an array with all the ancestors",
+            "itemtype": "method",
+            "name": "getAncestors",
+            "params": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "",
+                "type": "Array"
+            },
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 1002,
             "description": "move item with id to be child of parent_id",
             "itemtype": "method",
             "name": "moveItem",
@@ -1953,7 +2191,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 928,
+            "line": 1078,
             "description": "remove item with given id",
             "itemtype": "method",
             "name": "removeItem",
@@ -1972,7 +2210,7 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 950,
+            "line": 1116,
             "description": "update a given item with new data",
             "itemtype": "method",
             "name": "updateItem",
@@ -1992,7 +2230,27 @@
         },
         {
             "file": "../src/tree.js",
-            "line": 973,
+            "line": 1141,
+            "description": "update a given item id and the link with its children",
+            "itemtype": "method",
+            "name": "updateItemId",
+            "params": [
+                {
+                    "name": "old_id",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "new_id",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "class": "Tree"
+        },
+        {
+            "file": "../src/tree.js",
+            "line": 1166,
             "description": "clears all the items",
             "itemtype": "method",
             "name": "clear",
@@ -2018,7 +2276,11 @@
         },
         {
             "message": "Missing item type",
-            "line": " ../src/area.js:526"
+            "line": " ../src/area.js:550"
+        },
+        {
+            "message": "Missing item type",
+            "line": " ../src/dialog.js:2"
         },
         {
             "message": "Missing item type",
@@ -2031,10 +2293,6 @@
         {
             "message": "Missing item type",
             "line": " ../src/panel.js:4"
-        },
-        {
-            "message": "Missing item type",
-            "line": " ../src/panel.js:47"
         },
         {
             "message": "Missing item type",

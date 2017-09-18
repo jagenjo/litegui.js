@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>../src/dialog.js</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="icon" href="../assets/favicon.ico">
+    <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+                <h1><img src="../assets/css/logo.png" title="" width="117" height="52"></h1>
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+                    <h2 class="off-left">APIs</h2>
+                    <div id="api-tabview" class="tabview">
+                        <ul class="tabs">
+                            <li><a href="#api-classes">Classes</a></li>
+                            <li><a href="#api-modules">Modules</a></li>
+                        </ul>
+                
+                        <div id="api-tabview-filter">
+                            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                        </div>
+                
+                        <div id="api-tabview-panel">
+                            <ul id="api-classes" class="apis classes">
+                                <li><a href="../classes/Area.html">Area</a></li>
+                                <li><a href="../classes/ContextMenu.html">ContextMenu</a></li>
+                                <li><a href="../classes/Dialog.html">Dialog</a></li>
+                                <li><a href="../classes/Inspector.html">Inspector</a></li>
+                                <li><a href="../classes/LineEditor.html">LineEditor</a></li>
+                                <li><a href="../classes/List.html">List</a></li>
+                                <li><a href="../classes/LiteGUI.html">LiteGUI</a></li>
+                                <li><a href="../classes/SearchBox.html">SearchBox</a></li>
+                                <li><a href="../classes/Slider.html">Slider</a></li>
+                                <li><a href="../classes/Split.html">Split</a></li>
+                                <li><a href="../classes/Tabs.html">Tabs</a></li>
+                                <li><a href="../classes/Tree.html">Tree</a></li>
+                            </ul>
+                
+                
+                            <ul id="api-modules" class="apis modules">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+                    Show:
+                    <label for="api-show-inherited">
+                        <input type="checkbox" id="api-show-inherited" checked>
+                        Inherited
+                    </label>
+            
+                    <label for="api-show-protected">
+                        <input type="checkbox" id="api-show-protected">
+                        Protected
+                    </label>
+            
+                    <label for="api-show-private">
+                        <input type="checkbox" id="api-show-private">
+                        Private
+                    </label>
+                    <label for="api-show-deprecated">
+                        <input type="checkbox" id="api-show-deprecated">
+                        Deprecated
+                    </label>
+            
+                </div>
+            
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+<h1 class="file-heading">File: ../src/dialog.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+(function(){
+	/****************** DIALOG **********************/
+	/**
+	* Dialog
+	*
+	* @class Dialog
+	* @param {Object} options useful options are { title, width, height, closable, on_close, scroll }
+	* @constructor
+	*/
+	function Dialog( options, legacy )
+	{
+		if( legacy || (options &amp;&amp; options.constructor === String) )
+		{
+			var id = options;
+			options = legacy || {};
+			options.id = id;
+			console.warn(&quot;LiteGUI.Dialog legacy parameter, use options as first parameter instead of id.&quot;);
+		}
+
+		this._ctor( options );
+	}
+
+	Dialog.MINIMIZED_WIDTH = 200;
+	Dialog.title_height = &quot;20px&quot;;
+
+	Dialog.getDialog = function( id )
+	{
+		var element = document.getElementById( id );		
+		if(!element)
+			return null;
+		return element.dialog;
+	}
+
+	Dialog.prototype._ctor = function( options )
+	{
+		options = options || {};
+
+		var that = this;
+		this.width = options.width;
+		this.height = options.height;
+		this.minWidth = options.minWidth || 150;
+		this.minHeight = options.minHeight || 100;
+		this.content = options.content || &quot;&quot;;
+
+		var panel = document.createElement(&quot;div&quot;);
+		if(options.id)
+			panel.id = options.id;
+
+		panel.className = &quot;litedialog &quot; + (options.className || &quot;&quot;);
+		panel.data = this;
+		panel.dialog = this;
+
+		var code = &quot;&quot;;
+		if(options.title)
+		{
+			code += &quot;&lt;div class=&#x27;panel-header&#x27;&gt;&quot;+options.title+&quot;&lt;/div&gt;&lt;div class=&#x27;buttons&#x27;&gt;&quot;;
+			if(options.minimize){
+				code += &quot;&lt;button class=&#x27;litebutton mini-button minimize-button&#x27;&gt;-&lt;/button&gt;&quot;;
+				code += &quot;&lt;button class=&#x27;litebutton mini-button maximize-button&#x27; style=&#x27;display:none&#x27;&gt;&lt;/button&gt;&quot;;
+			}
+			if(options.hide)
+				code += &quot;&lt;button class=&#x27;litebutton mini-button hide-button&#x27;&gt;&lt;/button&gt;&quot;;
+			if(options.detachable)
+				code += &quot;&lt;button class=&#x27;litebutton mini-button detach-button&#x27;&gt;&lt;/button&gt;&quot;;
+			
+			if(options.close || options.closable)
+				code += &quot;&lt;button class=&#x27;litebutton mini-button close-button&#x27;&gt;&quot;+ LiteGUI.special_codes.close +&quot;&lt;/button&gt;&quot;;
+			code += &quot;&lt;/div&gt;&quot;;
+		}
+
+		code += &quot;&lt;div class=&#x27;content&#x27;&gt;&quot;+this.content+&quot;&lt;/div&gt;&quot;;
+		code += &quot;&lt;div class=&#x27;panel-footer&#x27;&gt;&lt;/div&gt;&quot;;
+		panel.innerHTML = code;
+
+		this.root = panel;
+		this.content = panel.querySelector(&quot;.content&quot;);
+		this.footer = panel.querySelector(&quot;.panel-footer&quot;);
+
+		if(options.fullcontent)
+		{
+			this.content.style.width = &quot;100%&quot;;		
+			this.content.style.height = options.title ? &quot;calc( 100% - &quot;+Dialog.title_height+&quot; )&quot; : &quot;100%&quot;;
+		}
+
+		if(options.buttons)
+		{
+			for(var i in options.buttons)
+				this.addButton(options.buttons[i].name, options.buttons[i]);
+		}
+
+		//if(options.scroll == false)	this.content.style.overflow = &quot;hidden&quot;;
+		if(options.scroll == true)
+			this.content.style.overflow = &quot;auto&quot;;
+
+		//buttons *********************************
+		var close_button = panel.querySelector(&quot;.close-button&quot;);
+		if(close_button)
+			close_button.addEventListener(&quot;click&quot;, this.close.bind(this) );
+
+		var maximize_button = panel.querySelector(&quot;.maximize-button&quot;);
+		if(maximize_button)
+			maximize_button.addEventListener(&quot;click&quot;, this.maximize.bind(this) );
+
+		var minimize_button = panel.querySelector(&quot;.minimize-button&quot;);
+		if(minimize_button)
+			minimize_button.addEventListener(&quot;click&quot;, this.minimize.bind(this) );
+
+		var hide_button = panel.querySelector(&quot;.hide-button&quot;);
+		if(hide_button)
+			hide_button.addEventListener(&quot;click&quot;, this.hide.bind(this) );
+
+		var detach_button = panel.querySelector(&quot;.detach-button&quot;);
+		if(detach_button)
+			detach_button.addEventListener(&quot;click&quot;, function() { that.detachWindow(); });
+
+		//size, draggable, resizable, etc
+		this.enableProperties(options);
+
+		this.root.addEventListener(&quot;DOMNodeInsertedIntoDocument&quot;, function(){ 
+			if( that.on_attached_to_DOM )
+				that.on_attached_to_DOM();
+			if( that.on_resize )
+				that.on_resize();
+		});
+		this.root.addEventListener(&quot;DOMNodeRemovedFromDocument&quot;, function(){ 
+			if( that.on_detached_from_DOM )
+				that.on_detached_from_DOM();
+		});
+
+
+		//attach
+		if(options.attach || options.parent)
+		{
+			var parent = null;
+			if(options.parent)
+				parent = typeof(options.parent) == &quot;string&quot; ? document.querySelector(options.parent) : options.parent;
+			if(!parent)
+				parent = LiteGUI.root;
+			parent.appendChild( this.root );
+			this.center();
+		}
+
+		//if(options.position) //not docked
+		//	this.setPosition( options.position[0], options.position[1] );
+	}
+
+	/**
+	* add widget or html to the content of the dialog
+	* @method add
+	*/
+	Dialog.prototype.add = function( litegui_item )
+	{
+		this.content.appendChild( litegui_item.root || litegui_item );
+	}
+
+	//takes the info from the parent to 
+	Dialog.prototype.enableProperties = function(options)
+	{
+		options = options || {};
+		var that = this;
+
+		var panel = this.root;
+		panel.style.position = &quot;absolute&quot;;
+		//panel.style.display = &quot;none&quot;;
+
+		panel.style.minWidth = this.minWidth + &quot;px&quot;;
+		panel.style.minHeight = this.minHeight + &quot;px&quot;;
+
+		if(this.width)
+			panel.style.width = this.width + &quot;px&quot;;
+
+		if(this.height)
+		{
+			if(typeof(this.height) == &quot;number&quot;)
+			{
+				panel.style.height = this.height + &quot;px&quot;;
+			}
+			else
+			{
+				if(this.height.indexOf(&quot;%&quot;) != -1)
+					panel.style.height = this.height;
+			}
+
+			this.content.style.height = &quot;calc( &quot; + this.height + &quot;px - 24px )&quot;;
+		}
+
+		panel.style.boxShadow = &quot;0 0 3px black&quot;;
+
+		if(options.draggable)
+		{
+			this.draggable = true;
+			LiteGUI.draggable( panel, panel.querySelector(&quot;.panel-header&quot;), function(){
+				that.bringToFront();
+			},null, function(){
+				return !that.minimized;
+			});
+		}
+
+		if(options.resizable)
+			this.setResizable();
+	}
+
+	Dialog.prototype.setResizable = function()
+	{
+		if(this.resizable)
+			return;
+
+		var root = this.root;
+		this.resizable = true;
+		var footer = this.footer;
+		footer.style.minHeight = &quot;4px&quot;;
+		footer.classList.add(&quot;resizable&quot;);
+
+		var corner = document.createElement(&quot;div&quot;);
+		corner.className = &quot;resizable-corner&quot;;
+		this.root.appendChild( corner );
+
+		footer.addEventListener(&quot;mousedown&quot;, inner_mouse);
+		corner.addEventListener(&quot;mousedown&quot;, inner_mouse, true);
+
+		var mouse = [0,0];
+		var that = this;
+
+		var is_corner = false;
+
+		function inner_mouse(e)
+		{
+			//console.log( getTime(), is_corner );
+
+			if(e.type == &quot;mousedown&quot;)
+			{
+				document.body.addEventListener(&quot;mousemove&quot;, inner_mouse);
+				document.body.addEventListener(&quot;mouseup&quot;, inner_mouse);
+				is_corner = this == corner;
+				mouse[0] = e.pageX;
+				mouse[1] = e.pageY;
+			}
+			else if(e.type == &quot;mousemove&quot;)
+			{
+				var rect = LiteGUI.getRect( root );
+				var w = rect.width;
+				var neww = w - (mouse[0] - e.pageX);
+	
+				var h = rect.height;
+				var newh = h - (mouse[1] - e.pageY);
+
+				if(is_corner)
+					root.style.width = neww + &quot;px&quot;;
+				root.style.height = newh + &quot;px&quot;;
+
+				mouse[0] = e.pageX;
+				mouse[1] = e.pageY;
+				that.content.style.height = &quot;calc( 100% - 24px )&quot;;
+
+				if(that.on_resize &amp;&amp; (w != neww || h != newh) )
+					that.on_resize(e,neww,newh);
+			}
+			else if(e.type == &quot;mouseup&quot;)
+			{
+				document.body.removeEventListener(&quot;mousemove&quot;, inner_mouse);
+				document.body.removeEventListener(&quot;mouseup&quot;, inner_mouse);
+				is_corner = false;
+			}
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}
+	}
+
+	Dialog.prototype.dockTo = function( parent, dock_type )
+	{
+		if(!parent) return;
+		var panel = this.root;
+
+		dock_type = dock_type || &quot;full&quot;;
+		parent = parent.content || parent;
+
+		panel.style.top = 0;
+		panel.style.left = 0;
+
+		panel.style.boxShadow = &quot;0 0 0&quot;;
+
+		if(dock_type == &quot;full&quot;)
+		{
+			panel.style.position = &quot;relative&quot;;
+			panel.style.width = &quot;100%&quot;;
+			panel.style.height = &quot;100%&quot;;
+			this.content.style.width = &quot;100%&quot;;
+			this.content.style.height = &quot;calc(100% - &quot;+ LiteGUI.Panel.title_height +&quot;)&quot;; //title offset: 20px
+			this.content.style.height = &quot;-moz-calc(100% - &quot;+ LiteGUI.Panel.title_height +&quot;)&quot;;
+			this.content.style.height = &quot;-webkit-calc(100% - &quot;+ LiteGUI.Panel.title_height +&quot;)&quot;; 
+			this.content.style.overflow = &quot;auto&quot;;
+		}
+		else if(dock_type == &#x27;left&#x27; || dock_type == &#x27;right&#x27;)
+		{
+			panel.style.position = &quot;absolute&quot;;
+			panel.style.top = 0;
+			panel.style[dock_type] = 0;
+
+			panel.style.width = this.width + &quot;px&quot;;
+			panel.style.height = &quot;100%&quot;;
+
+			this.content.style.height = &quot;-moz-calc(100% - &quot;+ LiteGUI.Panel.title_height +&quot;)&quot;;
+			this.content.style.height = &quot;-webkit-calc(100% - &quot;+ LiteGUI.Panel.title_height +&quot;)&quot;;
+			this.content.style.height = &quot;calc(100% - &quot;+ LiteGUI.Panel.title_height +&quot;)&quot;;
+			this.content.style.overflow = &quot;auto&quot;;
+
+			if(dock_type == &#x27;right&#x27;)
+			{
+				panel.style.left = &quot;auto&quot;;
+				panel.style.right = 0;
+			}
+		}
+		else if(dock_type == &#x27;bottom&#x27; || dock_type == &#x27;top&#x27;)
+		{
+			panel.style.width = &quot;100%&quot;;
+			panel.style.height = this.height + &quot;px&quot;;
+			if(dock_type == &#x27;bottom&#x27;)
+			{
+				panel.style.bottom = 0;
+				panel.style.top = &quot;auto&quot;;
+			}
+		}
+
+		if(this.draggable)
+		{
+			//$(panel).draggable({disabled: true});
+			LiteGUI.draggable(panel);
+		}
+		
+
+		if(parent.content)
+			parent.content.appendChild(panel);
+		else if( typeof(parent) == &quot;string&quot;)
+		{
+			parent = document.querySelector( parent );
+			if(parent)
+				parent.appendChild( panel )
+		}
+		else
+			parent.appendChild( panel ); 
+	}
+
+	Dialog.prototype.addButton = function(name,options)
+	{
+		options = options || {};
+		if( options.constructor === Function )
+			options = { callback: options };
+
+		var that = this;
+		var button = document.createElement(&quot;button&quot;);
+		button.className = &quot;litebutton&quot;;
+
+		button.innerHTML = name;
+		if(options.className)
+			button.className += &quot; &quot; + options.className;
+
+		this.root.querySelector(&quot;.panel-footer&quot;).appendChild( button );
+
+		button.addEventListener(&quot;click&quot;, function(e) { 
+			if(options.callback)
+				options.callback(this);
+
+			if(options.close)
+				that.close();
+		});
+
+		return button;
+	}
+
+	/**
+	* destroys the dialog
+	* @method close
+	*/
+	Dialog.prototype.close = function() {
+		LiteGUI.remove( this.root );
+		LiteGUI.trigger( this, &quot;closed&quot;, this);
+		if(this.on_close)
+			this.on_close();
+		if(this.onclose)
+			console.warn(&quot;Dialog: Do not use onclose, use on_close instead&quot;);
+		if(this.dialog_window)
+		{
+			this.dialog_window.close();
+			this.dialog_window = null;
+		}
+	}
+
+	Dialog.prototype.highlight = function(time)
+	{
+		time = time || 100;
+		this.root.style.outline = &quot;1px solid white&quot;;
+		var doc = this.root.ownerDocument;
+		var w = doc.defaultView || doc.parentWindow;
+		w.focus();
+		setTimeout( (function(){
+			this.root.style.outline = null;
+		}).bind(this), time );
+	}
+
+	Dialog.minimized = [];
+
+	Dialog.prototype.minimize = function() {
+		if(this.minimized)
+			return;
+
+		this.minimized = true;
+		this.old_box = this.root.getBoundingClientRect();
+
+		this.root.querySelector(&quot;.content&quot;).style.display = &quot;none&quot;;
+		
+		var minimize_button = this.root.querySelector(&quot;.minimize-button&quot;);
+		if(minimize_button)	
+			minimize_button.style.display = &quot;none&quot;;
+
+		var maximize_button = this.root.querySelector(&quot;.maximize-button&quot;);
+		if(maximize_button)
+			maximize_button.style.display = &quot;&quot;;
+
+		this.root.style.width = LiteGUI.Dialog.MINIMIZED_WIDTH + &quot;px&quot;;
+
+		LiteGUI.bind( this, &quot;closed&quot;, function() {
+			LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
+			LiteGUI.Dialog.arrangeMinimized();
+		});
+
+		LiteGUI.Dialog.minimized.push( this );
+		LiteGUI.Dialog.arrangeMinimized();
+
+		LiteGUI.trigger( this,&quot;minimizing&quot; );
+	}
+
+	Dialog.arrangeMinimized = function()
+	{
+		for(var i in LiteGUI.Dialog.minimized)
+		{
+			var dialog = LiteGUI.Dialog.minimized[i];
+			var parent = dialog.root.parentNode;
+			var pos = parent.getBoundingClientRect().height - 20;
+			//$(dialog.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + &quot;px&quot; },100);
+			dialog.root.style.left = LiteGUI.Dialog.MINIMIZED_WIDTH * i;
+			dialog.root.style.top = pos + &quot;px&quot;;
+		}
+	}
+
+	Dialog.prototype.maximize = function() {
+		if(!this.minimized)
+			return;
+		this.minimized = false;
+
+		this.root.querySelector(&quot;.content&quot;).style.display = &quot;&quot;;
+		LiteGUI.draggable(this.root);
+		this.root.style.left = this.old_box.left+&quot;px&quot;;
+		this.root.style.top = this.old_box.top + &quot;px&quot;;
+		this.root.style.width = this.old_box.width + &quot;px&quot;;
+		this.root.style.height = this.old_box.height + &quot;px&quot;;
+
+		var minimize_button = this.root.querySelector(&quot;.minimize-button&quot;);
+		if(minimize_button)
+			minimize_button.style.display = &quot;&quot;;
+
+		var maximize_button = this.root.querySelector(&quot;.maximize-button&quot;);
+		if(maximize_button)
+			maximize_button.style.display = &quot;none&quot;;
+
+		LiteGUI.Dialog.minimized.splice( LiteGUI.Dialog.minimized.indexOf( this ), 1);
+		LiteGUI.Dialog.arrangeMinimized();
+		LiteGUI.trigger( this, &quot;maximizing&quot; );
+	}
+
+	Dialog.prototype.makeModal = function()
+	{
+		LiteGUI.showModalBackground(true);
+		LiteGUI.modalbg_div.appendChild( this.root ); //add panel
+		this.show();
+		this.center();
+
+		LiteGUI.bind( this, &quot;closed&quot;, inner );
+
+		function inner(e)
+		{
+			LiteGUI.showModalBackground(false);
+		}
+	}
+
+	Dialog.prototype.bringToFront = function()
+	{
+		var parent = this.root.parentNode;
+		parent.removeChild(this.root);
+		parent.appendChild(this.root);
+	}
+
+	/**
+	* shows a hidden dialog
+	* @method show
+	*/
+	Dialog.prototype.show = function( v, reference_element )
+	{
+		if(!this.root.parentNode)
+		{
+			if(!reference_element)
+				LiteGUI.add( this );
+			else
+			{
+				var doc = reference_element.ownerDocument;
+				var parent = doc.querySelector(&quot;.litegui-wrap&quot;) || doc.body;
+				parent.appendChild( this.root );
+				var w = doc.defaultView || doc.parentWindow;
+				w.focus();
+			}
+			this.center();
+		}
+
+		//$(this.root).show(v,null,100,callback);
+		if(!this.detach_window)
+		{
+			this.root.style.display = &quot;&quot;;
+			LiteGUI.trigger( this, &quot;shown&quot; );
+		}
+	}
+
+	/**
+	* hides the dialog
+	* @method hide
+	*/
+	Dialog.prototype.hide = function( v )
+	{
+		this.root.style.display = &quot;none&quot;;
+		LiteGUI.trigger(this, &quot;hidden&quot;);
+	}
+
+	Dialog.prototype.fadeIn = function(time)
+	{
+		time = time || 1000;
+		this.root.style.display = &quot;&quot;;
+		this.root.style.opacity = 0;
+		var that = this;
+		setTimeout(function(){
+			that.root.style.transition = &quot;opacity &quot;+time+&quot;ms&quot;;
+			that.root.style.opacity = 1;
+		},100);
+	}
+
+	Dialog.prototype.setPosition = function(x,y)
+	{
+		if(!this.root.parentNode)
+			console.warn(&quot;LiteGUI.Dialog: Cannot set position of dialog if it is not in the DOM&quot;);
+		this.root.position = &quot;absolute&quot;;
+		this.root.style.left = x + &quot;px&quot;;
+		this.root.style.top = y + &quot;px&quot;;
+	}
+
+	Dialog.prototype.setSize = function( w, h )
+	{
+		this.root.style.width = typeof(w) == &quot;number&quot; ? w + &quot;px&quot; : w;
+		this.root.style.height = typeof(h) == &quot;number&quot; ? h + &quot;px&quot; : h;
+	}
+
+	Dialog.prototype.setTitle = function(text)
+	{
+		if(!this.header)
+			return;
+		this.header.innerHTML = text;
+	}
+
+	Dialog.prototype.center = function()
+	{
+		if(!this.root.parentNode)
+			return;
+
+		this.root.position = &quot;absolute&quot;;
+		var width = this.root.offsetWidth;
+		var height = this.root.offsetHeight;
+		var parent_width = this.root.parentNode.offsetWidth;
+		var parent_height = this.root.parentNode.offsetHeight;
+		this.root.style.left = Math.floor(( parent_width - width ) * 0.5) + &quot;px&quot;;
+		this.root.style.top = Math.floor(( parent_height - height ) * 0.5) + &quot;px&quot;;
+	}
+
+	/**
+	* Adjust the size of the dialog to the size of the content
+	* @method adjustSize
+	* @param {number} margin
+	*/
+	Dialog.prototype.adjustSize = function( margin, skip_timeout )
+	{
+		margin = margin || 0;
+		this.content.style.height = &quot;auto&quot;;
+
+		if(this.content.offsetHeight == 0 &amp;&amp; !skip_timeout) //happens sometimes if the dialog is not yet visible
+		{
+			var that = this;
+			setTimeout( function(){ that.adjustSize( margin, true ); }, 1 );
+			return;
+		}
+
+		var extra = 0;
+		var footer = this.root.querySelector(&quot;.panel-footer&quot;);
+		if(footer)
+			extra += footer.offsetHeight;
+
+		var width = this.content.offsetWidth;
+		var height = this.content.offsetHeight + 20 + margin + extra;
+
+		this.setSize( width, height );
+	}
+
+	Dialog.prototype.clear = function()
+	{
+		this.content.innerHTML = &quot;&quot;;
+	}
+
+	Dialog.prototype.detachWindow = function( on_complete, on_close )
+	{
+		if(this.dialog_window)
+			return;
+
+		//create window
+		var rect = this.root.getClientRects()[0];
+		var w = rect.width;
+		var h = rect.height;
+		var title = &quot;Window&quot;;
+		var header = this.root.querySelector(&quot;.panel-header&quot;);
+		if(header)
+			title = header.textContent;
+
+		var dialog_window = window.open(&quot;&quot;,&quot;&quot;,&quot;width=&quot;+w+&quot;, height=&quot;+h+&quot;, location=no, status=no, menubar=no, titlebar=no, fullscreen=yes&quot;);
+		dialog_window.document.write( &quot;&lt;head&gt;&lt;title&gt;&quot;+title+&quot;&lt;/title&gt;&quot; );
+		this.dialog_window = dialog_window;
+
+		//transfer style
+		var styles = document.querySelectorAll(&quot;link[rel=&#x27;stylesheet&#x27;],style&quot;);
+		for(var i = 0; i &lt; styles.length; i++)
+			dialog_window.document.write( styles[i].outerHTML );
+		dialog_window.document.write( &quot;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&quot; );
+		dialog_window.document.close();
+
+		var that = this;
+
+		//closing event
+		dialog_window.onbeforeunload = function(){
+			var index = LiteGUI.windows.indexOf( dialog_window );
+			if(index != -1)
+				LiteGUI.windows.splice( index, 1 );
+			if(on_close)
+				on_close();
+		}
+
+		//move the content there
+		dialog_window.document.body.appendChild( this.content );
+		this.root.style.display = &quot;none&quot;; //hide
+		this._old_height = this.content.style.height;
+		this.content.style.height = &quot;100%&quot;;
+
+		LiteGUI.windows.push( dialog_window );
+
+		if(on_complete)
+			on_complete();
+
+		return dialog_window;		
+	}
+
+	Dialog.prototype.reattachWindow = function( on_complete )
+	{
+		if(!this.dialog_window)
+			return;
+
+		this.root.appendChild( this.content );
+		this.root.style.display = &quot;&quot;; //show
+		this.content.style.height = this._old_height;
+		delete this._old_height;
+		this.dialog_window.close();
+		var index = LiteGUI.windows.indexOf( this.dialog_window );
+		if(index != -1)
+			LiteGUI.windows.splice( index, 1 );
+		this.dialog_window = null;
+	}
+
+
+	//*********************************************
+
+	Dialog.showAll = function()
+	{
+		var dialogs = document.body.querySelectorAll(&quot;litedialog&quot;);
+		for(var i = 0; i &lt; dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.show();
+		}
+	}
+
+	Dialog.hideAll = function()
+	{
+		var dialogs = document.body.querySelectorAll(&quot;litedialog&quot;);
+		for(var i = 0; i &lt; dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.hide();
+		}
+	}
+
+	Dialog.closeAll = function()
+	{
+		var dialogs = document.body.querySelectorAll(&quot;litedialog&quot;);
+		for(var i = 0; i &lt; dialogs.length; i++)
+		{
+			var dialog = dialogs[i];
+			dialog.dialog.close();
+		}
+	}
+
+	LiteGUI.Dialog = Dialog;
+})();
+    </pre>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

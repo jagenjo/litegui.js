@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Area</title>
+    <title>ContextMenu</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -87,12 +87,12 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1>Area Class</h1>
+<h1>ContextMenu Class</h1>
 <div class="box meta">
 
 
         <div class="foundat">
-            Defined in: <a href="../files/.._src_area.js.html#l6"><code>..&#x2F;src&#x2F;area.js:6</code></a>
+            Defined in: <a href="../files/.._src_widgets.js.html#l69"><code>..&#x2F;src&#x2F;widgets.js:69</code></a>
         </div>
 
 
@@ -100,17 +100,20 @@
 
 
 <div class="box intro">
-    <p>Areas can be split several times horizontally or vertically to fit different colums or rows</p>
+    <p>ContextMenu</p>
 
 </div>
 
     <div class="constructor">
         <h2>Constructor</h2>
-<div id="method_Area" class="method item">
-    <h3 class="name"><code>Area</code></h3>
+<div id="method_ContextMenu" class="method item">
+    <h3 class="name"><code>ContextMenu</code></h3>
 
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>values</code>
+                </li>
                 <li class="arg">
                         <code>options</code>
                 </li>
@@ -127,7 +130,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/.._src_area.js.html#l6"><code>..&#x2F;src&#x2F;area.js:6</code></a>
+        <a href="../files/.._src_widgets.js.html#l69"><code>..&#x2F;src&#x2F;widgets.js:69</code></a>
         </p>
 
 
@@ -143,12 +146,30 @@
 
             <ul class="params-list">
                 <li class="param">
+                        <code class="param-name">values</code>
+                        <span class="type">Array</span>
+
+
+                    <div class="param-description">
+                        <p>(allows object { title: &quot;Nice text&quot;, callback: function ... })</p>
+
+                    </div>
+
+                </li>
+                <li class="param">
                         <code class="param-name">options</code>
                         <span class="type">Object</span>
 
 
                     <div class="param-description">
-                         
+                        <p>[optional] Some options:\</p>
+<ul>
+<li>title: title to show on top of the menu</li>
+<li>callback: function to call when an option is clicked, it receives the item information</li>
+<li>ignore_item_callbacks: ignores the callback inside the item, it just calls the options.callback</li>
+<li>event: you can pass a MouseEvent, this way the ContextMenu appears in that position</li>
+</ul>
+
                     </div>
 
                 </li>

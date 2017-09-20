@@ -2,6 +2,8 @@
 
 Dialogs are floating windows that can be dragged around or closed.
 
+Technically the behave like a ```LiteGUI.Panel``` but with a frame that makes it a floating window.
+
 Here is an example of how to create a Dialog:
 
 ```js

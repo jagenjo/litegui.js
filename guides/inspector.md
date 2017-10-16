@@ -192,6 +192,20 @@ my_instance.constructor["@property_name"] = { widget: "slider" };
 my_instance["@property_name"] = { widget: "slider" };
 ```
 
+If you dont want to show all the properties  you can specify the ```getInspectorProperties``` method in the instance:
+
+```js
+  instance.getInspectorProperties = function(){ return { age: {widget: "slider"}, name: "string" } };
+```
+
+If you want to specify the order in which they are shown: 
+
+```js
+my_instance.constructor.properties_order = ["age","name"];
+```
+
+
+
 ## Sections, Groups and Containers ##
 
 Every widget is added to the current section, if you want to create new sections you can call the ```addSection``` method, then you can add later widgets to that section. Sections can be collapsed.

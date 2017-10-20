@@ -33,13 +33,13 @@ Or if you want to have more info then pass an object with the next properties:
 
 The available options for the context menu are (all are optional):
 
-- parentMenu: the previous ContextMenu in case you want to chain this menu with an existing one
-- title: text to show on top
-- callback: function to call once an option has been selected
-- ignore_item_callbacks: if true no item callbacks will be executed
-- event: the event of the mouse that triggered to show this menu, used to position the menu right below the mouse
-- left: pixels from left
-- top: pixels from top
+- **parentMenu**: the previous ContextMenu in case you want to chain this menu with an existing one
+- **title**: text to show on top
+- **callback**: function to call once an option has been selected
+- **ignore_item_callbacks**: if true no item callbacks will be executed
+- **event**: the event of the mouse that triggered to show this menu, used to position the menu right below the mouse
+- **left**: pixels from left
+- **top**: pixels from top
 
 ## Capturing the right mouse click ##
 

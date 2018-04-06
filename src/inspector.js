@@ -18,7 +18,7 @@
 	onchange: callback to call when something changes <br/>
    } <br/>
 
-	Dependencies: 
+	Dependencies:
 		- jscolor.js
 
 * @constructor
@@ -219,12 +219,12 @@ Inspector.prototype.getWidget = function( name )
 *
 * @method inspectInstance
 * @param {Object} instance the instance that you want to inspect, attributes will be collected from this object
-* @param {Array} properties an array with all the names of the properties you want to inspect, 
+* @param {Array} properties an array with all the names of the properties you want to inspect,
 *		  if not specified then it calls getProperties, othewise collect them and tries to guess the type
 * @param {Object} properties_info_example it overwrites the info about properties found in the object (in case the automaticaly guessed type is wrong)
 * @param {Array} properties_to_skip this properties will be ignored
 */
-Inspector.prototype.inspectInstance = function( instance, properties, properties_info_example, properties_to_skip ) 
+Inspector.prototype.inspectInstance = function( instance, properties, properties_info_example, properties_to_skip )
 {
 	if(!instance)
 		return;
@@ -251,7 +251,7 @@ Inspector.prototype.inspectInstance = function( instance, properties, properties
 		properties_info = instance.getInspectorProperties();
 	else
 	{
-		//add to properties_info the ones that are not specified 
+		//add to properties_info the ones that are not specified
 		for(var i in properties)
 		{
 			if( properties_info_example && properties_info_example[i] )
@@ -274,7 +274,7 @@ Inspector.prototype.inspectInstance = function( instance, properties, properties
 				properties_info[i] = instance["@" + i];
 			else if(v === null || v === undefined) //are you sure?
 				continue;
-			else 
+			else
 			{
 				switch( v.constructor )
 				{
@@ -290,7 +290,7 @@ Inspector.prototype.inspectInstance = function( instance, properties, properties
 								case 2: properties_info[i] = { type: is_number ? "vec2" : "Array", step: 0.1 }; break;
 								case 3: properties_info[i] = { type: is_number ? "vec3" : "Array", step: 0.1 }; break;
 								case 4: properties_info[i] = { type: is_number ? "vec4" : "Array", step: 0.1 }; break;
-								default: 
+								default:
 									properties_info[i] = { type: "Array" }; break;
 									continue;
 							}
@@ -347,7 +347,7 @@ Inspector.prototype.collectProperties = function( instance )
 * @param {Object} properties_info object containing   "property_name" :{ type: value, widget:..., min:..., max:... }  or just "property":"type"
 * @param {Array} properties_to_skip this properties will be ignored
 */
-Inspector.prototype.showProperties = function( instance, properties_info ) 
+Inspector.prototype.showProperties = function( instance, properties_info )
 {
 	//for every enumerable property create widget
 	for(var i in properties_info)
@@ -413,9 +413,9 @@ Inspector.assignValue = function(value)
 		instance[this.name] = parseFloat(value);
 	else if(typeof(current_value) == "string")
 		instance[this.name] = value;
-	else if( value && value.length && current_value && current_value.length && 
+	else if( value && value.length && current_value && current_value.length &&
 		( !Object.getOwnPropertyDescriptor( instance, this.name ) || !Object.getOwnPropertyDescriptor( instance, this.name ).set ) &&  //no setters
-		( !Object.getOwnPropertyDescriptor( instance.__proto__, this.name ) || !Object.getOwnPropertyDescriptor( instance.__proto__, this.name ).set ) ) 
+		( !Object.getOwnPropertyDescriptor( instance.__proto__, this.name ) || !Object.getOwnPropertyDescriptor( instance.__proto__, this.name ).set ) )
 	{
 		for(var i = 0; i < value.length; ++i)
 			current_value[i] = value[i];
@@ -437,7 +437,7 @@ Inspector.assignValue = function(value)
 * - pre_title: string to append to the left side of the name, this is helpful if you want to add icons with behaviour when clicked
 * - title: string to replace the name, sometimes you want to supply a different name than the one you want to show (this is helpful to retrieve values from an inspector)
 */
-Inspector.prototype.createWidget = function( name, content, options ) 
+Inspector.prototype.createWidget = function( name, content, options )
 {
 	options = options || {};
 	content = (content === undefined || content === null) ? "" : content;
@@ -446,7 +446,7 @@ Inspector.prototype.createWidget = function( name, content, options )
 	element.inspector = this;
 	element.options = options;
 	element.name = name;
-	
+
 	this.row_number += this.widgets_per_row;
 	if(this.row_number % 2 == 0)
 		element.className += " even";
@@ -468,7 +468,7 @@ Inspector.prototype.createWidget = function( name, content, options )
 		element.style.minHeight = "auto";
 	}
 
-	//store widgets 
+	//store widgets
 	this.widgets.push( element );
 	if(options.widget_name || name)
 		this.widgets_by_name[ options.widget_name || name ] = element;
@@ -485,7 +485,7 @@ Inspector.prototype.createWidget = function( name, content, options )
 	if( (name !== undefined && name !== null) && (this.name_width || options.name_width) && !this.one_line)
 	{
 		var w = LiteGUI.sizeToCSS( options.name_width || this.name_width );
-		namewidth = "style='width: calc(" + w + " - 0px); width: -webkit-calc(" + w + " - 0px); width: -moz-calc(" + w + " - 0px); '"; //hack 
+		namewidth = "style='width: calc(" + w + " - 0px); width: -webkit-calc(" + w + " - 0px); width: -moz-calc(" + w + " - 0px); '"; //hack
 		contentwidth = "style='width: calc( 100% - " + w + "); width: -webkit-calc(100% - " + w + "); width: -moz-calc( 100% - " + w + "); '";
 	}
 
@@ -507,7 +507,7 @@ Inspector.prototype.createWidget = function( name, content, options )
 		title = options.title;
 	if( name === null || name === undefined )
 		content_class += " full";
-	else if(name === "") //three equals because 0 == "" 
+	else if(name === "") //three equals because 0 == ""
 		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle +"</span>";
 	else
 		code += "<span class='wname' title='"+title+"' "+namewidth+">"+ pretitle + name + filling + "</span>";
@@ -523,8 +523,8 @@ Inspector.prototype.createWidget = function( name, content, options )
 	}
 
 	element.content = element.querySelector("span.info_content");
-	element.remove = function() { 
-		if( this.parentNode ) 
+	element.remove = function() {
+		if( this.parentNode )
 			this.parentNode.removeChild( this );
 	};
 
@@ -565,7 +565,7 @@ Inspector.onWidgetChange = function( element, name, value, options, expand_value
 		//$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
 	}
 
-	if(this.onchange) 
+	if(this.onchange)
 		this.onchange(name, value, element);
 	return r;
 }
@@ -582,7 +582,7 @@ Inspector.widget_constructors = {
 	text: 'addString',
 	textarea: 'addTextarea',
 	color: 'addColor',
-	"boolean": 'addCheckbox', 
+	"boolean": 'addCheckbox',
 	checkbox: 'addCheckbox',
 	icon: 'addIcon',
 	vec2: 'addVector2',
@@ -656,7 +656,7 @@ Inspector.prototype.add = function( type, name, value, options )
 
 	if( options && options.constructor === Function )
 		options = { callback: options };
-	
+
 	return func.call( this, name,value, options );
 }
 
@@ -726,11 +726,11 @@ Inspector.prototype.addDefault = function( name, value, options)
 /**
 * Widget to edit strings
 * @method addString
-* @param {string} name 
+* @param {string} name
 * @param {string} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - focus: true if you want the cursor to be here
-* - password: true if you want to hide the string 
+* - password: true if you want to hide the string
 * - immediate: calls the callback once every keystroke
 * - disabled: shows the widget disabled
 * - callback: function to call when the widget changes
@@ -745,7 +745,7 @@ Inspector.prototype.addString = function(name,value, options)
 	this.values[name] = value;
 
 	var inputtype = "text";
-	if(options.password) 
+	if(options.password)
 		inputtype = "password";
 	var focus = options.focus ? "autofocus" : "";
 
@@ -761,14 +761,14 @@ Inspector.prototype.addString = function(name,value, options)
 		//input.style.textAlign = "right";
 	}
 
-	input.addEventListener( options.immediate ? "keyup" : "change", function(e) { 
+	input.addEventListener( options.immediate ? "keyup" : "change", function(e) {
 		var r = Inspector.onWidgetChange.call(that, element, name, e.target.value, options);
 		if(r !== undefined)
 			this.value = r;
 	});
 
 	if(options.callback_enter)
-		input.addEventListener( "keydown" , function(e) { 
+		input.addEventListener( "keydown" , function(e) {
 			if(e.keyCode == 13)
 			{
 				var r = Inspector.onWidgetChange.call(that, element, name, e.target.value, options);
@@ -795,12 +795,12 @@ Inspector.prototype.addString = function(name,value, options)
 	if(options.icon)
 		element.setIcon( options.icon );
 
-	element.setValue = function(v, skip_event) { 
+	element.setValue = function(v, skip_event) {
 		if(v === undefined )
 			return;
 		if(v === input.value)
 			return;
-		input.value = v; 
+		input.value = v;
 		if(!skip_event)
 			LiteGUI.trigger(input, "change" );
 	};
@@ -815,7 +815,7 @@ Inspector.prototype.addString = function(name,value, options)
 /**
 * Widget to edit strings, but it adds a button behind (useful to search values somewhere in case the user do not remember the name)
 * @method addStringButton
-* @param {string} name 
+* @param {string} name
 * @param {string} value the string to show
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - disabled: shows the widget disabled
@@ -832,10 +832,10 @@ Inspector.prototype.addStringButton = function( name, value, options)
 		value = "";
 	var that = this;
 	this.values[name] = value;
-	
+
 	var element = this.createWidget( name, "<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
 	var input = element.querySelector(".wcontent input");
-	input.addEventListener("change", function(e) { 
+	input.addEventListener("change", function(e) {
 		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 		if(r !== undefined)
 			this.value = r;
@@ -858,7 +858,7 @@ Inspector.prototype.addStringButton = function( name, value, options)
 		element.setIcon( options.icon );
 
 	var button = element.querySelector(".wcontent button");
-	button.addEventListener("click", function(e) { 
+	button.addEventListener("click", function(e) {
 		if(options.callback_button)
 			options.callback_button.call( element, input.value, e );
 	});
@@ -875,7 +875,7 @@ Inspector.prototype.addStringButton = function( name, value, options)
 	this.append(element,options);
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	element.wclick = function(callback) { $(this).wclick(callback); }
-	element.setValue = function(v, skip_event) { 
+	element.setValue = function(v, skip_event) {
 		input.value = v;
 		if(!skip_event)
 			LiteGUI.trigger(input, "change" );
@@ -889,11 +889,11 @@ Inspector.prototype.addStringButton = function( name, value, options)
 /**
 * Widget to edit strings with multiline support
 * @method addTextarea
-* @param {string} name 
+* @param {string} name
 * @param {string} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - focus: true if you want the cursor to be here
-* - password: true if you want to hide the string 
+* - password: true if you want to hide the string
 * - immediate: calls the callback once every keystroke
 * - disabled: shows the widget disabled
 * - callback: function to call when the widget changes
@@ -911,7 +911,7 @@ Inspector.prototype.addTextarea = function(name,value, options)
 	this.tab_index++;
 	var textarea = element.querySelector(".wcontent textarea");
 	textarea.value = value;
-	textarea.addEventListener( options.immediate ? "keyup" : "change", function(e) { 
+	textarea.addEventListener( options.immediate ? "keyup" : "change", function(e) {
 		Inspector.onWidgetChange.call(that,element,name,e.target.value, options, false, e);
 	});
 	if(options.callback_keydown)
@@ -921,7 +921,7 @@ Inspector.prototype.addTextarea = function(name,value, options)
 		textarea.style.height = "calc( " + LiteGUI.sizeToCSS( options.height ) + " - 5px )";
 		//textarea.style.height = LiteGUI.sizeToCSS( options.height );
 	this.append(element,options);
-	element.setValue = function(v, skip_event) { 
+	element.setValue = function(v, skip_event) {
 		if(v === undefined)
 			return;
 		if(v == textarea.value)
@@ -931,7 +931,7 @@ Inspector.prototype.addTextarea = function(name,value, options)
 		if(!skip_event)
 			LiteGUI.trigger( textarea,"change" );
 	};
-	element.getValue = function(v) { 
+	element.getValue = function(v) {
 		return textarea.value;
 	}
 	element.focus = function() { LiteGUI.focus(textarea); };
@@ -942,8 +942,8 @@ Inspector.prototype.addTextarea = function(name,value, options)
 /**
 * Widget to edit numbers (it adds a dragging mini widget in the right side)
 * @method addNumber
-* @param {string} name 
-* @param {number} value 
+* @param {string} name
+* @param {number} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - disabled: shows the widget disabled
 * - callback: function to call when the string is edited
@@ -973,9 +973,9 @@ Inspector.prototype.addNumber = function(name, value, options)
 	options.step = options.step === undefined ? (options.precision == 0 ? 1 : 0.1) : options.step;
 
 	this.tab_index++;
-	
+
 	var dragger = null;
-	
+
 	dragger = new LiteGUI.Dragger(value, options);
 	dragger.root.style.width = "calc( 100% - 1px )";
 	element.querySelector(".wcontent").appendChild( dragger.root );
@@ -987,13 +987,13 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 	function inner_before_change(e)
 	{
-		if(this.callback_before) 
+		if(this.callback_before)
 			this.callback_before.call(element);
 	}
 
 	var input = element.querySelector("input");
-	
-	input.addEventListener("change", function(e) { 
+
+	input.addEventListener("change", function(e) {
 
 		LiteGUI.trigger( element, "wbeforechange", e.target.value );
 
@@ -1002,7 +1002,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 
 		if(options.callback)
 		{
-			var ret = options.callback.call( element, parseFloat( e.target.value) ); 
+			var ret = options.callback.call( element, parseFloat( e.target.value) );
 			if( typeof(ret) == "number")
 				this.value = ret;
 		}
@@ -1011,7 +1011,7 @@ Inspector.prototype.addNumber = function(name, value, options)
 			that.onchange(name,e.target.value,element);
 	});
 
-	element.setValue = function( v, skip_event) { 
+	element.setValue = function( v, skip_event) {
 		if(v === undefined)
 			return;
 		v = parseFloat(v);
@@ -1035,8 +1035,8 @@ Inspector.prototype.addNumber = function(name, value, options)
 /**
 * Widget to edit two numbers (it adds a dragging mini widget in the right side)
 * @method addVector2
-* @param {string} name 
-* @param {vec2} value 
+* @param {string} name
+* @param {vec2} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - callback: function to call once the value changes
 * - disabled: shows the widget disabled
@@ -1057,7 +1057,7 @@ Inspector.prototype.addVector2 = function(name,value, options)
 	value = value || [0,0];
 	var that = this;
 	this.values[name] = value;
-	
+
 	var element = this.createWidget(name,"", options);
 
 	options.step = options.step ||0.1;
@@ -1091,7 +1091,7 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 	var inputs = element.querySelectorAll("input");
 	for(var i = 0; i < inputs.length; ++i)
-		inputs[i].addEventListener( "change" , function(e) { 
+		inputs[i].addEventListener( "change" , function(e) {
 
 		//gather all three parameters
 		var r = [];
@@ -1105,8 +1105,8 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 		if(options.callback)
 		{
-			var new_val = options.callback.call( element, r ); 
-			
+			var new_val = options.callback.call( element, r );
+
 			if(typeof(new_val) == "object" && new_val.length >= 2)
 			{
 				for(var i = 0; i < elems.length; i++)
@@ -1122,7 +1122,7 @@ Inspector.prototype.addVector2 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function( v, skip_event) { 
+	element.setValue = function( v, skip_event) {
 		if(!v)
 			return;
 		if(dragger1.getValue() != v[0])
@@ -1138,8 +1138,8 @@ Inspector.prototype.addVector2 = function(name,value, options)
 /**
 * Widget to edit two numbers (it adds a dragging mini widget in the right side)
 * @method addVector3
-* @param {string} name 
-* @param {vec3} value 
+* @param {string} name
+* @param {vec3} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - callback: function to call once the value changes
 * - disabled: shows the widget disabled
@@ -1160,7 +1160,7 @@ Inspector.prototype.addVector3 = function(name,value, options)
 	value = value || [0,0,0];
 	var that = this;
 	this.values[name] = value;
-	
+
 	var element = this.createWidget(name,"", options);
 
 	options.step = options.step || 0.1;
@@ -1200,7 +1200,7 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 	var inputs = element.querySelectorAll("input");
 	for(var i = 0; i < inputs.length; ++i)
-		inputs[i].addEventListener("change", function(e) { 
+		inputs[i].addEventListener("change", function(e) {
 		//gather all three parameters
 		var r = [];
 		var elems = inputs;
@@ -1213,8 +1213,8 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 		if(options.callback)
 		{
-			var new_val = options.callback.call( element,r ); 
-			
+			var new_val = options.callback.call( element,r );
+
 			if(typeof(new_val) == "object" && new_val.length >= 3)
 			{
 				for(var i = 0; i < elems.length; i++)
@@ -1230,7 +1230,7 @@ Inspector.prototype.addVector3 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function( v, skip_event ) { 
+	element.setValue = function( v, skip_event ) {
 		if(!v)
 			return;
 		dragger1.setValue(v[0],true);
@@ -1246,8 +1246,8 @@ Inspector.prototype.addVector3 = function(name,value, options)
 /**
 * Widget to edit two numbers (it adds a dragging mini widget in the right side)
 * @method addVector4
-* @param {string} name 
-* @param {vec4} value 
+* @param {string} name
+* @param {vec4} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - callback: function to call once the value changes
 * - disabled: shows the widget disabled
@@ -1268,7 +1268,7 @@ Inspector.prototype.addVector4 = function(name,value, options)
 	value = value || [0,0,0];
 	var that = this;
 	this.values[name] = value;
-	
+
 	var element = this.createWidget( name,"", options );
 
 	options.step = options.step || 0.1;
@@ -1299,7 +1299,7 @@ Inspector.prototype.addVector4 = function(name,value, options)
 
 	var inputs = element.querySelectorAll("input");
 	for(var i = 0; i < inputs.length; ++i)
-		inputs[i].addEventListener("change", function(e) { 
+		inputs[i].addEventListener("change", function(e) {
 		//gather all parameters
 		var r = [];
 		var elems = inputs;
@@ -1312,7 +1312,7 @@ Inspector.prototype.addVector4 = function(name,value, options)
 
 		if(options.callback)
 		{
-			var new_val = options.callback.call( element, r ); 
+			var new_val = options.callback.call( element, r );
 			if(typeof(new_val) == "object" && new_val.length >= 4)
 			{
 				for(var i = 0; i < elems.length; i++)
@@ -1328,7 +1328,7 @@ Inspector.prototype.addVector4 = function(name,value, options)
 
 	this.append(element,options);
 
-	element.setValue = function( v, skip_event ) { 
+	element.setValue = function( v, skip_event ) {
 		if(!v)
 			return;
 		for(var i = 0; i < draggers.length; i++)
@@ -1343,8 +1343,8 @@ Inspector.prototype.addVector4 = function(name,value, options)
 /**
 * Widget to edit two numbers using a rectangular pad where you can drag horizontaly and verticaly a handler
 * @method addPad
-* @param {string} name 
-* @param {vec2} value 
+* @param {string} name
+* @param {vec2} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - callback: function to call once the value changes
 * - disabled: shows the widget disabled
@@ -1370,7 +1370,7 @@ Inspector.prototype.addPad = function(name,value, options)
 	value = value || [0,0];
 	var that = this;
 	this.values[name] = value;
-	
+
 	var element = this.createWidget(name,"", options);
 
 	options.step = options.step ||0.1;
@@ -1437,14 +1437,14 @@ Inspector.prototype.addPad = function(name,value, options)
 
 			if(options.callback)
 			{
-				var new_val = options.callback.call( element, r ); 
+				var new_val = options.callback.call( element, r );
 				if( new_val && new_val.length >= 2)
 				{
 					for(var i = 0; i < elems.length; i++)
 						element.setValue( new_val );
 				}
 			}
-			
+
 			LiteGUI.trigger( element, "wchange",[r]);
 			if(that.onchange)
 				that.onchange(name,r,element);
@@ -1494,7 +1494,7 @@ Inspector.prototype.addPad = function(name,value, options)
 /**
 * Widget to show plain information in HTML (not interactive)
 * @method addInfo
-* @param {string} name 
+* @param {string} name
 * @param {string} value HTML code
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - className: to specify a classname of the content
@@ -1525,7 +1525,7 @@ Inspector.prototype.addInfo = function( name, value, options)
 
 	var info = element.querySelector(".winfo") || element.querySelector(".wcontent");
 
-	element.setValue = function(v) { 
+	element.setValue = function(v) {
 		if(v === undefined)
 			return;
 		if(info)
@@ -1559,8 +1559,8 @@ Inspector.prototype.addInfo = function( name, value, options)
 /**
 * Widget to edit a number using a slider
 * @method addSlider
-* @param {string} name 
-* @param {number} value 
+* @param {string} name
+* @param {number} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - min: min value
 * - max: max value
@@ -1614,13 +1614,13 @@ Inspector.prototype.addSlider = function(name, value, options)
 
 	this.append(element,options);
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v,skip_event) {
 		if(v === undefined)
 			return;
 		value = v;
 		slider.setValue(v,skip_event);
 	};
-	element.getValue = function() { 
+	element.getValue = function() {
 		return value;
 	};
 
@@ -1631,8 +1631,8 @@ Inspector.prototype.addSlider = function(name, value, options)
 /**
 * Widget to edit a boolean value using a checkbox
 * @method addCheckbox
-* @param {string} name 
-* @param {boolean} value 
+* @param {string} name
+* @param {boolean} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - label: text to show, otherwise it shows on/off
 * - label_on: text to show when on
@@ -1651,13 +1651,13 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 	var label_on = options.label_on || options.label || "on";
 	var label_off = options.label_off || options.label || "off";
 	var label = (value ? label_on : label_off);
-	
+
 	//var element = this.createWidget(name,"<span class='inputfield'><span class='fixed flag'>"+(value ? "on" : "off")+"</span><span tabIndex='"+this.tab_index+"'class='checkbox "+(value?"on":"")+"'></span></span>", options );
 	var element = this.createWidget(name,"<span class='inputfield'><span tabIndex='"+this.tab_index+"' class='fixed flag checkbox "+(value ? "on" : "off")+"'>"+label+"</span></span>", options );
 	this.tab_index++;
 
 	var checkbox = element.querySelector(".wcontent .checkbox");
-	checkbox.addEventListener("keypress", function(e) { 
+	checkbox.addEventListener("keypress", function(e) {
 		if(e.keyCode == 32)
 			LiteGUI.trigger(this, "click");
 	});
@@ -1672,14 +1672,14 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 			checkbox.classList.remove("on");
 		Inspector.onWidgetChange.call(that,element,name,v, options);
 	});
-	
+
 	element.data = value;
 
-	element.setValue = function(v,skip_event) { 
+	element.setValue = function(v,skip_event) {
 		if(v === undefined)
 			return;
 		if(	that.values[name] != v && !skip_event)
-			LiteGUI.trigger( checkbox, "click" ); 
+			LiteGUI.trigger( checkbox, "click" );
 	};
 
 	this.append(element,options);
@@ -1690,7 +1690,7 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 /**
 * Widget to edit a set of boolean values using checkboxes
 * @method addFlags
-* @param {Object} value object that contains all the booleans 
+* @param {Object} value object that contains all the booleans
 * @param {Object} optional object with extra flags to insert
 * @return {HTMLElement} the widget in the form of the DOM element that contains it
 **/
@@ -1711,7 +1711,7 @@ Inspector.prototype.addFlags = function(flags, force_flags, options)
 			flag_options[j] = options[j];
 
 		flag_options.callback = (function(j) {
-				return function(v) { 
+				return function(v) {
 					flags[j] = v;
 				}
 			})(i);
@@ -1723,8 +1723,8 @@ Inspector.prototype.addFlags = function(flags, force_flags, options)
 /**
 * Widget to edit an enumeration using a combobox
 * @method addCombo
-* @param {string} name 
-* @param {*} value 
+* @param {string} name
+* @param {*} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - values: a list with all the possible values, it could be an array, or an object, in case of an object, the key is the string to show, the value is the value to assign
 * - disabled: true to disable
@@ -1738,7 +1738,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 	//value = value || "";
 	var that = this;
 	this.values[name] = value;
-	
+
 	this.tab_index++;
 
 	var element = this.createWidget(name,"<span class='inputfield full inputcombo "+(options.disabled?"disabled":"")+"'></span>", options);
@@ -1768,11 +1768,11 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var code = "<select tabIndex='"+this.tab_index+"' "+(options.disabled?"disabled":"")+" class='"+(options.disabled?"disabled":"")+"'></select>";
 	element.querySelector("span.inputcombo").innerHTML = code;
 	setValues(values);
-	
+
 	var stop_event = false; //used internally
 
 	var select = element.querySelector(".wcontent select");
-	select.addEventListener("change", function(e) { 
+	select.addEventListener("change", function(e) {
 		var index = e.target.value;
 		var value = values[index];
 		if(stop_event)
@@ -1780,7 +1780,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 		Inspector.onWidgetChange.call( that,element,name,value, options );
 	});
 
-	element.setValue = function(v, skip_event) { 
+	element.setValue = function(v, skip_event) {
 		if(v === undefined)
 			return;
 		value = v;
@@ -1807,7 +1807,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 
 		if(index == -1)
 			return;
-			
+
 		stop_event = skip_event;
 
 		for(var i in items)
@@ -1823,7 +1823,7 @@ Inspector.prototype.addCombo = function(name, value, options)
 			else
 				item.removeAttribute("selected");
 		}
-		
+
 		stop_event = false;
 	};
 
@@ -1862,7 +1862,7 @@ Inspector.prototype.addComboButtons = function(name, value, options)
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
-	
+
 	var code = "";
 	if(options.values)
 		for(var i in options.values)
@@ -1870,7 +1870,7 @@ Inspector.prototype.addComboButtons = function(name, value, options)
 
 	var element = this.createWidget(name,code, options);
 	var buttons = element.querySelectorAll( ".wcontent button" );
-	LiteGUI.bind( buttons, "click", function(e) { 
+	LiteGUI.bind( buttons, "click", function(e) {
 
 		var buttonname = e.target.innerHTML;
 		that.values[name] = buttonname;
@@ -1895,7 +1895,7 @@ Inspector.prototype.addTags = function(name, value, options)
 	value = value || [];
 	var that = this;
 	this.values[name] = value;
-	
+
 	var code = "<select>";
 	if(options.values)
 		for(var i in options.values)
@@ -1912,7 +1912,7 @@ Inspector.prototype.addTags = function(name, value, options)
 
 	//combo change
 	var select_element = element.querySelector(".wcontent select");
-	select_element.addEventListener("change", function(e) { 
+	select_element.addEventListener("change", function(e) {
 		inner_addtag(e.target.value);
 	});
 
@@ -1942,7 +1942,7 @@ Inspector.prototype.addTags = function(name, value, options)
 
 		that.values[name] = element.tags;
 		if(options.callback)
-			options.callback.call( element, element.tags ); 
+			options.callback.call( element, element.tags );
 		LiteGUI.trigger( element, "wchange", element.tags);
 		LiteGUI.trigger( element, "wadded", tagname);
 		if(that.onchange)
@@ -1957,7 +1957,7 @@ Inspector.prototype.addTags = function(name, value, options)
 /**
 * Widget to select from a list of items
 * @method addList
-* @param {string} name 
+* @param {string} name
 * @param {*} value [Array or Object]
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - multiselection: allow multiple selection
@@ -1970,7 +1970,7 @@ Inspector.prototype.addList = function(name, values, options)
 	options = this.processOptions(options);
 
 	var that = this;
-	
+
 	var list_height = "";
 	if(options.height)
 		list_height = "style='height: 100%; overflow: auto;'";
@@ -1992,7 +1992,7 @@ Inspector.prototype.addList = function(name, values, options)
 	for(var i = 0; i < ul_elements.length; ++i)
 	{
 		var ul = ul_elements[i];
-		ul.addEventListener("focus",function() { 
+		ul.addEventListener("focus",function() {
 			document.addEventListener("keydown",inner_key,true);
 		});
 		ul.addEventListener("blur",function() {
@@ -2026,7 +2026,7 @@ Inspector.prototype.addList = function(name, values, options)
 		return true;
 	}
 
-	function inner_item_click(e) { 
+	function inner_item_click(e) {
 
 		if(options.multiselection)
 			this.classList.toggle("selected");
@@ -2045,7 +2045,7 @@ Inspector.prototype.addList = function(name, values, options)
 		LiteGUI.trigger(element, "wadded", value );
 	}
 
-	function inner_item_dblclick(e) { 
+	function inner_item_dblclick(e) {
 		var value = values[ this.dataset["pos"] ];
 		if(options.callback_dblclick)
 			options.callback_dblclick.call(that,value);
@@ -2074,7 +2074,7 @@ Inspector.prototype.addList = function(name, values, options)
 				var icon = "";
 				if( value === null || value === undefined )
 				{
-				
+
 				}
 				else if( value.constructor === String || value.constructor === Number || value.constructor === Boolean )
 				{
@@ -2231,7 +2231,7 @@ Inspector.prototype.addList = function(name, values, options)
 		}
 	}
 
-	if(options.height) 
+	if(options.height)
 		element.scrollTop = 0;
 	this.processElement(element, options);
 	return element;
@@ -2255,7 +2255,7 @@ Inspector.prototype.addButton = function(name, value, options)
 		attrs = "disabled='disabled'";
 
 	var title = options.title || "";
-	
+
 	var element = this.createWidget(name,"<button title='"+title+"' class='litebutton "+button_classname+"' tabIndex='"+ this.tab_index + "' "+attrs+">"+value+"</button>", options);
 	this.tab_index++;
 	var button = element.querySelector("button");
@@ -2265,9 +2265,9 @@ Inspector.prototype.addButton = function(name, value, options)
 	});
 	this.append(element,options);
 
-	element.wclick = function(callback) { 
+	element.wclick = function(callback) {
 		if(!options.disabled)
-			LiteGUI.bind(this, "wclick", callback ); 
+			LiteGUI.bind(this, "wclick", callback );
 	}
 
 	element.setValue = function(v)
@@ -2366,7 +2366,7 @@ Inspector.prototype.addIcon = function(name, value, options)
 	});
 	this.append(element,options);
 
-	element.setValue = function(v, skip_event ) { 
+	element.setValue = function(v, skip_event ) {
 		if(v === undefined)
 			return;
 		value = v;
@@ -2387,7 +2387,7 @@ Inspector.prototype.addColor = function( name, value, options )
 	value = value || [0.0,0.0,0.0];
 	var that = this;
 	this.values[name] = value;
-	
+
 	var code = "<input tabIndex='"+this.tab_index+"' id='colorpicker-"+name+"' class='color' value='"+(value[0]+","+value[1]+","+value[2])+"' "+(options.disabled?"disabled":"")+"/>";
 	this.tab_index++;
 
@@ -2396,7 +2396,7 @@ Inspector.prototype.addColor = function( name, value, options )
 	var element = this.createWidget(name,code, options);
 	this.append(element,options); //add now or jscolor dont work
 
-	//create jsColor 
+	//create jsColor
 	var input_element = element.querySelector("input.color");
 	var myColor = null;
 
@@ -2406,19 +2406,19 @@ Inspector.prototype.addColor = function( name, value, options )
 		//SHOWS CONTEXTUAL MENU
 		//block focusing
 		/*
-		input_element.addEventListener("contextmenu", function(e) { 
+		input_element.addEventListener("contextmenu", function(e) {
 			if(e.button != 2) //right button
 				return false;
 			//create the context menu
 			var contextmenu = new LiteGUI.ContextMenu( ["Copy in HEX","Copy in RGBA"], { event: e, callback: inner_action });
-			e.preventDefault(); 
+			e.preventDefault();
 			e.stopPropagation();
 
 			input_element.addEventListener("focus", block_focus , true);
 			setTimeout(function(){ input_element.removeEventListener("focus", block_focus , true);},1000);
 
 			return false;
-		},true);	
+		},true);
 
 		function block_focus(e)
 		{
@@ -2447,7 +2447,7 @@ Inspector.prototype.addColor = function( name, value, options )
 		myColor.pickerInsetColor = "#222";
 		myColor.rgb_intensity = 1.0;
 
-		if(options.disabled) 
+		if(options.disabled)
 			myColor.pickerOnfocus = false; //this doesnt work
 
 		if( value.constructor !== String && value.length && value.length > 2)
@@ -2458,13 +2458,13 @@ Inspector.prototype.addColor = function( name, value, options )
 		}
 
 		//update values in rgb format
-		input_element.addEventListener("change", function(e) { 
+		input_element.addEventListener("change", function(e) {
 			var rgbelement = element.querySelector(".rgb-color");
 			if(rgbelement)
 				rgbelement.innerHTML = LiteGUI.Inspector.parseColor(myColor.rgb);
 		});
 
-		myColor.onImmediateChange = function() 
+		myColor.onImmediateChange = function()
 		{
 			var v = [ myColor.rgb[0] * myColor.rgb_intensity, myColor.rgb[1] * myColor.rgb_intensity, myColor.rgb[2] * myColor.rgb_intensity ];
 			//Inspector.onWidgetChange.call(that,element,name,v, options);
@@ -2491,15 +2491,15 @@ Inspector.prototype.addColor = function( name, value, options )
 				myColor.onImmediateChange();
 		});
 
-		element.setValue = function(value,skip_event) { 
+		element.setValue = function(value,skip_event) {
 			myColor.fromRGB(value[0],value[1],value[2]);
 			if(!skip_event)
-				LiteGUI.trigger( dragger.input, "change" ); 
+				LiteGUI.trigger( dragger.input, "change" );
 		};
 	}
 	else
 	{
-		input_element.addEventListener("change", function(e) { 
+		input_element.addEventListener("change", function(e) {
 			var rgbelement = element.querySelector(".rgb-color");
 			if(rgbelement)
 				rgbelement.innerHTML = LiteGUI.Inspector.parseColor(myColor.rgb);
@@ -2517,13 +2517,13 @@ Inspector.prototype.addFile = function(name, value, options)
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
-	
+
 	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'>"+value+"</span></span><button class='litebutton' style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
 	var content = element.querySelector(".wcontent");
 	content.style.position = "relative";
 	var input = element.querySelector(".wcontent input");
 	var filename_element = element.querySelector(".wcontent .filename");
-	input.addEventListener("change", function(e) { 
+	input.addEventListener("change", function(e) {
 		if(!e.target.files.length)
 		{
 			//nothing
@@ -2569,13 +2569,13 @@ Inspector.prototype.addLine = function(name, value, options)
 	value = value || "";
 	var that = this;
 	this.values[name] = value;
-	
+
 	var element = this.createWidget(name,"<span class='line-editor'></span>", options);
 
 	var line_editor = new LiteGUI.LineEditor(value,options);
 	element.querySelector("span.line-editor").appendChild(line_editor);
 
-	LiteGUI.bind( line_editor, "change", function(e) { 
+	LiteGUI.bind( line_editor, "change", function(e) {
 		LiteGUI.trigger(element, "wbeforechange",[e.target.value]);
 		if(options.callback)
 			options.callback.call( element,e.target.value );
@@ -2593,7 +2593,7 @@ Inspector.prototype.addTree = function(name, value, options)
 
 	value = value || "";
 	var element = this.createWidget(name,"<div class='wtree inputfield full'></div>", options);
-	
+
 	var tree_root = element.querySelector(".wtree");
 	if(options.height)
 	{
@@ -2603,7 +2603,7 @@ Inspector.prototype.addTree = function(name, value, options)
 
 	var current = value;
 
-	var tree = element.tree = new LiteGUI.Tree( value, options.tree_options );
+	var tree = element.tree = new LiteGUI.Tree( value, options );
 	tree.onItemSelected = function(node, data) {
 		if(options.callback)
 			options.callback.call( element, node, data);
@@ -2611,7 +2611,7 @@ Inspector.prototype.addTree = function(name, value, options)
 
 	tree_root.appendChild(tree.root);
 
-	element.setValue = function(v) { 
+	element.setValue = function(v) {
 		tree.updateTree(v);
 	};
 
@@ -2626,7 +2626,7 @@ Inspector.prototype.addDataTree = function(name, value, options)
 
 	value = value || "";
 	var element = this.createWidget(name,"<div class='wtree'></div>", options);
-	
+
 	var node = element.querySelector(".wtree");
 	var current = value;
 
@@ -2656,8 +2656,8 @@ Inspector.prototype.addDataTree = function(name, value, options)
 /**
 * Widget to edit an array of values of a certain type
 * @method addArray
-* @param {string} name 
-* @param {Array} value 
+* @param {string} name
+* @param {Array} value
 * @param {Object} options, here is a list for this widget (check createWidget for a list of generic options):
 * - data_type: the type of every value inside the array
 * - data_options: options for the widgets of every item in the array
@@ -2684,7 +2684,7 @@ Inspector.prototype.addArray = function( name, value, options )
 	//length widget
 	this.widgets_per_row = 3;
 	this.addInfo(name,null,{ name_width: "100%", width: "100% - 160px"});
-	var length_widget = this.addString( "length", value.length || "0", { width: 100, callback: function(v){ 
+	var length_widget = this.addString( "length", value.length || "0", { width: 100, callback: function(v){
 		var v = parseInt(v);
 		if(value < 0)
 			value = 0;
@@ -2819,7 +2819,7 @@ Inspector.prototype.addSection = function( name, options )
 
 	var element = document.createElement("DIV");
 	element.className = "wsection";
-	if(!name) 
+	if(!name)
 		element.className += " notitle";
 	if(options.className)
 		element.className += " " + options.className;
@@ -2847,7 +2847,7 @@ Inspector.prototype.addSection = function( name, options )
 
 	if(name)
 		element.sectiontitle.addEventListener("click",function(e) {
-			if(e.target.localName == "button") 
+			if(e.target.localName == "button")
 				return;
 			element.classList.toggle("collapsed");
 			var seccont = element.querySelector(".wsectioncontent");
@@ -2921,7 +2921,7 @@ Inspector.prototype.endCurrentSection = function()
 		this.current_section.end();
 }
 
-//A container of widgets with a title 
+//A container of widgets with a title
 Inspector.prototype.beginGroup = function( name, options )
 {
 	options = this.processOptions(options);
@@ -2942,7 +2942,7 @@ Inspector.prototype.beginGroup = function( name, options )
 	var header = element.querySelector(".wgroupheader");
 	if(collapsed)
 		header.classList.add("collapsed");
-	header.addEventListener("click", function(e) { 
+	header.addEventListener("click", function(e) {
 		var style = element.querySelector(".wgroupcontent").style;
 		style.display = style.display === "none" ? "" : "none";
 		collapsed = !collapsed;
@@ -2971,7 +2971,7 @@ Inspector.prototype.endGroup = function()
 /**
 * Creates a title bar in the widgets list to help separate widgets
 * @method addTitle
-* @param {string} title 
+* @param {string} title
 * @param {Object} options
 * @return {HTMLElement} the widget in the form of the DOM element that contains it
 **/
@@ -2987,7 +2987,7 @@ Inspector.prototype.addTitle = function(title,options)
 	}
 	code += "</span>";
 	element.innerHTML = code;
-	element.setValue = function(v) { 
+	element.setValue = function(v) {
 		this.querySelector(".text").innerHTML = v;
 	};
 	this.row_number = 0;
@@ -3056,7 +3056,7 @@ Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)
 
 		var files = evt.dataTransfer.files;
 		var count = files.length;
-		
+
 		var file = files[0];
 		if(file == null) return;
 

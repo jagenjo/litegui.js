@@ -704,6 +704,17 @@ var LiteGUI = {
 		return elem;
 	},
 
+	getParents: function(element)
+	{
+		var elements = [];
+		while ((element = element.parentElement) !== null) {
+			if (element.nodeType !== Node.ELEMENT_NODE)
+				continue;
+			elements.push(elem);
+		}
+		return elements;
+	},
+
 	//used to create a window that retains all the CSS info or the scripts.
 	newWindow: function(title, width, height, options)
 	{
@@ -826,6 +837,7 @@ var LiteGUI = {
 		var buttons = dialog.content.querySelectorAll("button");
 		for(var i = 0; i < buttons.length; i++)
 			buttons[i].addEventListener("click", inner);
+		buttons[0].focus();
 
 		function inner(v) {
 			var v = this.dataset["value"] == "yes";
@@ -1734,7 +1746,7 @@ function ContextMenu( values, options )
 		}
 	}
 
-	if(options.event && options.event.constructor !== MouseEvent && options.event.constructor !== CustomEvent)
+	if( options.event && options.event.constructor.name !== "MouseEvent" && options.event.constructor.name !== "CustomEvent" )
 	{
 		console.error("Event passed to ContextMenu is not of type MouseEvent or CustomEvent. Ignoring it.");
 		options.event = null;
@@ -1794,8 +1806,28 @@ function ContextMenu( values, options )
 	root.addEventListener("mouseleave", function(e) {
 		if(that.lock)
 			return;
-		that.close(e);
+		if(root.closing_timer)
+			clearTimeout( root.closing_timer );
+		root.closing_timer = setTimeout( that.close.bind(that, e), 500 );
+		//that.close(e);
 	});
+
+	root.addEventListener("mouseenter", function(e) {
+		if(root.closing_timer)
+			clearTimeout( root.closing_timer );
+	});
+
+	function on_mouse_wheel(e)
+	{
+		var pos = parseInt( root.style.top );
+		root.style.top = (pos + e.deltaY * 0.1).toFixed() + "px";
+		e.preventDefault();
+		return true;
+	}
+
+	root.addEventListener("wheel", on_mouse_wheel, true);
+	root.addEventListener("mousewheel", on_mouse_wheel, true);
+
 
 	//insert before checking position
 	var root_document = document;
@@ -1811,7 +1843,7 @@ function ContextMenu( values, options )
 	var top = options.top || 0;
 	if(options.event)
 	{
-		if( options.event.constructor !== MouseEvent && options.event.constructor !== CustomEvent )
+		if( options.event.constructor.name !== "MouseEvent" && options.event.constructor.name !== "CustomEvent" )
 		{
 			console.warn("Event passed to ContextMenu is not of type MouseEvent");
 			options.event = null;
@@ -1961,6 +1993,8 @@ ContextMenu.prototype.close = function(e, ignore_parent_menu)
 	}
 	if(this.current_submenu)
 		this.current_submenu.close(e, true);
+	if(this.root.closing_timer)
+		clearTimeout( this.root.closing_timer );
 }
 
 //returns the top most menu
@@ -1982,7 +2016,6 @@ LiteGUI.ContextMenu = ContextMenu;
 LiteGUI.ContextualMenu = ContextMenu; //LEGACY: REMOVE
 
 
-//the tiny box to expand the children of a node
 function Checkbox( value, on_change)
 {
 	var that = this;
@@ -2204,32 +2237,23 @@ LiteGUI.List = List;
 function Slider(value, options)
 {
 	options = options || {};
-	var canvas = document.createElement("canvas");
-	canvas.className = "slider " + (options.extraclass ? options.extraclass : "");
-	canvas.width = 100;
-	canvas.height = 1;
-	canvas.style.position = "relative";
-	canvas.style.width = "calc( 100% - 2em )";
-	canvas.style.height = "1.2em";
-	this.root = canvas;
+	var root = this.root = document.createElement("div");
 	var that = this;
 	this.value = value;
+	root.className = "liteslider";
 
 	this.setValue = function(value, skip_event)
 	{
 		//var width = canvas.getClientRects()[0].width;
-		var ctx = canvas.getContext("2d");
 		var min = options.min || 0.0;
 		var max = options.max || 1.0;
 		if(value < min) value = min;
 		else if(value > max) value = max;
 		var range = max - min;
 		var norm = (value - min) / range;
-		ctx.clearRect(0,0,canvas.width,canvas.height);
-		ctx.fillStyle = "#999";
-		ctx.fillRect(0,0, canvas.width * norm, canvas.height);
-		ctx.fillStyle = "#DA2";
-		ctx.fillRect(canvas.width * norm - 1,0,2, canvas.height);
+		var percentage = (norm*100).toFixed(1) + "%";
+		var percentage2 = (norm*100+2).toFixed(1) + "%";
+		root.style.background = "linear-gradient(to right, #999 " + percentage + ", #FC0 "+percentage2+", #333 " + percentage2 + ")";
 
 		if(value != this.value)
 		{
@@ -2245,7 +2269,10 @@ function Slider(value, options)
 
 	function setFromX(x)
 	{
-		var width = canvas.getClientRects()[0].width;
+		var rect = root.getBoundingClientRect();
+		if(!rect)
+			return;
+		var width = rect.width;
 		var norm = x / width;
 		var min = options.min || 0.0;
 		var max = options.max || 1.0;
@@ -2255,19 +2282,23 @@ function Slider(value, options)
 
 	var doc_binded = null;
 
-	canvas.addEventListener("mousedown", function(e) {
+	root.addEventListener("mousedown", function(e) {
 		var mouseX, mouseY;
 		if(e.offsetX) { mouseX = e.offsetX; mouseY = e.offsetY; }
 		else if(e.layerX) { mouseX = e.layerX; mouseY = e.layerY; }	
 		setFromX(mouseX);
-		doc_binded = canvas.ownerDocument;
+		doc_binded = root.ownerDocument;
 		doc_binded.addEventListener("mousemove", onMouseMove );
 		doc_binded.addEventListener("mouseup", onMouseUp );
+		e.preventDefault();
+		e.stopPropagation();
 	});
 
 	function onMouseMove(e)
 	{
-		var rect = canvas.getClientRects()[0];
+		var rect = root.getBoundingClientRect();
+		if(!rect)
+			return;
 		var x = e.x === undefined ? e.pageX : e.x;
 		var mouseX = x - rect.left;
 		setFromX(mouseX);
@@ -2605,7 +2636,7 @@ function Console( options )
 
 	this.root.innerHTML = "<div class='log'></div><div class='foot'><input type='text'/></div>";
 
-	this.log = this.root.querySelector('.log');
+	this.log_element = this.root.querySelector('.log');
 	this.input = this.root.querySelector('input');
 
 	this.input.addEventListener("keydown", this.onKeyDown.bind(this) );
@@ -2664,8 +2695,8 @@ Console.prototype.onKeyDown = function(e)
 
 Console.prototype.addMessage = function(text,className,as_text)
 {
-	var content = this.log;
-	var element = null;
+	var content = this.log_element;
+	var element = null; //contains the last message sent
 
 	if(text && text.constructor === Array)
 	{
@@ -2694,13 +2725,39 @@ Console.prototype.addMessage = function(text,className,as_text)
 			content.removeChild( content.children[0] );
 	}
 
-	this.log.scrollTop = 1000000;
+	this.log_element.scrollTop = 1000000;
+	element.update = function(v)
+	{
+		this.innerHTML = v;
+	}
+
 	return element;
+}
+
+Console.prototype.log = function()
+{
+	var args = Array.prototype.slice.call(arguments);
+	var d = args.join(",");
+	return this.addMessage( d, "msglog" );
+}
+
+Console.prototype.warn = function()
+{
+	var args = Array.prototype.slice.call(arguments);
+	var d = args.join(",");
+	return this.addMessage( d, "msgwarn" );
+}
+
+Console.prototype.error = function()
+{
+	var args = Array.prototype.slice.call(arguments);
+	var d = args.join(",");
+	return this.addMessage( d, "msgerror" );
 }
 
 Console.prototype.clear = function()
 {
-	this.log.innerHTML = "";
+	this.log_element.innerHTML = "";
 }
 
 LiteGUI.Console = Console;
@@ -3267,13 +3324,23 @@ LiteGUI.Console = Console;
 	* @class Split
 	* @constructor
 	*/
-	function Split(id, sections, options)
+	function Split( sections, options, legacy )
 	{
 		options = options || {};
 
+		if(sections && sections.constructor === String)
+		{
+			var id = sections;
+			sections = options;
+			options = legacy || {};
+			options.id = id;
+			console.warn("LiteGUI.Split legacy parameter, use sections as first parameter instead of id.");
+		}
+
 		var root = document.createElement("div");
 		this.root = root;
-		root.id = id;
+		if(options.id)
+			root.id = id;
 		root.className = "litesplit " + (options.vertical ? "vsplit" : "hsplit");
 		this.sections = [];
 
@@ -4143,6 +4210,11 @@ LiteGUI.Console = Console;
 		this.plus_tab = this.addTab( "plus_tab", { title: "+", tab_width: 20, button: true, callback: callback, skip_callbacks: true });
 	}
 
+	Tabs.prototype.addButtonTab = function( id, title, callback )
+	{
+		return this.addTab( id, { title: title, tab_width: 20, button: true, callback: callback, skip_callbacks: true });
+	}
+
 	//this is tab
 	Tabs.prototype.onTabClicked = function(e)
 	{
@@ -4261,7 +4333,10 @@ LiteGUI.Console = Console;
 	{
 		var tab = this.tabs[id];
 		if(!tab)
+		{
+			console.warn( "tab not found: " + id );
 			return;
+		}
 
 		if(tab.onclose)
 			tab.onclose(tab);
@@ -4467,6 +4542,8 @@ LiteGUI.Console = Console;
 
 			if(!options.disabled)
 			{
+				if(element.requestPointerLock)
+					element.requestPointerLock();
 				doc_binded.addEventListener("mousemove", inner_move);
 				doc_binded.addEventListener("mouseup", inner_up);
 
@@ -4481,11 +4558,15 @@ LiteGUI.Console = Console;
 
 		function inner_move(e)
 		{
-			var diff = [e.screenX - dragger.data[0], dragger.data[1] - e.screenY];
-
+			var deltax = e.screenX - dragger.data[0];
+			var deltay = dragger.data[1] - e.screenY;
+			var diff = [ deltax, deltay ];
+			if(e.movementX !== undefined)
+				diff = [e.movementX, -e.movementY]
+			//console.log(e);
 			dragger.data = [e.screenX, e.screenY];
 			var axis = options.horizontal ? 0 : 1;
-			inner_inc(diff[axis],e);
+			inner_inc( diff[axis], e );
 
 			e.stopPropagation();
 			e.preventDefault();
@@ -4510,6 +4591,8 @@ LiteGUI.Console = Console;
 			doc_binded = null;
 			doc.removeEventListener("mousemove", inner_move);
 			doc.removeEventListener("mouseup", inner_up);
+			if(doc.exitPointerLock)
+				doc.exitPointerLock();
 			LiteGUI.trigger(dragger,"blur");
 			e.stopPropagation();
 			e.preventDefault();
@@ -4626,6 +4709,10 @@ LiteGUI.Console = Console;
 		if(options.height)
 			this.root.style.height = typeof(options.height) == "string" ? options.height : Math.round(options.height) + "px";
 
+        this.collapsed_depth = 3;
+        if(options.collapsed_depth != null)
+            this.collapsed_depth = options.collapsed_depth;
+
 		//bg click
 		root.addEventListener("click", function(e){
 			if(e.srcElement != that.root)
@@ -4663,14 +4750,13 @@ LiteGUI.Console = Console;
 	* @method updateTree
 	* @param {object} data
 	*/
-	Tree.prototype.updateTree = function(data)
+	Tree.prototype.updateTree = function( data )
 	{
 		this.root.innerHTML = "";
-		var root_item = this.createAndInsert( data, this.options, null);
+		var root_item = this.createAndInsert( data, this.options, null );
 		if(root_item)
 		{
 			root_item.className += " root_item";
-			//this.root.appendChild(root_item);
 			this.root_item = root_item;
 		}
 		else
@@ -4756,7 +4842,7 @@ LiteGUI.Console = Console;
 		}
 
 		//update collapse button
-		this._updateListBox( element, options );
+		this._updateListBox( element, options, child_level );
 
 		if(options && options.selected)
 			this.markAsSelected( element, true );
@@ -4952,7 +5038,6 @@ LiteGUI.Console = Console;
 			title_element.className += " " + data.className;
 
 		title_element.innerHTML = "<span class='precontent'></span><span class='indentblock'></span><span class='collapsebox'></span><span class='incontent'></span><span class='postcontent'></span>";
-
 
 		var content = data.content || data.id || "";
 		title_element.querySelector(".incontent").innerHTML = content;
@@ -5323,7 +5408,7 @@ LiteGUI.Console = Console;
 	* @method expandItem
 	* @param {string} id
 	*/
-	Tree.prototype.expandItem = function(id)
+	Tree.prototype.expandItem = function(id, parents)
 	{
 		var item = this.getItem(id);
 		if(!item)
@@ -5332,7 +5417,14 @@ LiteGUI.Console = Console;
 		if(!item.listbox)
 			return;
 
-		listbox.setValue(true); //this propagates changes
+		item.listbox.setValue(true); //this propagates changes
+
+		if(!parents)
+			return;
+
+		var parent = this.getParent( item );
+		if(parent)
+			this.expandItem(parent,parents);
 	}
 
 	/**
@@ -5426,6 +5518,9 @@ LiteGUI.Console = Console;
 		this.markAsSelected(node);
 		if( scroll && !this._skip_scroll )
 			this.scrollToItem(node);
+
+		//expand parents
+		this.expandItem( node, true );
 
 		if(send_event)
 			LiteGUI.trigger( node, "click" );
@@ -5797,9 +5892,11 @@ LiteGUI.Console = Console;
 
 		//go up and semiselect
 		var parent = this.getParent( node );
-		while(parent)
+		var visited = [];
+		while(parent && visited.indexOf(parent) == -1)
 		{
 			parent.classList.add("semiselected");
+			visited.push( parent );
 			parent = this.getParent( parent );
 		}
 		/*
@@ -5813,7 +5910,7 @@ LiteGUI.Console = Console;
 	}
 
 	//updates the widget to collapse
-	Tree.prototype._updateListBox = function( node, options )
+	Tree.prototype._updateListBox = function( node, options, current_level )
 	{
 		if(!node)
 			return;
@@ -5833,7 +5930,7 @@ LiteGUI.Console = Console;
 			node.listbox = box;
 		}
 
-		if(options && options.collapsed)
+		if( (options && options.collapsed) || current_level >= this.collapsed_depth )
 			node.listbox.collapse();
 
 		var child_elements = this.getChildren( node.dataset["item_id"] );
@@ -7162,6 +7259,27 @@ Inspector.prototype.inspectInstance = function( instance, properties, properties
 		for(var i in properties_to_skip)
 			delete properties_info[ properties_to_skip[i] ];
 
+	//allows to establish the order of the properties in the inspector
+	if(classObject.properties_order)
+	{
+		var sorted_properties = {};
+		for(var i in classObject.properties_order)
+		{
+			var name = classObject.properties_order[i];
+			if( properties_info[ name ] )
+				sorted_properties[ name ] = properties_info[ name ];
+			else
+				console.warn("property not found in instance:", name );
+		}
+		for(var i in properties_info) //add the missing ones at the end (should this be optional?)
+		{
+			if( !sorted_properties[i] )
+				sorted_properties[i] = properties_info[i];
+		}
+		properties_info = sorted_properties;
+	}
+
+
 	//showAttributes doesnt return anything but just in case...
 	return this.showProperties( instance, properties_info );
 
@@ -7221,7 +7339,11 @@ Inspector.prototype.showProperties = function( instance, properties_info )
 		if(!options.callback) //generate default callback to modify data
 		{
 			var o = { instance: instance, name: varname, options: options };
-			options.callback = Inspector.assignValue.bind( o );
+			if(options.type == "function")
+			{
+			}
+			else
+				options.callback = Inspector.assignValue.bind( o );
 
 		}
 		if(!options.callback_update) //generate default refresh
@@ -7664,6 +7786,8 @@ Inspector.prototype.addString = function(name,value, options)
 	};
 	element.getValue = function() { return input.value; };
 	element.focus = function() { $(this).find("input").focus(); };
+	element.disable = function() { input.disabled = true; };
+	element.enable = function() { input.disabled = false; };
 	element.wchange = function(callback) { $(this).wchange(callback); }
 	this.append(element,options);
 	this.processElement(element, options);
@@ -7738,6 +7862,8 @@ Inspector.prototype.addStringButton = function( name, value, options)
 		if(!skip_event)
 			LiteGUI.trigger(input, "change" );
 	};
+	element.disable = function() { input.disabled = true; button.disabled = true; };
+	element.enable = function() { input.disabled = false; button.disabled = false; };
 	element.getValue = function() { return input.value; };
 	element.focus = function() { LiteGUI.focus(input); };
 	this.processElement(element, options);
@@ -7793,6 +7919,8 @@ Inspector.prototype.addTextarea = function(name,value, options)
 		return textarea.value;
 	}
 	element.focus = function() { LiteGUI.focus(textarea); };
+	element.disable = function() { textarea.disabled = true;};
+	element.enable = function() { textarea.disabled = false;};
 	this.processElement(element, options);
 	return element;
 }
@@ -7886,6 +8014,8 @@ Inspector.prototype.addNumber = function(name, value, options)
 	element.setRange = function(min,max) { dragger.setRange(min,max); }
 	element.getValue = function() { return parseFloat( input.value ); };
 	element.focus = function() { LiteGUI.focus(input); };
+	element.disable = function() { input.disabled = true;};
+	element.enable = function() { input.disabled = false;};
 	this.processElement(element, options);
 	return element;
 }
@@ -8383,6 +8513,9 @@ Inspector.prototype.addInfo = function( name, value, options)
 
 	var info = element.querySelector(".winfo") || element.querySelector(".wcontent");
 
+	if(options.callback)
+		element.addEventListener("click",options.callback.bind(element));
+
 	element.setValue = function(v) { 
 		if(v === undefined)
 			return;
@@ -8501,8 +8634,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 Inspector.prototype.addCheckbox = function(name, value, options)
 {
 	options = this.processOptions(options);
-
-	value = value || "";
+	value = !!value;
 	var that = this;
 	this.values[name] = value;
 
@@ -8521,21 +8653,23 @@ Inspector.prototype.addCheckbox = function(name, value, options)
 	});
 
 	element.addEventListener("click", function() {
-		var v = !this.data;
-		this.data = v;
-		element.querySelector("span.flag").innerHTML = v ? label_on : label_off;
-		if(v)
+		value = !value;
+		element.querySelector("span.flag").innerHTML = value ? label_on : label_off;
+		if(value)
 			checkbox.classList.add("on");
 		else
 			checkbox.classList.remove("on");
-		Inspector.onWidgetChange.call(that,element,name,v, options);
+		Inspector.onWidgetChange.call(that,element,name,value, options);
 	});
 	
-	element.data = value;
+	element.getValue = function() { 
+		return value;
+	}
 
 	element.setValue = function(v,skip_event) { 
 		if(v === undefined)
 			return;
+		value = v;
 		if(	that.values[name] != v && !skip_event)
 			LiteGUI.trigger( checkbox, "click" ); 
 	};
@@ -8632,11 +8766,16 @@ Inspector.prototype.addCombo = function(name, value, options)
 	var select = element.querySelector(".wcontent select");
 	select.addEventListener("change", function(e) { 
 		var index = e.target.value;
-		var value = values[index];
+		value = values[index];
 		if(stop_event)
 			return;
 		Inspector.onWidgetChange.call( that,element,name,value, options );
 	});
+
+	element.getValue = function()
+	{
+		return value;		
+	}
 
 	element.setValue = function(v, skip_event) { 
 		if(v === undefined)
@@ -8842,6 +8981,8 @@ Inspector.prototype.addList = function(name, values, options)
 	var infocontent = element.querySelector(".info_content");
 	infocontent.style.height = "100%";
 
+	var list_element = element.querySelector(".lite-list");
+
 	var inputfield = element.querySelector(".inputfield");
 	inputfield.style.height = "100%";
 	inputfield.style.paddingBottom = "0.2em";
@@ -8864,17 +9005,29 @@ Inspector.prototype.addList = function(name, values, options)
 		if( !selected )
 			return;
 
-		if(e.keyCode == 40)
+		if(e.keyCode == 13) //intro
+		{
+			if(!selected)
+				return;
+			var value = values[ selected.dataset["pos"] ];
+			if(options.callback_dblclick)
+				options.callback_dblclick.call(that,value);
+		}
+		else if(e.keyCode == 40) //arrow down
 		{
 			var next = selected.nextSibling;
 			if(next)
 				LiteGUI.trigger(next, "click");
+			if(selected.scrollIntoViewIfNeeded)
+				selected.scrollIntoViewIfNeeded({block: "end", behavior: "smooth"});
 		}
-		else if(e.keyCode == 38)
+		else if(e.keyCode == 38) //arrow up
 		{
 			var prev = selected.previousSibling;
 			if(prev)
 				LiteGUI.trigger(prev,"click");
+			if(selected.scrollIntoViewIfNeeded)
+				selected.scrollIntoViewIfNeeded({block: "end", behavior: "smooth"});
 		}
 		else
 			return;
@@ -9043,6 +9196,19 @@ Inspector.prototype.addList = function(name, values, options)
 		}
 	}
 
+	element.deselectAll = function()
+	{
+		//there has to be a more efficient way to do this
+		var items = this.querySelectorAll("ul li");
+		for(var i = 0; i < items.length; ++i)
+		{
+			var item = items[i];
+			if( !item.classList.contains("selected") )
+				continue;
+			LiteGUI.trigger( item, "click" );
+		}
+	}
+
 	element.setValue = function(v)
 	{
 		if(v === undefined)
@@ -9056,9 +9222,20 @@ Inspector.prototype.addList = function(name, values, options)
 		return items.length;
 	}
 
-	element.filter = function(callback)
+	element.filter = function( callback, case_sensitive )
 	{
 		var items = this.querySelectorAll("ul li");
+		var use_string = false;
+
+		if( callback && callback.constructor === String )
+		{
+			var needle = callback;
+			if( case_sensitive )
+				needle.toLowerCase();
+			use_string = true;
+			callback = function(v){ return ( (case_sensitive ? v : v.toLowerCase()).indexOf(needle) != -1); };
+		}
+
 		for(var i = 0; i < items.length; ++i)
 		{
 			var item = items[i];
@@ -9068,7 +9245,11 @@ Inspector.prototype.addList = function(name, values, options)
 				continue;
 			}
 
-			if( !callback( item.value, item, item.classList.contains("selected") ) )
+			var value = item.value;
+			if(use_string && value != null && value.constructor !== String)
+				value = item.innerHTML;
+
+			if( !callback( value, item, item.classList.contains("selected") ) )
 				item.style.display = "none";
 			else
 				item.style.display = "";
@@ -9134,6 +9315,9 @@ Inspector.prototype.addButton = function(name, value, options)
 			return;
 		button.innerHTML = v;
 	}
+
+	element.disable = function() { button.disabled = true; };
+	element.enable = function() { button.disabled = false; };
 
 	this.processElement(element, options);
 	return element;
@@ -9571,7 +9755,7 @@ Inspector.prototype.addArray = function( name, value, options )
 		var value = container.value;
 		var size = Math.min( value.length, max_items );
 
-		that.widgets_per_row = 2;
+		that.widgets_per_row += 1;
 		container.innerHTML = "";
 
 		for(var i = 0; i < size; ++i)
@@ -9579,23 +9763,31 @@ Inspector.prototype.addArray = function( name, value, options )
 			var v = null;
 			if (value[i] !== undefined)
 				v = value[i];
-			var item_options = { widget_parent: container, name_width: 30, width: "100% - 40px", callback: assign.bind({value: this.value, index: i}) };
+			var row = document.createElement("div");
+			row.className = "array-row";
+			row.innerHTML = "<span class='row-index'>" + i + "</span><span class='row-cell'></span><button style='width: 30px;' class='litebutton single row-trash'><img src='imgs/mini-icon-trash.png'/></button>";
+			container.appendChild(row);
+
+			var widget_row_container = row.querySelector('.row-cell');
+			
+			var item_options = { widget_parent: widget_row_container, callback: assign.bind({value: this.value, index: i}) };
 			if(options.data_options)
 				for(var j in options.data_options)
 					item_options[j] = options.data_options[j];
-			var w = that.add( type, i, v, item_options );
+			var w = that.add( type, null, v, item_options );
 
-			that.addButton(null,"<img src='imgs/mini-icon-trash.png'/>", {  widget_parent: container, index: i,width: 30, callback: function(){
+			/*
+			that.addButton(null,"<img src='imgs/mini-icon-trash.png'/>", {  widget_parent: container, index: i, width: 30, callback: function(){
 				if( value && value.length > (this.options.index-1))
 				{
 					value.splice( this.options.index,1 );
 					length_widget.setValue( value.length, true );
 					refresh.call( container );
 				}
-
 			}});
+			*/
 		}
-		that.widgets_per_row = 1;
+		that.widgets_per_row -= 1;
 	}
 
 	function assign(v)
@@ -9794,6 +9986,12 @@ Inspector.prototype.beginGroup = function( name, options )
 	content.className = "wgroupcontent";
 	if(options.collapsed)
 		content.style.display = "none";
+
+	if( options.height )
+		content.style.height = LiteGUI.sizeToCSS( options.height );
+	if( options.scrollable )
+		content.style.overflow = "auto";
+
 	element.appendChild( content );
 
 	var collapsed = options.collapsed || false;

@@ -703,6 +703,17 @@ var LiteGUI = {
 		return elem;
 	},
 
+	getParents: function(element)
+	{
+		var elements = [];
+		while ((element = element.parentElement) !== null) {
+			if (element.nodeType !== Node.ELEMENT_NODE)
+				continue;
+			elements.push(elem);
+		}
+		return elements;
+	},
+
 	//used to create a window that retains all the CSS info or the scripts.
 	newWindow: function(title, width, height, options)
 	{
@@ -825,6 +836,7 @@ var LiteGUI = {
 		var buttons = dialog.content.querySelectorAll("button");
 		for(var i = 0; i < buttons.length; i++)
 			buttons[i].addEventListener("click", inner);
+		buttons[0].focus();
 
 		function inner(v) {
 			var v = this.dataset["value"] == "yes";

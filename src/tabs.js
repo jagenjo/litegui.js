@@ -428,6 +428,11 @@
 		this.plus_tab = this.addTab( "plus_tab", { title: "+", tab_width: 20, button: true, callback: callback, skip_callbacks: true });
 	}
 
+	Tabs.prototype.addButtonTab = function( id, title, callback )
+	{
+		return this.addTab( id, { title: title, tab_width: 20, button: true, callback: callback, skip_callbacks: true });
+	}
+
 	//this is tab
 	Tabs.prototype.onTabClicked = function(e)
 	{
@@ -546,7 +551,10 @@
 	{
 		var tab = this.tabs[id];
 		if(!tab)
+		{
+			console.warn( "tab not found: " + id );
 			return;
+		}
 
 		if(tab.onclose)
 			tab.onclose(tab);

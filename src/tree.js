@@ -59,6 +59,10 @@
 		if(options.height)
 			this.root.style.height = typeof(options.height) == "string" ? options.height : Math.round(options.height) + "px";
 
+        this.collapsed_depth = 3;
+        if(options.collapsed_depth != null)
+            this.collapsed_depth = options.collapsed_depth;
+
 		//bg click
 		root.addEventListener("click", function(e){
 			if(e.srcElement != that.root)
@@ -96,14 +100,13 @@
 	* @method updateTree
 	* @param {object} data
 	*/
-	Tree.prototype.updateTree = function(data)
+	Tree.prototype.updateTree = function( data )
 	{
 		this.root.innerHTML = "";
-		var root_item = this.createAndInsert( data, this.options, null);
+		var root_item = this.createAndInsert( data, this.options, null );
 		if(root_item)
 		{
 			root_item.className += " root_item";
-			//this.root.appendChild(root_item);
 			this.root_item = root_item;
 		}
 		else
@@ -189,7 +192,7 @@
 		}
 
 		//update collapse button
-		this._updateListBox( element, options );
+		this._updateListBox( element, options, child_level );
 
 		if(options && options.selected)
 			this.markAsSelected( element, true );
@@ -385,7 +388,6 @@
 			title_element.className += " " + data.className;
 
 		title_element.innerHTML = "<span class='precontent'></span><span class='indentblock'></span><span class='collapsebox'></span><span class='incontent'></span><span class='postcontent'></span>";
-
 
 		var content = data.content || data.id || "";
 		title_element.querySelector(".incontent").innerHTML = content;
@@ -756,7 +758,7 @@
 	* @method expandItem
 	* @param {string} id
 	*/
-	Tree.prototype.expandItem = function(id)
+	Tree.prototype.expandItem = function(id, parents)
 	{
 		var item = this.getItem(id);
 		if(!item)
@@ -765,7 +767,14 @@
 		if(!item.listbox)
 			return;
 
-		listbox.setValue(true); //this propagates changes
+		item.listbox.setValue(true); //this propagates changes
+
+		if(!parents)
+			return;
+
+		var parent = this.getParent( item );
+		if(parent)
+			this.expandItem(parent,parents);
 	}
 
 	/**
@@ -859,6 +868,9 @@
 		this.markAsSelected(node);
 		if( scroll && !this._skip_scroll )
 			this.scrollToItem(node);
+
+		//expand parents
+		this.expandItem( node, true );
 
 		if(send_event)
 			LiteGUI.trigger( node, "click" );
@@ -1230,9 +1242,11 @@
 
 		//go up and semiselect
 		var parent = this.getParent( node );
-		while(parent)
+		var visited = [];
+		while(parent && visited.indexOf(parent) == -1)
 		{
 			parent.classList.add("semiselected");
+			visited.push( parent );
 			parent = this.getParent( parent );
 		}
 		/*
@@ -1246,7 +1260,7 @@
 	}
 
 	//updates the widget to collapse
-	Tree.prototype._updateListBox = function( node, options )
+	Tree.prototype._updateListBox = function( node, options, current_level )
 	{
 		if(!node)
 			return;
@@ -1266,7 +1280,7 @@
 			node.listbox = box;
 		}
 
-		if(options && options.collapsed)
+		if( (options && options.collapsed) || current_level >= this.collapsed_depth )
 			node.listbox.collapse();
 
 		var child_elements = this.getChildren( node.dataset["item_id"] );

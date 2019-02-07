@@ -75,6 +75,8 @@
 
 			if(!options.disabled)
 			{
+				if(element.requestPointerLock)
+					element.requestPointerLock();
 				doc_binded.addEventListener("mousemove", inner_move);
 				doc_binded.addEventListener("mouseup", inner_up);
 
@@ -89,11 +91,15 @@
 
 		function inner_move(e)
 		{
-			var diff = [e.screenX - dragger.data[0], dragger.data[1] - e.screenY];
-
+			var deltax = e.screenX - dragger.data[0];
+			var deltay = dragger.data[1] - e.screenY;
+			var diff = [ deltax, deltay ];
+			if(e.movementX !== undefined)
+				diff = [e.movementX, -e.movementY]
+			//console.log(e);
 			dragger.data = [e.screenX, e.screenY];
 			var axis = options.horizontal ? 0 : 1;
-			inner_inc(diff[axis],e);
+			inner_inc( diff[axis], e );
 
 			e.stopPropagation();
 			e.preventDefault();
@@ -118,6 +124,8 @@
 			doc_binded = null;
 			doc.removeEventListener("mousemove", inner_move);
 			doc.removeEventListener("mouseup", inner_up);
+			if(doc.exitPointerLock)
+				doc.exitPointerLock();
 			LiteGUI.trigger(dragger,"blur");
 			e.stopPropagation();
 			e.preventDefault();

@@ -555,13 +555,23 @@
 	* @class Split
 	* @constructor
 	*/
-	function Split(id, sections, options)
+	function Split( sections, options, legacy )
 	{
 		options = options || {};
 
+		if(sections && sections.constructor === String)
+		{
+			var id = sections;
+			sections = options;
+			options = legacy || {};
+			options.id = id;
+			console.warn("LiteGUI.Split legacy parameter, use sections as first parameter instead of id.");
+		}
+
 		var root = document.createElement("div");
 		this.root = root;
-		root.id = id;
+		if(options.id)
+			root.id = id;
 		root.className = "litesplit " + (options.vertical ? "vsplit" : "hsplit");
 		this.sections = [];
 

@@ -100,7 +100,7 @@ function ContextMenu( values, options )
 		}
 	}
 
-	if(options.event && options.event.constructor !== MouseEvent && options.event.constructor !== CustomEvent)
+	if( options.event && options.event.constructor.name !== "MouseEvent" && options.event.constructor.name !== "CustomEvent" )
 	{
 		console.error("Event passed to ContextMenu is not of type MouseEvent or CustomEvent. Ignoring it.");
 		options.event = null;
@@ -160,8 +160,28 @@ function ContextMenu( values, options )
 	root.addEventListener("mouseleave", function(e) {
 		if(that.lock)
 			return;
-		that.close(e);
+		if(root.closing_timer)
+			clearTimeout( root.closing_timer );
+		root.closing_timer = setTimeout( that.close.bind(that, e), 500 );
+		//that.close(e);
 	});
+
+	root.addEventListener("mouseenter", function(e) {
+		if(root.closing_timer)
+			clearTimeout( root.closing_timer );
+	});
+
+	function on_mouse_wheel(e)
+	{
+		var pos = parseInt( root.style.top );
+		root.style.top = (pos + e.deltaY * 0.1).toFixed() + "px";
+		e.preventDefault();
+		return true;
+	}
+
+	root.addEventListener("wheel", on_mouse_wheel, true);
+	root.addEventListener("mousewheel", on_mouse_wheel, true);
+
 
 	//insert before checking position
 	var root_document = document;
@@ -177,7 +197,7 @@ function ContextMenu( values, options )
 	var top = options.top || 0;
 	if(options.event)
 	{
-		if( options.event.constructor !== MouseEvent && options.event.constructor !== CustomEvent )
+		if( options.event.constructor.name !== "MouseEvent" && options.event.constructor.name !== "CustomEvent" )
 		{
 			console.warn("Event passed to ContextMenu is not of type MouseEvent");
 			options.event = null;
@@ -327,6 +347,8 @@ ContextMenu.prototype.close = function(e, ignore_parent_menu)
 	}
 	if(this.current_submenu)
 		this.current_submenu.close(e, true);
+	if(this.root.closing_timer)
+		clearTimeout( this.root.closing_timer );
 }
 
 //returns the top most menu
@@ -348,7 +370,6 @@ LiteGUI.ContextMenu = ContextMenu;
 LiteGUI.ContextualMenu = ContextMenu; //LEGACY: REMOVE
 
 
-//the tiny box to expand the children of a node
 function Checkbox( value, on_change)
 {
 	var that = this;
@@ -570,32 +591,23 @@ LiteGUI.List = List;
 function Slider(value, options)
 {
 	options = options || {};
-	var canvas = document.createElement("canvas");
-	canvas.className = "slider " + (options.extraclass ? options.extraclass : "");
-	canvas.width = 100;
-	canvas.height = 1;
-	canvas.style.position = "relative";
-	canvas.style.width = "calc( 100% - 2em )";
-	canvas.style.height = "1.2em";
-	this.root = canvas;
+	var root = this.root = document.createElement("div");
 	var that = this;
 	this.value = value;
+	root.className = "liteslider";
 
 	this.setValue = function(value, skip_event)
 	{
 		//var width = canvas.getClientRects()[0].width;
-		var ctx = canvas.getContext("2d");
 		var min = options.min || 0.0;
 		var max = options.max || 1.0;
 		if(value < min) value = min;
 		else if(value > max) value = max;
 		var range = max - min;
 		var norm = (value - min) / range;
-		ctx.clearRect(0,0,canvas.width,canvas.height);
-		ctx.fillStyle = "#999";
-		ctx.fillRect(0,0, canvas.width * norm, canvas.height);
-		ctx.fillStyle = "#DA2";
-		ctx.fillRect(canvas.width * norm - 1,0,2, canvas.height);
+		var percentage = (norm*100).toFixed(1) + "%";
+		var percentage2 = (norm*100+2).toFixed(1) + "%";
+		root.style.background = "linear-gradient(to right, #999 " + percentage + ", #FC0 "+percentage2+", #333 " + percentage2 + ")";
 
 		if(value != this.value)
 		{
@@ -611,7 +623,10 @@ function Slider(value, options)
 
 	function setFromX(x)
 	{
-		var width = canvas.getClientRects()[0].width;
+		var rect = root.getBoundingClientRect();
+		if(!rect)
+			return;
+		var width = rect.width;
 		var norm = x / width;
 		var min = options.min || 0.0;
 		var max = options.max || 1.0;
@@ -621,19 +636,23 @@ function Slider(value, options)
 
 	var doc_binded = null;
 
-	canvas.addEventListener("mousedown", function(e) {
+	root.addEventListener("mousedown", function(e) {
 		var mouseX, mouseY;
 		if(e.offsetX) { mouseX = e.offsetX; mouseY = e.offsetY; }
 		else if(e.layerX) { mouseX = e.layerX; mouseY = e.layerY; }	
 		setFromX(mouseX);
-		doc_binded = canvas.ownerDocument;
+		doc_binded = root.ownerDocument;
 		doc_binded.addEventListener("mousemove", onMouseMove );
 		doc_binded.addEventListener("mouseup", onMouseUp );
+		e.preventDefault();
+		e.stopPropagation();
 	});
 
 	function onMouseMove(e)
 	{
-		var rect = canvas.getClientRects()[0];
+		var rect = root.getBoundingClientRect();
+		if(!rect)
+			return;
 		var x = e.x === undefined ? e.pageX : e.x;
 		var mouseX = x - rect.left;
 		setFromX(mouseX);

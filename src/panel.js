@@ -1,6 +1,6 @@
 //enclose in a scope
 (function(){
-	
+
 	/****************** PANEL **************/
 	function Panel(id, options)
 	{
@@ -49,6 +49,12 @@
 	Panel.prototype.add = function( litegui_item )
 	{
 		this.content.appendChild( litegui_item.root );
+	}
+
+	Panel.prototype.clear = function()
+	{
+		while (this.content.firstChild)
+			this.content.removeChild(this.content.firstChild);
 	}
 
 	LiteGUI.Panel = Panel;

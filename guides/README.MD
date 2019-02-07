@@ -32,6 +32,9 @@ To know more about Areas check the [LiteGUI.Inspector](inspector.md) guide.
 
 When you want to create a panel containing a titlebar and some content you can use the panel class, or if you want to be floating you can use the Dialog class.
 
+To know more about Dialogs check the [LiteGUI.Dialog](dialog.md) guide.
+
+
 ## LiteGUI base class ##
 
 The LiteGUI class comes with several methods that could be useful when working with interfaces, like to bind and trigger events, to handle the clipboard, to import CSSs, to do HTTP Requests, to create elements, to launch alerts, confirm and prompt box dialogs.

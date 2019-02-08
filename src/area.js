@@ -47,10 +47,6 @@
 		this.options = options;
 
 		var that = this;
-		//window.addEventListener("resize",function(e) { that.onResize(e); });
-		//$(this).bind("resize",function(e) { that.resize(e); });
-
-		//this._computed_size = [ $(this.root).width(), $(this.root).height() ];
 		this._computed_size = [ this.root.offsetWidth, this.root.offserHeight ];
 
 		var content = document.createElement("div");
@@ -87,7 +83,6 @@
 
 	Area.prototype.onResize = function(e)
 	{
-		//this._computed_size = [ $(this.root).width(), $(this.root).height() ];
 		var computed_size = [ this.root.offsetWidth, this.root.offsetHeight ];
 		if( e && this._computed_size && computed_size[0] == this._computed_size[0] && computed_size[1] == this._computed_size[1])
 			return;
@@ -103,12 +98,6 @@
 			{
 				var section = this.sections[i];
 				section.onResize(e);
-				//$(section).trigger("resize"); //it is a LiteArea
-				//$(section.root).trigger("resize");
-				/*
-				for (var j = 0; j < section.root.childNodes.length; j++)
-					$(section.root.childNodes[j]).trigger("resize");
-				*/
 			}
 		else //send it to the children
 		{
@@ -431,7 +420,6 @@
 
 			if (this.dynamic_section == area1)
 			{
-				//var size = ($(area2.root).width() + delta) + "px";
 				var size = (area2.root.offsetWidth + delta);
 				if(size < min_size)
 					size = min_size;
@@ -442,7 +430,6 @@
 			}
 			else
 			{
-				//var size = ($(area1.root).width() - delta) + "px";
 				var size = (area1.root.offsetWidth - delta);
 				if(size < min_size)
 					size = min_size;
@@ -456,7 +443,6 @@
 		{
 			if (this.dynamic_section == area1)
 			{
-				//var size = ($(area2.root).height() - delta) + "px";
 				var size = (area2.root.offsetHeight - delta);
 				if(size < min_size)
 					size = min_size;
@@ -467,7 +453,6 @@
 			}
 			else
 			{
-				//var size = ($(area1.root).height() + delta) + "px";
 				var size = (area1.root.offsetHeight + delta);
 				if(size < min_size)
 					size = min_size;

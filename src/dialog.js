@@ -324,7 +324,6 @@
 
 		if(this.draggable)
 		{
-			//$(panel).draggable({disabled: true});
 			LiteGUI.draggable(panel);
 		}
 		
@@ -437,7 +436,6 @@
 			var dialog = LiteGUI.Dialog.minimized[i];
 			var parent = dialog.root.parentNode;
 			var pos = parent.getBoundingClientRect().height - 20;
-			//$(dialog.root).animate({ left: LiteGUI.Dialog.MINIMIZED_WIDTH * i, top: pos + "px" },100);
 			dialog.root.style.left = LiteGUI.Dialog.MINIMIZED_WIDTH * i;
 			dialog.root.style.top = pos + "px";
 		}
@@ -511,7 +509,6 @@
 			this.center();
 		}
 
-		//$(this.root).show(v,null,100,callback);
 		if(!this.detach_window)
 		{
 			this.root.style.display = "";

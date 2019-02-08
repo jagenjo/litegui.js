@@ -19,7 +19,7 @@
 			var id = options;
 			options = legacy || {};
 			options.id = id;
-			console.warn("LiteGUI.Dialog legacy parameter, use options as first parameter instead of id.");
+			console.warn("LiteGUI.Tabs legacy parameter, use options as first parameter instead of id.");
 		}
 
 		options = options || {};
@@ -139,9 +139,9 @@
 	Tabs.prototype.appendTo = function(parent, at_front)
 	{
 		if(at_front)
-			$(parent).prepend(this.root);
+			parent.prepend(this.root);
 		else
-			$(parent).append(this.root);
+			parent.appendChild(this.root);
 	}
 
 	/**
@@ -480,7 +480,9 @@
 			}
 		}
 
-		$(that.list).find("li.wtab").removeClass("selected");
+		var list = that.list.querySelectorAll("li.wtab");
+		for(var i = 0; i < list.length; ++i)
+			list[i].classList.remove("selected");
 		this.classList.add("selected");
 
 		//change tab
@@ -493,7 +495,7 @@
 			if(options.callback) 
 				options.callback(tab_id, tab_content,e);
 
-			$(that).trigger("wchange",[tab_id, tab_content]);
+			LiteGUI.trigger(that,"wchange",[tab_id, tab_content]);
 			if(that.onchange)
 				that.onchange( tab_id, tab_content );
 		}

@@ -53,15 +53,15 @@ function SearchBox( value, options )
 	this.root = element;
 	var that = this;
 
-	$(this.input).change( function(e) { 
+	this.input.onchange = function(e) { 
 		var value = e.target.value;
 		if(options.callback)
 			options.callback.call(that,value);
-	});
+	};
 }
 
-SearchBox.prototype.setValue = function(v) { $(this.input).val(v).change(); };
-SearchBox.prototype.getValue = function() { return $(this.input).val(); };
+SearchBox.prototype.setValue = function(v) { this.input.value = v; this.input.onchange(); };
+SearchBox.prototype.getValue = function() { return this.input.value; };
 
 LiteGUI.SearchBox = SearchBox;
 
@@ -539,9 +539,11 @@ function List( id, items, options )
 
 		item.addEventListener("click", function() {
 
-			$(root).find(".list-item.selected").removeClass("selected");
+			var list = root.querySelectorAll(".list-item.selected");
+			for(var j = 0; j < list.length; ++j)
+				list[j].classList.remove("selected");
 			this.classList.add("selected");
-			$(that.root).trigger("wchanged", this);
+			LiteGUI.trigger( that.root, "wchanged", this );
 			if(that.callback)
 				that.callback( this.data  );
 		});
@@ -703,15 +705,16 @@ function LineEditor(value, options)
 	element.no_trespassing = options.no_trespassing || false;
 	element.show_samples = options.show_samples || 0;
 	element.options = options;
+	element.style.minWidth = "50px";
+	element.style.minHeight = "20px";
 
 	var canvas = document.createElement("canvas");
 	canvas.width = options.width || 200;
 	canvas.height = options.height || 50;
-	element.appendChild(canvas);
+	element.appendChild( canvas );
 	element.canvas = canvas;
 
-	$(canvas).bind("mousedown",onmousedown);
-	$(element).resize(onresize);
+	element.addEventListener("mousedown",onmousedown);
 
 	element.getValueAt = function(x)
 	{
@@ -781,6 +784,12 @@ function LineEditor(value, options)
 
 	element.redraw = function()
 	{
+		var rect = canvas.parentNode.getBoundingClientRect();
+		if(rect && canvas.width != rect.width && rect.width && rect.width < 1000)
+			canvas.width = rect.width;
+		if(rect && canvas.height != rect.height && rect.height && rect.height < 1000)
+			canvas.height = rect.height;
+
 		var ctx = canvas.getContext("2d");
 		ctx.setTransform(1, 0, 0, 1, 0, 0);
 		ctx.translate(0,canvas.height);
@@ -839,8 +848,8 @@ function LineEditor(value, options)
 	var last_mouse = [0,0];
 	function onmousedown(evt)
 	{
-		$(document).bind("mousemove",onmousemove);
-		$(document).bind("mouseup",onmouseup);
+		document.addEventListener("mousemove",onmousemove);
+		document.addEventListener("mouseup",onmouseup);
 
 		var rect = canvas.getBoundingClientRect();
 		var mousex = evt.clientX - rect.left;
@@ -918,8 +927,8 @@ function LineEditor(value, options)
 	{
 		selected = -1;
 		element.redraw();
-		$(document).unbind("mousemove",onmousemove);
-		$(document).unbind("mouseup",onmouseup);
+		document.removeEventListener("mousemove",onmousemove);
+		document.removeEventListener("mouseup",onmouseup);
 		onchange();
 		evt.preventDefault();
 		evt.stopPropagation();
@@ -927,8 +936,6 @@ function LineEditor(value, options)
 
 	function onresize(e)
 	{
-		canvas.width = $(this).width();
-		canvas.height = $(this).height();
 		element.redraw();
 	}
 	
@@ -937,7 +944,7 @@ function LineEditor(value, options)
 		if(options.callback)
 			options.callback.call(element,element.value);
 		else
-			$(element).change();
+			LiteGUI.trigger(element,"change");
 	}
 
 	function distance(a,b) { return Math.sqrt( Math.pow(b[0]-a[0],2) + Math.pow(b[1]-a[1],2) ); };
@@ -966,7 +973,7 @@ function LineEditor(value, options)
 		var v = null;
 		if(selected != -1)
 			v = element.value[selected];
-		element.value.sort(function(a,b) { return a[0] > b[0]; });
+		element.value.sort(function(a,b) { return a[0] - b[0]; });
 		if(v)
 			selected = element.value.indexOf(v);
 	}

@@ -1,16 +1,14 @@
 var mainarea = null;
 
-$(window).bind("load", function() { 
+window.onload = function(){
 
 	LiteGUI.init(); 
 
 	var mainmenu = new LiteGUI.Menubar("mainmenubar");
 	LiteGUI.add( mainmenu );
 
-	mainarea = new LiteGUI.Area("mainarea",{content_id:"canvasarea", height: "calc( 100% - 20px )", main:true, inmediateResize: true});
+	mainarea = new LiteGUI.Area({ id: "mainarea", content_id:"canvasarea", height: "calc( 100% - 20px )", main:true, inmediateResize: true});
 	LiteGUI.add( mainarea );
-	//$(window).resize(function() { $(LiteGUI.mainarea).trigger("resize"); });
-
  
 	//create main canvas to test redraw
 	var canvas = document.createElement("canvas");
@@ -39,15 +37,14 @@ $(window).bind("load", function() {
 		canvas.redraw();
 	};
 
-	var docked_bottom = new LiteGUI.Panel("bottom_panel", {title:'Docked panel',hide:true});
+	var docked_bottom = new LiteGUI.Panel({ id: "bottom_panel", title:"Docked panel",hide:true});
 	mainarea.getSection(0).getSection(1).add( docked_bottom );
-	$(docked_bottom).trigger("closed",function() { LiteGUI.mainarea.getSection(0).merge() });
+	LiteGUI.bind( docked_bottom,"closed",function() { LiteGUI.mainarea.getSection(0).merge() });
 	//mainarea.resize();
 
 	var dialog = createWidgetsDialog();
 	var dialog2 = createTableDialog();
 
-	//$("#menu-bar").append(this.mainmenu.root);
 	mainmenu.add("file/new");
 	mainmenu.add("file/open");
 	mainmenu.add("file/save");
@@ -80,7 +77,7 @@ $(window).bind("load", function() {
 	}});
 
 	canvas.redraw();
-});
+};
 
 function createSidePanel()
 {
@@ -92,7 +89,7 @@ function createSidePanel()
 
 	//docked.dockTo( mainarea.getSection(1).content,"full");
 	//docked.show();
-	$(docked).bind("closed", function() { mainarea.merge(); });
+	LiteGUI.bind( docked, "closed", function() { mainarea.merge(); });
 
 	window.sidepanel = docked;
 
@@ -102,15 +99,15 @@ function createSidePanel()
 function updateSidePanel( root )
 {
 	root = root || window.sidepanel;
-	$(root.content).empty();
+	root.content.innerHTML = "";
 
 	//tabs 
-	var tabs_widget = new LiteGUI.Tabs("paneltab");
+	var tabs_widget = new LiteGUI.Tabs();
 	tabs_widget.addTab("Info");
 	tabs_widget.addTab("Tree",{selected:true, width: "100%", height: 200});
 	tabs_widget.addTab("Extra");
 
-	$(tabs_widget.getTabContent("Info")).append("<strong>Example of code inside tab container</strong>");
+	tabs_widget.getTabContent("Info").appendChild( LiteGUI.createElement( "strong",null,"Example of code inside tab container") );
 
 	//tree
 	var mytree = { id: "Rootnode", 
@@ -125,9 +122,9 @@ function updateSidePanel( root )
 				{ id: "Child3" },
 			]};
 
-	var litetree = new LiteGUI.Tree("tree", mytree, {allow_rename:true});
-	LiteGUI.bind( litetree, "item_selected", function(e,node) {
-		console.log("Node selected: " + node); 
+	var litetree = new LiteGUI.Tree( mytree, { allow_rename: true });
+	LiteGUI.bind( litetree.root, "item_selected", function(e) {
+		console.log("Node selected: ", e.detail); 
 	});
 	var tree_tab_content = tabs_widget.getTabContent("Tree");
 	tree_tab_content.appendChild( litetree.root )
@@ -141,9 +138,9 @@ function updateSidePanel( root )
 	//side panel widget
 	var widgets = new LiteGUI.Inspector();
 	widgets.onchange = function(name,value,widget) {
-		//console.log("Widget change: " + name + " -> " + value );
+		console.log("Widget change: " + name + " -> " + value );
 	};
-	$(root.content).append(widgets.root);
+	root.content.appendChild(widgets.root);
 
 	widgets.addSlider("slider",10,{min:1,max:100,step:1});
 	widgets.addSeparator();
@@ -175,7 +172,7 @@ function createWidgetsDialog()
 {
 	//test floating panel
 	var name = "Dialog_" + ((Math.random() * 100)>>0);
-	var dialog = new LiteGUI.Dialog(name, {title:name, close: true, minimize: true, width: 300, scroll: true, resizable:true, draggable: true, detachable: true });
+	var dialog = new LiteGUI.Dialog({ id: name, title:name, close: true, minimize: true, width: 300, scroll: true, resizable:true, draggable: true, detachable: true });
 	dialog.show('fade');
 
 	//test menu in panel

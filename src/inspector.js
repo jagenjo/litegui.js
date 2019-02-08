@@ -565,9 +565,7 @@ Inspector.onWidgetChange = function( element, name, value, options, expand_value
 	{
 		if(section)
 			LiteGUI.trigger( section, "wbeforechange", value );
-		//$(this.current_section).trigger("wbeforechange",value); //used for undo //TODO: use LiteGUI.trigger
 		LiteGUI.trigger( element, "wbeforechange", value );
-		//$(element).trigger("wbeforechange",value); //TODO: REPLACE by LiteGUI.trigger
 	}
 
 	//assign and launch callbacks
@@ -585,9 +583,7 @@ Inspector.onWidgetChange = function( element, name, value, options, expand_value
 	{
 		if(section)
 			LiteGUI.trigger( section, "wchange", value, element );
-		//$(this.current_section).trigger("wchange",value); //used for undo //TODO: use LiteGUI.trigger
 		LiteGUI.trigger( element, "wchange", value, element );
-		//$(element).trigger("wchange",value); //TODO: REPLACE by LiteGUI.trigger
 	}
 
 	if(this.onchange) 
@@ -830,10 +826,9 @@ Inspector.prototype.addString = function(name,value, options)
 			LiteGUI.trigger(input, "change" );
 	};
 	element.getValue = function() { return input.value; };
-	element.focus = function() { $(this).find("input").focus(); };
+	element.focus = function() { this.querySelector("input").focus(); };
 	element.disable = function() { input.disabled = true; };
 	element.enable = function() { input.disabled = false; };
-	element.wchange = function(callback) { $(this).wchange(callback); }
 	this.append(element,options);
 	this.processElement(element, options);
 	return element;
@@ -900,8 +895,6 @@ Inspector.prototype.addStringButton = function( name, value, options)
 
 	this.tab_index += 1;
 	this.append(element,options);
-	element.wchange = function(callback) { $(this).wchange(callback); }
-	element.wclick = function(callback) { $(this).wclick(callback); }
 	element.setValue = function(v, skip_event) { 
 		input.value = v;
 		if(!skip_event)
@@ -1251,7 +1244,7 @@ Inspector.prototype.addVector3 = function(name,value, options)
 			if(typeof(new_val) == "object" && new_val.length >= 3)
 			{
 				for(var i = 0; i < elems.length; i++)
-					$(elems[i]).val(new_val[i]);
+					elems[i].value = new_val[i];
 				r = new_val;
 			}
 		}
@@ -1918,8 +1911,8 @@ Inspector.prototype.addComboButtons = function(name, value, options)
 		that.values[name] = buttonname;
 
 		var elements = element.querySelectorAll(".selected");
-		for(var i in elements)
-			elements.classList.remove("selected");
+		for(var i = 0; i < elements.length; ++i)
+			elements[i].classList.remove("selected");
 		this.classList.add("selected");
 
 		Inspector.onWidgetChange.call( that,element,name,buttonname, options );
@@ -2236,7 +2229,6 @@ Inspector.prototype.addList = function(name, values, options)
 			var item = items[i];
 			if( item.classList.contains("selected") )
 				continue;
-			//$(item).click();
 			LiteGUI.trigger( item, "click" );
 		}
 	}
@@ -2658,6 +2650,7 @@ Inspector.prototype.addLine = function(name, value, options)
 	this.values[name] = value;
 	
 	var element = this.createWidget(name,"<span class='line-editor'></span>", options);
+	element.style.width = "100%";
 
 	var line_editor = new LiteGUI.LineEditor(value,options);
 	element.querySelector("span.line-editor").appendChild(line_editor);
@@ -3106,78 +3099,6 @@ Inspector.prototype.scrollTo = function( id )
 	var delta = element.offsetTop - top;
 	this.root.parentNode.parentNode.scrollTop = delta;
 }
-
-/*
-Inspector.prototype.addImageSlot = function(title, callback_drop, callback_set)
-{
-	var element = this.createElement("DIV");
-	element.innerHTML = "<strong>"+title+"</strong><input class='text' type='text' value=''/><button class='load confirm_button'>Ok</button><div class='img-slot'>Drop img here</div>";
-	this.append(element);
-
-	var confirm_button = $(element).find(".confirm_button")[0];
-	$(confirm_button).click(function() {
-		var text = $(element).find(".text")[0];
-		if(callback_set)
-			callback_set( $(text).val() );
-	});
-
-	var slot = $(element).find(".img-slot")[0];
-
-	slot.addEventListener("dragenter", onDragEnter, false);
-	slot.addEventListener("dragexit", onDragExit, false);
-	slot.addEventListener("dragover", onDragNull, false);
-	slot.addEventListener("drop", onFileDrop, false);
-
-
-	function onDragEnter(evt)
-	{
-		$(slot).addClass("highlight");
-		evt.stopPropagation();
-		evt.preventDefault();
-	}
-
-	function onDragExit(evt)
-	{
-		$(slot).removeClass("highlight");
-		evt.stopPropagation();
-		evt.preventDefault();
-	}
-
-	function onDragNull(evt)
-	{
-		evt.stopPropagation();
-		evt.preventDefault();
-	}
-
-	function onFileDrop(evt)
-	{
-		$(slot).removeClass("highlight");
-		evt.stopPropagation();
-		evt.preventDefault();
-
-		var files = evt.dataTransfer.files;
-		var count = files.length;
-		
-		var file = files[0];
-		if(file == null) return;
-
-		var reader = new FileReader();
-		var extension = file.name.substr( file.name.lastIndexOf(".") + 1).toLowerCase();
-
-		reader.onload = function(e) {
-			if(callback_drop)
-				callback_drop(e, file);
-		}
-
-		var image_extensions = ["png","jpg"];
-		if (image_extensions.indexOf(extension) != -1)
-			reader.readAsDataURL(file);
-		else
-			reader.readAsArrayBuffer(file);
-	}
-}
-*/
-
 
 Inspector.prototype.processOptions = function(options)
 {

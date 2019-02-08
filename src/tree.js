@@ -442,13 +442,15 @@
 				if( that.isNodeSelected( node ) )
 				{
 					node.classList.remove("selected");
-					LiteGUI.trigger(that.root, "item_remove_from_selection", { item: node, data: node.data} );
+					LiteGUI.trigger(that, "item_remove_from_selection", { item: node, data: node.data} );
+					LiteGUI.trigger(that.root, "item_remove_from_selection", { item: node, data: node.data} ); //LEGACY
 					return;
 				}
 
 				//mark as selected
 				that.markAsSelected( node, true );
-				LiteGUI.trigger(that.root, "item_add_to_selection", { item: node, data: node.data} );
+				LiteGUI.trigger(that, "item_add_to_selection", { item: node, data: node.data} );
+				LiteGUI.trigger(that.root, "item_add_to_selection", { item: node, data: node.data} ); //LEGACY
 				var r = false;
 				if(data.callback) 
 					r = data.callback.call(that,node);
@@ -478,7 +480,8 @@
 					//console.log(item);
 					//mark as selected
 					that.markAsSelected( item, true );
-					LiteGUI.trigger( that.root, "item_add_to_selection", { item: item, data: item.data } );
+					LiteGUI.trigger( that, "item_add_to_selection", { item: item, data: item.data } );
+					LiteGUI.trigger( that.root, "item_add_to_selection", { item: item, data: item.data } ); //LEGACY
 				}
 			}
 			else
@@ -487,7 +490,8 @@
 				that.markAsSelected( node );
 
 				that._skip_scroll = true; //avoid scrolling while user clicks something
-				LiteGUI.trigger(that.root, "item_selected", { item: node, data: node.data} );
+				LiteGUI.trigger( that, "item_selected", { item: node, data: node.data } );
+				LiteGUI.trigger( that.root, "item_selected", { item: node, data: node.data } ); //LEGACY
 				var r = false;
 				if(data.callback) 
 					r = data.callback.call(that,node);
@@ -503,7 +507,8 @@
 			var node = this; //this.parentNode;
 			var title = node.title_element.querySelector(".incontent");
 
-			LiteGUI.trigger( that.root, "item_dblclicked", node );
+			LiteGUI.trigger( that, "item_dblclicked", node );
+			LiteGUI.trigger( that.root, "item_dblclicked", node ); //LEGACY
 
 			if(!title._editing && that.options.allow_rename)
 			{

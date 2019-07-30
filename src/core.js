@@ -42,25 +42,39 @@ var LiteGUI = {
 		if(!this.container )
 			this.container = document.body;
 
-		//create litegui root element
-		var root = document.createElement("div");
-		root.className = "litegui-wrap fullscreen";
-		root.style.position = "relative";
-		root.style.overflow = "hidden";
-		this.root = root;
-		this.container.appendChild( root );
+		if( options.wrapped )
+		{
+			//create litegui root element
+			var root = document.createElement("div");
+			root.style.position = "relative";
+			root.style.overflow = "hidden";
+			this.root = root;
+			this.container.appendChild( root );
+
+			//content: the main container for everything
+			var content = document.createElement("div");
+			this.content = content;
+			this.root.appendChild(content);
+
+			//maximize
+			if( this.root.classList.contains("fullscreen") )
+			{
+				window.addEventListener("resize", function(e) { 
+					LiteGUI.maximizeWindow();
+				});
+			}
+		}
+		else
+			this.root = this.content = this.container;
+
+		this.root.className = "litegui-wrap fullscreen";
+		this.content.className = "litegui-maincontent";
 
 		//create modal dialogs container
 		var modalbg = this.modalbg_div = document.createElement("div");
 		this.modalbg_div.className = "litemodalbg";
 		this.root.appendChild(this.modalbg_div);
 		modalbg.style.display = "none";
-
-		//content: the main container for everything
-		var content = document.createElement("div");
-		content.className = "litegui-maincontent";
-		this.content = content;
-		this.root.appendChild(content);
 
 		//create menubar
 		if(options.menubar)
@@ -70,14 +84,7 @@ var LiteGUI = {
 		if(options.gui_callback)
 			options.gui_callback();
 
-		//maximize
-		if( this.root.classList.contains("fullscreen") )
-		{
-			window.addEventListener("resize", function(e) { 
-				LiteGUI.maximizeWindow();
-			});
-		}
-
+		//external windows
 		window.addEventListener("beforeunload", function(e) {
 			for(var i in LiteGUI.windows)
 				LiteGUI.windows[i].close();
@@ -1165,7 +1172,8 @@ var LiteGUI = {
 		navicon: "&#9776;",
 		refresh: "&#8634;",
 		gear: "&#9881;",
-		open_folder: "&#128194;"
+		open_folder: "&#128194;",
+		download: "&#11123;"
 	},
 	
 	//given a html entity string it returns the equivalent unicode character
@@ -1199,6 +1207,18 @@ var LiteGUI = {
 		if(v >= 0 )
 			return (v|0) + "px";
 		return "calc( 100% - " + Math.abs(v|0) + "px )";
+	},
+
+	/**
+	* Returns the window where this element is attached (used in multi window applications)
+	* @method getElementWindow
+	* @param {HTMLElement} v
+	* @return {Window} the window element
+	**/
+	getElementWindow: function(v)
+	{
+        var doc = v.ownerDocument;
+        return doc.defaultView || doc.parentWindow;
 	},
 
 	/**

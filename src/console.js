@@ -7,21 +7,22 @@ function Console( options )
 
 	this.root = document.createElement("div");
 	this.root.className = "liteconsole";
-
 	this.root.innerHTML = "<div class='log'></div><div class='foot'><input type='text'/></div>";
 
 	this.log_element = this.root.querySelector('.log');
 	this.input = this.root.querySelector('input');
 
-	this.input.addEventListener("keydown", this.onKeyDown.bind(this) );
-
+	this.input.addEventListener("keydown", this.processKeyDown.bind(this) );
 	this._prompt = options.prompt || "]";
+
+	this.onAutocomplete = null; //receives string, must return final string
+	this.onProcessCommand = null; //receives input value
 
 	this.history = [];
 	this._history_offset = 0;
 }
 
-Console.prototype.onKeyDown = function(e)
+Console.prototype.processKeyDown = function(e)
 {
 	if(this._input_blocked)
 		return;

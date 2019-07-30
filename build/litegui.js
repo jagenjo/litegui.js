@@ -43,25 +43,39 @@ var LiteGUI = {
 		if(!this.container )
 			this.container = document.body;
 
-		//create litegui root element
-		var root = document.createElement("div");
-		root.className = "litegui-wrap fullscreen";
-		root.style.position = "relative";
-		root.style.overflow = "hidden";
-		this.root = root;
-		this.container.appendChild( root );
+		if( options.wrapped )
+		{
+			//create litegui root element
+			var root = document.createElement("div");
+			root.style.position = "relative";
+			root.style.overflow = "hidden";
+			this.root = root;
+			this.container.appendChild( root );
+
+			//content: the main container for everything
+			var content = document.createElement("div");
+			this.content = content;
+			this.root.appendChild(content);
+
+			//maximize
+			if( this.root.classList.contains("fullscreen") )
+			{
+				window.addEventListener("resize", function(e) { 
+					LiteGUI.maximizeWindow();
+				});
+			}
+		}
+		else
+			this.root = this.content = this.container;
+
+		this.root.className = "litegui-wrap fullscreen";
+		this.content.className = "litegui-maincontent";
 
 		//create modal dialogs container
 		var modalbg = this.modalbg_div = document.createElement("div");
 		this.modalbg_div.className = "litemodalbg";
 		this.root.appendChild(this.modalbg_div);
 		modalbg.style.display = "none";
-
-		//content: the main container for everything
-		var content = document.createElement("div");
-		content.className = "litegui-maincontent";
-		this.content = content;
-		this.root.appendChild(content);
 
 		//create menubar
 		if(options.menubar)
@@ -71,14 +85,7 @@ var LiteGUI = {
 		if(options.gui_callback)
 			options.gui_callback();
 
-		//maximize
-		if( this.root.classList.contains("fullscreen") )
-		{
-			window.addEventListener("resize", function(e) { 
-				LiteGUI.maximizeWindow();
-			});
-		}
-
+		//external windows
 		window.addEventListener("beforeunload", function(e) {
 			for(var i in LiteGUI.windows)
 				LiteGUI.windows[i].close();
@@ -1166,7 +1173,8 @@ var LiteGUI = {
 		navicon: "&#9776;",
 		refresh: "&#8634;",
 		gear: "&#9881;",
-		open_folder: "&#128194;"
+		open_folder: "&#128194;",
+		download: "&#11123;"
 	},
 	
 	//given a html entity string it returns the equivalent unicode character
@@ -1200,6 +1208,18 @@ var LiteGUI = {
 		if(v >= 0 )
 			return (v|0) + "px";
 		return "calc( 100% - " + Math.abs(v|0) + "px )";
+	},
+
+	/**
+	* Returns the window where this element is attached (used in multi window applications)
+	* @method getElementWindow
+	* @param {HTMLElement} v
+	* @return {Window} the window element
+	**/
+	getElementWindow: function(v)
+	{
+        var doc = v.ownerDocument;
+        return doc.defaultView || doc.parentWindow;
 	},
 
 	/**
@@ -2653,21 +2673,22 @@ function Console( options )
 
 	this.root = document.createElement("div");
 	this.root.className = "liteconsole";
-
 	this.root.innerHTML = "<div class='log'></div><div class='foot'><input type='text'/></div>";
 
 	this.log_element = this.root.querySelector('.log');
 	this.input = this.root.querySelector('input');
 
-	this.input.addEventListener("keydown", this.onKeyDown.bind(this) );
-
+	this.input.addEventListener("keydown", this.processKeyDown.bind(this) );
 	this._prompt = options.prompt || "]";
+
+	this.onAutocomplete = null; //receives string, must return final string
+	this.onProcessCommand = null; //receives input value
 
 	this.history = [];
 	this._history_offset = 0;
 }
 
-Console.prototype.onKeyDown = function(e)
+Console.prototype.processKeyDown = function(e)
 {
 	if(this._input_blocked)
 		return;
@@ -5176,7 +5197,7 @@ LiteGUI.Console = Console;
 				var input = title.querySelector("input");
 
 				//loose focus when renaming
-				$(input).blur(function(e) { 
+				input.addEventListener("blur",function(e) { 
 					var new_name = e.target.value;
 					setTimeout(function() { that2.innerHTML = new_name; },1); //bug fix, if I destroy input inside the event, it produce a NotFoundError
 					//item.node_name = new_name;
@@ -5189,11 +5210,11 @@ LiteGUI.Console = Console;
 				input.addEventListener("keydown", function(e) {
 					if(e.keyCode != 13)
 						return;
-					$(this).blur();
+					this.blur();
 				});
 
 				//set on focus
-				$(input).focus();
+				input.focus();
 
 				e.preventDefault();
 			}
@@ -6330,8 +6351,6 @@ LiteGUI.Console = Console;
 			panel.style.height = "100%";
 			this.content.style.width = "100%";
 			this.content.style.height = "calc(100% - "+ LiteGUI.Panel.title_height +")"; //title offset: 20px
-			this.content.style.height = "-moz-calc(100% - "+ LiteGUI.Panel.title_height +")";
-			this.content.style.height = "-webkit-calc(100% - "+ LiteGUI.Panel.title_height +")"; 
 			this.content.style.overflow = "auto";
 		}
 		else if(dock_type == 'left' || dock_type == 'right')
@@ -6342,9 +6361,6 @@ LiteGUI.Console = Console;
 
 			panel.style.width = this.width + "px";
 			panel.style.height = "100%";
-
-			this.content.style.height = "-moz-calc(100% - "+ LiteGUI.Panel.title_height +")";
-			this.content.style.height = "-webkit-calc(100% - "+ LiteGUI.Panel.title_height +")";
 			this.content.style.height = "calc(100% - "+ LiteGUI.Panel.title_height +")";
 			this.content.style.overflow = "auto";
 
@@ -7055,8 +7071,14 @@ function Inspector( options )
 }
 
 //append the inspector to a parent
-Inspector.prototype.appendTo = function( parent, at_front)
+Inspector.prototype.appendTo = function( parent, at_front )
 {
+	if(!parent)
+		return;
+	if(parent.constructor === String)
+		parent = document.querySelector(parent);
+	if(!parent)
+		return;
 	if( at_front )
 		parent.insertBefore( this.root, parent.firstChild );
 	else
@@ -8504,7 +8526,7 @@ Inspector.prototype.addInfo = function( name, value, options)
 	value = (value === undefined || value === null) ? "" : value;
 	var element = null;
 	if(name != null)
-		element = this.createWidget(name,value, options);
+		element = this.createWidget( name, value, options);
 	else
 	{
 		element = document.createElement("div");
@@ -8535,6 +8557,13 @@ Inspector.prototype.addInfo = function( name, value, options)
 	if(!content)
 		content = element.querySelector(".winfo");
 
+	if(options.width)
+	{
+		element.style.width = LiteGUI.sizeToCSS(options.width);
+		element.style.display = "inline-block";
+		if(!name)
+			info.style.margin = "2px";
+	}
 	if(options.height)
 	{
 		content.style.height = LiteGUI.sizeToCSS(options.height);
@@ -9082,52 +9111,69 @@ Inspector.prototype.addList = function(name, values, options)
 			for(var i in values)
 			{
 				var	value = values[i];
-				var item_name = values.constructor === Array ? value : i;
-				if(!item_name)
-					item_name = i;
-				var item_title = item_name.constructor === String ? item_name : i;
-				var item_style = null;
-				if(item_name && item_name.constructor === String)
-					item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
-
-				var icon = "";
-				if( value === null || value === undefined )
-				{
-				
-				}
-				else if( value.constructor === String || value.constructor === Number || value.constructor === Boolean )
-				{
-					//?
-				}
-				else if( value )
-				{
-					item_title = value.content || value.name || i;
-					item_style = value.style;
-					if(value.icon)
-						icon = "<img src='"+value.icon+"' class='icon' />";
-				}
-
-				var selected = false;
-				if( (typeof(values[i]) == "object" && values[i].selected) || (item_selected == values[i]) )
-					selected = true;
-				var li_element = document.createElement("li");
-				li_element.classList.add( 'item-' + LiteGUI.safeName(i) );
-				if( selected )
-					li_element.classList.add( 'selected' );
-				li_element.dataset["name"] = item_name;
-				li_element.dataset["pos"] = i;
-				li_element.value = values[i];
-				if(item_style)
-					li_element.setAttribute("style", item_style );
-				li_element.innerHTML = icon + item_title;
+				var li_element = insert_item( value, item_selected, i );
 				ul.appendChild( li_element );
-				li_element.addEventListener( "click", inner_item_click );
-				if(options.callback_dblclick)
-					li_element.addEventListener( "dblclick", inner_item_dblclick );
 			}
 
 		//ul.innerHTML = code;
 		LiteGUI.bind( ul.querySelectorAll("li"), "click", inner_item_click );
+	}
+
+	function insert_item( value, selected, index )
+	{
+		var item_index = index; //to reference it
+		var item_title = index; //to show in the list
+		selected = !!selected;
+
+		var item_style = null;
+		var icon = "";
+		if( value != null )
+		{
+			if( value.constructor === String || value.constructor === Number || value.constructor === Boolean )
+			{
+				item_title = String(value);
+			}
+			else if( value )
+			{
+				item_title = value.content || value.title || value.name || index;
+				item_style = value.style;
+				if(value.icon)
+					icon = "<img src='"+value.icon+"' class='icon' /> ";
+				if(value.selected)
+					selected = true;
+			}
+		}
+
+		var item_name = item_title;
+		item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
+
+		var li_element = document.createElement("li");
+		li_element.classList.add( 'item-' + LiteGUI.safeName(item_index) );
+		if( selected )
+			li_element.classList.add( 'selected' );
+		li_element.dataset["name"] = item_name;
+		li_element.dataset["pos"] = item_index;
+		li_element.value = value;
+		if(item_style)
+			li_element.setAttribute("style", item_style );
+		li_element.innerHTML = icon + item_title;
+		li_element.addEventListener( "click", inner_item_click );
+		if(options.callback_dblclick)
+			li_element.addEventListener( "dblclick", inner_item_dblclick );
+		return li_element;
+	}
+
+	element.addItem = function( value, selected, name )
+	{
+		if(values.constructor !== Array)
+		{
+			console.error("cannot add item to list of object, only array");
+			return;
+		}
+		values.push( value );
+		var ul = this.querySelector("ul");
+		var li_element = insert_item( value, selected);
+		ul.appendChild( li_element );
 	}
 
 	element.removeItem = function(name)
@@ -9545,6 +9591,10 @@ Inspector.prototype.addColor = function( name, value, options )
 			if(!skip_event)
 				LiteGUI.trigger( dragger.input, "change" ); 
 		};
+
+		element.getValue = function() { 
+			return value;
+		};
 	}
 	else
 	{
@@ -9567,43 +9617,48 @@ Inspector.prototype.addFile = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'>"+value+"</span></span><button class='litebutton' style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
+	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'></span></span><button class='litebutton' style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
 	var content = element.querySelector(".wcontent");
 	content.style.position = "relative";
 	var input = element.querySelector(".wcontent input");
 	var filename_element = element.querySelector(".wcontent .filename");
+	if(value)
+		filename_element.innerText = value.name;
+
 	input.addEventListener("change", function(e) { 
 		if(!e.target.files.length)
 		{
 			//nothing
-			filename_element.innerHTML = "";
+			filename_element.innerText = "";
 			Inspector.onWidgetChange.call(that, element, name, null, options);
 			return;
 		}
 
 		var url = null;
+		//var data = { url: url, filename: e.target.value, file: e.target.files[0], files: e.target.files };
+		var file = e.target.files[0];
+		file.files = e.target.files;
 		if( options.generate_url )
-			url = URL.createObjectURL( e.target.files[0] );
-		var data = { url: url, filename: e.target.value, file: e.target.files[0], files: e.target.files };
+			file.url = URL.createObjectURL( e.target.files[0] );
+		filename_element.innerText = file.name;
 
 		if(options.read_file)
 		{
 			 var reader = new FileReader();
 			 reader.onload = function(e2){
-				data.data = e2.target.result;
-				Inspector.onWidgetChange.call( that, element, name, data, options );
+				file.data = e2.target.result;
+				Inspector.onWidgetChange.call( that, element, name, file, options );
 			 }
 			 if( options.read_file == "binary" )
-				 reader.readAsArrayBuffer( data.file );
+				 reader.readAsArrayBuffer( file );
 			 else if( options.read_file == "data_url" )
-				 reader.readAsDataURL( data.file );
+				 reader.readAsDataURL( file );
 			 else
-				 reader.readAsText( data.file );
+				 reader.readAsText( file );
 		}
 		else
 		{
-			filename_element.innerHTML = e.target.files[0].name;
-			Inspector.onWidgetChange.call( that, element, name, data, options );
+			Inspector.onWidgetChange.call( that, element, name, file, options );
 		}
 	});
 

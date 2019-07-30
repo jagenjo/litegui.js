@@ -85,8 +85,14 @@ function Inspector( options )
 }
 
 //append the inspector to a parent
-Inspector.prototype.appendTo = function( parent, at_front)
+Inspector.prototype.appendTo = function( parent, at_front )
 {
+	if(!parent)
+		return;
+	if(parent.constructor === String)
+		parent = document.querySelector(parent);
+	if(!parent)
+		return;
 	if( at_front )
 		parent.insertBefore( this.root, parent.firstChild );
 	else
@@ -1534,7 +1540,7 @@ Inspector.prototype.addInfo = function( name, value, options)
 	value = (value === undefined || value === null) ? "" : value;
 	var element = null;
 	if(name != null)
-		element = this.createWidget(name,value, options);
+		element = this.createWidget( name, value, options);
 	else
 	{
 		element = document.createElement("div");
@@ -1565,6 +1571,13 @@ Inspector.prototype.addInfo = function( name, value, options)
 	if(!content)
 		content = element.querySelector(".winfo");
 
+	if(options.width)
+	{
+		element.style.width = LiteGUI.sizeToCSS(options.width);
+		element.style.display = "inline-block";
+		if(!name)
+			info.style.margin = "2px";
+	}
 	if(options.height)
 	{
 		content.style.height = LiteGUI.sizeToCSS(options.height);
@@ -2112,52 +2125,69 @@ Inspector.prototype.addList = function(name, values, options)
 			for(var i in values)
 			{
 				var	value = values[i];
-				var item_name = values.constructor === Array ? value : i;
-				if(!item_name)
-					item_name = i;
-				var item_title = item_name.constructor === String ? item_name : i;
-				var item_style = null;
-				if(item_name && item_name.constructor === String)
-					item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
-
-				var icon = "";
-				if( value === null || value === undefined )
-				{
-				
-				}
-				else if( value.constructor === String || value.constructor === Number || value.constructor === Boolean )
-				{
-					//?
-				}
-				else if( value )
-				{
-					item_title = value.content || value.name || i;
-					item_style = value.style;
-					if(value.icon)
-						icon = "<img src='"+value.icon+"' class='icon' />";
-				}
-
-				var selected = false;
-				if( (typeof(values[i]) == "object" && values[i].selected) || (item_selected == values[i]) )
-					selected = true;
-				var li_element = document.createElement("li");
-				li_element.classList.add( 'item-' + LiteGUI.safeName(i) );
-				if( selected )
-					li_element.classList.add( 'selected' );
-				li_element.dataset["name"] = item_name;
-				li_element.dataset["pos"] = i;
-				li_element.value = values[i];
-				if(item_style)
-					li_element.setAttribute("style", item_style );
-				li_element.innerHTML = icon + item_title;
+				var li_element = insert_item( value, item_selected, i );
 				ul.appendChild( li_element );
-				li_element.addEventListener( "click", inner_item_click );
-				if(options.callback_dblclick)
-					li_element.addEventListener( "dblclick", inner_item_dblclick );
 			}
 
 		//ul.innerHTML = code;
 		LiteGUI.bind( ul.querySelectorAll("li"), "click", inner_item_click );
+	}
+
+	function insert_item( value, selected, index )
+	{
+		var item_index = index; //to reference it
+		var item_title = index; //to show in the list
+		selected = !!selected;
+
+		var item_style = null;
+		var icon = "";
+		if( value != null )
+		{
+			if( value.constructor === String || value.constructor === Number || value.constructor === Boolean )
+			{
+				item_title = String(value);
+			}
+			else if( value )
+			{
+				item_title = value.content || value.title || value.name || index;
+				item_style = value.style;
+				if(value.icon)
+					icon = "<img src='"+value.icon+"' class='icon' /> ";
+				if(value.selected)
+					selected = true;
+			}
+		}
+
+		var item_name = item_title;
+		item_name = item_name.replace(/<(?:.|\n)*?>/gm, ''); //remove html tags that could break the html
+
+		var li_element = document.createElement("li");
+		li_element.classList.add( 'item-' + LiteGUI.safeName(item_index) );
+		if( selected )
+			li_element.classList.add( 'selected' );
+		li_element.dataset["name"] = item_name;
+		li_element.dataset["pos"] = item_index;
+		li_element.value = value;
+		if(item_style)
+			li_element.setAttribute("style", item_style );
+		li_element.innerHTML = icon + item_title;
+		li_element.addEventListener( "click", inner_item_click );
+		if(options.callback_dblclick)
+			li_element.addEventListener( "dblclick", inner_item_dblclick );
+		return li_element;
+	}
+
+	element.addItem = function( value, selected, name )
+	{
+		if(values.constructor !== Array)
+		{
+			console.error("cannot add item to list of object, only array");
+			return;
+		}
+		values.push( value );
+		var ul = this.querySelector("ul");
+		var li_element = insert_item( value, selected);
+		ul.appendChild( li_element );
 	}
 
 	element.removeItem = function(name)
@@ -2575,6 +2605,10 @@ Inspector.prototype.addColor = function( name, value, options )
 			if(!skip_event)
 				LiteGUI.trigger( dragger.input, "change" ); 
 		};
+
+		element.getValue = function() { 
+			return value;
+		};
 	}
 	else
 	{
@@ -2597,43 +2631,48 @@ Inspector.prototype.addFile = function(name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'>"+value+"</span></span><button class='litebutton' style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
+	var element = this.createWidget(name,"<span class='inputfield full whidden' style='width: calc(100% - 26px)'><span class='filename'></span></span><button class='litebutton' style='width:20px; margin-left: 2px;'>...</button><input type='file' size='100' class='file' value='"+value+"'/>", options);
 	var content = element.querySelector(".wcontent");
 	content.style.position = "relative";
 	var input = element.querySelector(".wcontent input");
 	var filename_element = element.querySelector(".wcontent .filename");
+	if(value)
+		filename_element.innerText = value.name;
+
 	input.addEventListener("change", function(e) { 
 		if(!e.target.files.length)
 		{
 			//nothing
-			filename_element.innerHTML = "";
+			filename_element.innerText = "";
 			Inspector.onWidgetChange.call(that, element, name, null, options);
 			return;
 		}
 
 		var url = null;
+		//var data = { url: url, filename: e.target.value, file: e.target.files[0], files: e.target.files };
+		var file = e.target.files[0];
+		file.files = e.target.files;
 		if( options.generate_url )
-			url = URL.createObjectURL( e.target.files[0] );
-		var data = { url: url, filename: e.target.value, file: e.target.files[0], files: e.target.files };
+			file.url = URL.createObjectURL( e.target.files[0] );
+		filename_element.innerText = file.name;
 
 		if(options.read_file)
 		{
 			 var reader = new FileReader();
 			 reader.onload = function(e2){
-				data.data = e2.target.result;
-				Inspector.onWidgetChange.call( that, element, name, data, options );
+				file.data = e2.target.result;
+				Inspector.onWidgetChange.call( that, element, name, file, options );
 			 }
 			 if( options.read_file == "binary" )
-				 reader.readAsArrayBuffer( data.file );
+				 reader.readAsArrayBuffer( file );
 			 else if( options.read_file == "data_url" )
-				 reader.readAsDataURL( data.file );
+				 reader.readAsDataURL( file );
 			 else
-				 reader.readAsText( data.file );
+				 reader.readAsText( file );
 		}
 		else
 		{
-			filename_element.innerHTML = e.target.files[0].name;
-			Inspector.onWidgetChange.call( that, element, name, data, options );
+			Inspector.onWidgetChange.call( that, element, name, file, options );
 		}
 	});
 

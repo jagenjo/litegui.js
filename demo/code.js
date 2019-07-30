@@ -81,7 +81,7 @@ window.onload = function(){
 
 function createSidePanel()
 {
-	mainarea.split("horizontal",[null,240],true);
+	mainarea.split("horizontal",[null,340],true);
 
 	var docked = new LiteGUI.Panel("right_panel", {title:'Docked panel', close: true});
 

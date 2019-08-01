@@ -204,8 +204,6 @@ If you want to specify the order in which they are shown:
 my_instance.constructor.properties_order = ["age","name"];
 ```
 
-
-
 ## Sections, Groups and Containers ##
 
 Every widget is added to the current section, if you want to create new sections you can call the ```addSection``` method, then you can add later widgets to that section. Sections can be collapsed.

@@ -204,8 +204,6 @@ If you want to specify the order in which they are shown:
 my_instance.constructor.properties_order = ["age","name"];
 ```
 
-
-
 ## Sections, Groups and Containers ##
 
 Every widget is added to the current section, if you want to create new sections you can call the ```addSection``` method, then you can add later widgets to that section. Sections can be collapsed.
@@ -250,3 +248,55 @@ Finally
 1. Attach it to the inspector prototype: ```LiteGUI.Inspector.prototype.addMyWidget = MyWidgetFunction;```
 1. Add to widgets list: ```Inspector.widget_constructors["mytype"] = "addMyWidget";```
 
+Example of button widget
+
+```js
+Inspector.prototype.addButton = function(name, value, options)
+{
+	options = this.processOptions(options);
+
+	value = options.button_text || value || "";
+	var that = this;
+
+	var button_classname = "";
+	if(name === null)
+		button_classname = "single";
+	if(options.micro)
+		button_classname += " micro";
+
+	var attrs = "";
+	if(options.disabled)
+		attrs = "disabled='disabled'";
+
+	var title = options.title || "";
+	
+	var element = this.createWidget(name,"<button title='"+title+"' class='litebutton "+button_classname+"' tabIndex='"+ this.tab_index + "' "+attrs+">"+value+"</button>", options);
+	this.tab_index++;
+	var button = element.querySelector("button");
+	button.addEventListener("click", function(event) {
+		Inspector.onWidgetChange.call( that, element, name, this.innerHTML, options, false, event);
+		LiteGUI.trigger( button, "wclick", value );
+	});
+	this.append(element,options);
+
+	element.wclick = function(callback) { 
+		if(!options.disabled)
+			LiteGUI.bind(this, "wclick", callback ); 
+	}
+
+	element.setValue = function(v)
+	{
+		if(v === undefined)
+			return;
+		button.innerHTML = v;
+	}
+
+	element.disable = function() { button.disabled = true; };
+	element.enable = function() { button.disabled = false; };
+
+	this.processElement(element, options);
+	return element;
+}
+
+Inspector.widget_constructors["button"] = "addButton";
+```

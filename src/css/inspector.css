@@ -100,6 +100,10 @@
 	color: #888;
 }
 
+.inspector.dark .wtitle {
+	background-color: #323232;
+}
+
 .inspector .wtitle:first-child {
 	/*margin-top: 0;*/
 }

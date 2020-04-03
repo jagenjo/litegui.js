@@ -84,6 +84,21 @@ function Inspector( options )
 	this.widgets_per_row = options.widgets_per_row || 1;
 }
 
+Inspector.prototype.getValues = function()
+{
+	var r = {};
+	for(var i in this.widgets_by_name)
+		r[i] = this.widgets_by_name[i].getValue();
+	return r;
+}
+
+Inspector.prototype.setValues = function(v)
+{
+	for(var i in v)
+		if( this.widgets_by_name[i] )
+			this.widgets_by_name[i].setValue( v[i] );
+}
+
 //append the inspector to a parent
 Inspector.prototype.appendTo = function( parent, at_front )
 {
@@ -288,7 +303,7 @@ Inspector.prototype.inspectInstance = function( instance, properties, properties
 					case String: properties_info[i] = { type: "string" }; break;
 					case Boolean: properties_info[i] = { type: "boolean" }; break;
 					default:
-						if( v && v.length )
+						if( v && (v.constructor === Array || v.constructor.BYTES_PER_ELEMENT) ) //Array or typed_array
 						{
 							var is_number = v[0] != null && v[0].constructor === Number;
 							switch(v.length)
@@ -2405,7 +2420,10 @@ Inspector.prototype.addButtons = function(name, value, options)
 	{
 		for(var i in value)
 		{
-			code += "<button class='litebutton' tabIndex='"+this.tab_index+"' style='"+style+"'>"+value[i]+"</button>";
+			var title = "";
+			if( options.title && options.title.constructor === Array)
+				title = options.title[i] || "";
+			code += "<button class='litebutton' title='"+title+"' tabIndex='"+this.tab_index+"' style='"+style+"'>"+value[i]+"</button>";
 			this.tab_index++;
 		}
 	}
@@ -2894,6 +2912,8 @@ Inspector.prototype.addArray = function( name, value, options )
 //creates an empty container but it is not set active
 Inspector.prototype.addContainer = function(name, options)
 {
+	if(name && name.constructor !== String)
+		console.warn("LiteGUI.Inspector.addContainer first parameter must be a string with the name");
 	var element = this.startContainer(null,options);
 	this.endContainer();
 	return element;

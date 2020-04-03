@@ -186,7 +186,12 @@ var LiteGUI = {
 	* @param {String} class_name
 	*/
 	removeClass: function( elem, selector, class_name ){
-		var list = (elem || document).querySelectorAll( class_name );
+		if(!class_name)
+		{
+			class_name = selector;
+			selector = "." + selector;
+		}
+		var list = (elem || document).querySelectorAll( selector );
 		for(var i = 0; i < list.length; ++i)
 			list[i].classList.remove(class_name);
 	},
@@ -683,6 +688,32 @@ var LiteGUI = {
 	},
 
 	/**
+	* Useful to create elements from a text like '<div><span class="title"></span></div>' and an object like { ".title":"mytitle" }
+	* @method createListItem
+	* @param {String} code
+	* @param {Object} values it will use innerText in the elements that matches that selector
+	* @param {Object} style
+	* @return {HTMLElement} 
+	**/
+	createListItem: function( code, values, style )
+	{
+		var elem = document.createElement("span");
+		elem.innerHTML = code;
+		elem = elem.childNodes[0]; //to get the node
+		if(values)
+		for(var i in values)
+		{
+			var subelem = elem.querySelector(i);
+			if(subelem)
+				subelem.innerText = values[i];
+		}
+		if(style)
+		for(var i in style)
+			elem.style[i] = style[i];
+		return elem;
+	},
+
+	/**
 	* Request script and inserts it in the DOM
 	* @method createButton
 	* @param {String} id
@@ -1173,7 +1204,9 @@ var LiteGUI = {
 		refresh: "&#8634;",
 		gear: "&#9881;",
 		open_folder: "&#128194;",
-		download: "&#11123;"
+		download: "&#11123;",
+		tick: "&#10003;",
+		trash: "&#128465;"
 	},
 	
 	//given a html entity string it returns the equivalent unicode character
@@ -1580,14 +1613,14 @@ function beautifyCode( code, reserved, skip_css )
 	reserved = reserved || ["abstract", "else", "instanceof", "super", "boolean", "enum", "int", "switch", "break", "export", "interface", "synchronized", "byte", "extends", "let", "this", "case", "false", "long", "throw", "catch", "final", "native", "throws", "char", "finally", "new", "transient", "class", "float", "null", "true", "const", "for", "package", "try", "continue", "function", "private", "typeof", "debugger", "goto", "protected", "var", "default", "if", "public", "void", "delete", "implements", "return", "volatile", "do", "import", "short", "while", "double", "in", "static", "with"];
 
 	//reserved words
-	code = code.replace(/(\w+)/g, function(v) {
+	code = code.replace(/\b(\w+)\b/g, function(v) {
 		if(reserved.indexOf(v) != -1)
 			return "<span class='rsv'>" + v + "</span>";
 		return v;
 	});
 
 	//numbers
-	code = code.replace(/([0-9]+)/g, function(v) {
+	code = code.replace(/\b([0-9]+)\b/g, function(v) {
 		return "<span class='num'>" + v + "</span>";
 	});
 
@@ -1607,10 +1640,11 @@ function beautifyCode( code, reserved, skip_css )
 		return "<span class='str'>" + v + "</span>";
 	});
 
-	//comments
-	code = code.replace(/(\/\/[a-zA-Z0-9\?\!\(\)_ ]*)/g, function(v) {
-		return "<span class='cmnt'>" + v + "</span>";
+	//comments 
+	code = code.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, function(v) { ///(\/\/[a-zA-Z0-9\?\!\(\)_ ]*)/g
+		return "<span class='cmnt'>" + v.replace(/<[^>]*>/g, "") + "</span>";
 	});
+
 
 	if(!skip_css)
 		code = "<style>.obj { color: #79B; } .prop { color: #B97; }	.str,.num { color: #A79; } .cmnt { color: #798; } .rsv { color: #9AB; } </style>" + code;

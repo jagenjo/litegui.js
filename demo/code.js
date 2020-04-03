@@ -44,6 +44,7 @@ window.onload = function(){
 
 	var dialog = createWidgetsDialog();
 	var dialog2 = createTableDialog();
+	var dialog3 = createComplexListDialog();
 
 	mainmenu.add("file/new");
 	mainmenu.add("file/open");
@@ -203,6 +204,27 @@ function createWidgetsDialog()
 
 	return dialog;
 }
+
+function createComplexListDialog()
+{
+	var dialog = new LiteGUI.Dialog( { title:"Complex List", close: true, minimize: true, width: 300, height: 400, scroll: true, resizable:true, draggable: true} );
+	dialog.show();
+	dialog.setPosition( 600,200 );
+
+	var list = new LiteGUI.ComplexList({height: "100%"});
+	dialog.add( list );
+
+	list.addTitle("Example of title");
+	for(var i = 0; i < 10; ++i)
+		var elem = list.addItem({},"Example", Math.random()>0.5, true);
+	list.addTitle("Example of title");
+	for(var i = 0; i < 10; ++i)
+		list.addItem({},"More items", Math.random()>0.5, true);
+	list.addHTML("+ click me");
+
+	return dialog;
+}
+
 
 function createTableDialog()
 {

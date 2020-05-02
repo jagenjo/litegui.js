@@ -35,8 +35,6 @@ Start with the following index.html:
     <title>Algae</title>
     <link type="text/css" rel="stylesheet" href="litegui.js/build/litegui.css">
 
-    <script type="text/javascript" src="litegui.js/external/jquery-2.1.1.min.js"></script>
-    <script type="text/javascript" src="litegui.js/external/jquery-ui-1.10.4.min.js"></script>
     <script type="text/javascript" src="litegui.js/external/jscolor/jscolor.js"></script>
 
     <script type="application/javascript" src="litegui.js/build/litegui.js"></script>

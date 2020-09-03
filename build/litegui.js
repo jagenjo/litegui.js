@@ -5216,6 +5216,9 @@ LiteGUI.Console = Console;
 		if(data.precontent)
 			title_element.querySelector(".precontent").innerHTML = data.precontent;
 
+		if(data.postcontent)
+			title_element.querySelector(".postcontent").innerHTML = data.postcontent;
+
 		if(data.dataset)
 			for(var i in data.dataset)
 				root.dataset[i] = data.dataset[i];
@@ -8020,13 +8023,17 @@ Inspector.prototype.addStringButton = function( name, value, options)
 	var that = this;
 	this.values[name] = value;
 	
-	var element = this.createWidget( name, "<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='"+value+"' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
+	var element = this.createWidget( name, "<span class='inputfield button'><input type='text' tabIndex='"+this.tab_index+"' class='text string' value='' "+(options.disabled?"disabled":"")+"/></span><button class='micro'>"+(options.button || "...")+"</button>", options);
 	var input = element.querySelector(".wcontent input");
+	input.value = value;
 	input.addEventListener("change", function(e) { 
 		var r = Inspector.onWidgetChange.call(that,element,name,e.target.value, options);
 		if(r !== undefined)
 			this.value = r;
 	});
+
+	if( options.disabled )
+		input.setAttribute("disabled","disabled");
 
 	element.setIcon = function(img)
 	{
@@ -8788,7 +8795,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 	this.values[name] = value;
 
 	var element = this.createWidget(name,"<span class='inputfield full'>\
-				<input tabIndex='"+this.tab_index+"' type='text' class='slider-text fixed nano' value='"+value+"' /><span class='slider-container'></span></span>", options);
+				<input tabIndex='"+this.tab_index+"' type='text' class='slider-text fixed liteslider-value' value='' /><span class='slider-container'></span></span>", options);
 
 	var slider_container = element.querySelector(".slider-container");
 
@@ -8798,6 +8805,7 @@ Inspector.prototype.addSlider = function(name, value, options)
 	//Text change -> update slider
 	var skip_change = false; //used to avoid recursive loops
 	var text_input = element.querySelector(".slider-text");
+	text_input.value = value;
 	text_input.addEventListener('change', function(e) {
 		if(skip_change)
 			return;
@@ -9521,9 +9529,12 @@ Inspector.prototype.addButton = function(name, value, options)
 
 	var title = options.title || "";
 	
-	var element = this.createWidget(name,"<button title='"+title+"' class='litebutton "+button_classname+"' tabIndex='"+ this.tab_index + "' "+attrs+">"+value+"</button>", options);
+	var element = this.createWidget(name,"<button tabIndex='"+ this.tab_index + "' "+attrs+"></button>", options);
 	this.tab_index++;
 	var button = element.querySelector("button");
+	button.setAttribute("title",title);
+	button.className = "litebutton " + button_classname;
+	button.innerHTML = value;
 	button.addEventListener("click", function(event) {
 		Inspector.onWidgetChange.call( that, element, name, this.innerHTML, options, false, event);
 		LiteGUI.trigger( button, "wclick", value );

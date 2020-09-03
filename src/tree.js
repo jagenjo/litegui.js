@@ -395,6 +395,9 @@
 		if(data.precontent)
 			title_element.querySelector(".precontent").innerHTML = data.precontent;
 
+		if(data.postcontent)
+			title_element.querySelector(".postcontent").innerHTML = data.postcontent;
+
 		if(data.dataset)
 			for(var i in data.dataset)
 				root.dataset[i] = data.dataset[i];
